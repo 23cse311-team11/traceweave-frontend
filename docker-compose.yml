@@ -12,11 +12,8 @@ services:
     ports:
       - "4000:4000"
     environment:
-      - PORT=4000
-      - DATABASE_URL=postgres://user:password@postgres:5432/traceweave
-      - MONGO_URL=mongodb://mongo:27017/traceweave_history
+      - NODE_ENV=development
     depends_on:
-      - postgres
       - mongo
     volumes:
       - ./backend/core-api/src:/app/src # Hot Reload
@@ -65,18 +62,6 @@ services:
   # -----------------------------------------------------------------
   # DATA LAYER
   # -----------------------------------------------------------------
-  postgres:
-    image: postgres:15-alpine
-    container_name: traceweave-postgres
-    ports:
-      - "5431:5432"
-    environment:
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=traceweave
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./database/schema.sql:/docker-entrypoint-initdb.d/init.sql
 
   mongo:
     image: mongo:6
@@ -87,5 +72,4 @@ services:
       - mongo_data:/data/db
 
 volumes:
-  postgres_data:
   mongo_data:

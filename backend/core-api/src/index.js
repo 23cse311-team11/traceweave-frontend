@@ -1,18 +1,21 @@
-import express from 'express';
-import helmet from 'helmet';
-import cors from 'cors';
-import morgan from 'morgan';
-import httpStatus from 'http-status';
-import config from './config/config.js';
-import { errorConverter, errorHandler } from './middlewares/error.js';
-import ApiError from './utils/ApiError.js';
-import sequelize from './config/database.js';
-import dotenv from 'dotenv';
-import routes from './routes/index.js';
+import dotenv from "dotenv";
 
-if (!process.env.DB_HOST) {
+if (process.env.NODE_ENV !== "production") {
   dotenv.config({ path: ".env.local" });
 }
+
+import express from "express";
+import helmet from "helmet";
+import cors from "cors";
+import morgan from "morgan";
+import httpStatus from "http-status";
+import config from "./config/config.js";
+import { errorConverter, errorHandler } from "./middlewares/error.js";
+import ApiError from "./utils/ApiError.js";
+import routes from "./routes/index.js";
+import cookieParser from "cookie-parser";
+import passport from "./config/passport.js";
+import prisma from "./config/prisma.js";
 
 const app = express();
 
@@ -21,6 +24,12 @@ app.use(helmet()); // Security headers
 app.use(cors()); // Enable CORS
 app.use(express.json()); // Parse JSON bodies
 app.use(morgan('dev')); // Logger
+app.use(cookieParser());
+app.use(cors({
+  origin: 'http://localhost:3000', 
+  credentials: true 
+}));
+app.use(passport.initialize());
 
 // Routes (Placeholder)
 app.get('/health', (req, res) => {
@@ -51,7 +60,7 @@ let server;
 
 const startServer = async () => {
   try {
-    await sequelize.authenticate();
+    await prisma.$connect();
     console.log('PostgreSQL Connection has been established successfully.');
 
     server = app.listen(config.port, () => {

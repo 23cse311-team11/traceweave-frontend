@@ -1,0 +1,126 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+}
+        
+
+// OP-347: User Auth
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  fullName      String?   @map("full_name")
+  avatarUrl     String?   @map("avatar_url")
+  
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at") 
+
+  // Relations
+  identities    Identity[]        // <--- One User, Many Login Methods
+  workspaces    WorkspaceMember[]
+  ownedWorkspaces Workspace[]
+
+  @@map("users")
+}
+
+model Identity {
+  id           String    @id @default(uuid())
+  userId       String    @map("user_id")
+  
+  // Auth Data
+  provider     String    // 'email', 'google', 'github'
+  providerId   String?   @map("provider_id") // 'sub' from OAuth, null for email
+  passwordHash String?   @map("password_hash") // Only for 'email' provider
+  
+  // Optional: Store OAuth tokens if we ever need to fetch data from them later
+  accessToken  String?   @map("access_token") 
+  refreshToken String?   @map("refresh_token")
+
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  user         User      @relation(fields: [userId], references: [id])
+
+  @@unique([provider, providerId]) // Prevent duplicate OAuth links
+  @@unique([userId, provider])     // One Google link per user
+  @@map("identities")
+}
+
+// OP-348: Workspaces
+model Workspace {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  ownerId     String   @map("owner_id")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  // Relations
+  owner       User     @relation(fields: [ownerId], references: [id])
+  members     WorkspaceMember[]
+  collections Collection[]
+
+  @@map("workspaces")
+}
+
+// OP-349: RBAC (Many-to-Many via explicit table)
+model WorkspaceMember {
+  id          String   @id @default(uuid())
+  workspaceId String   @map("workspace_id")
+  userId      String   @map("user_id")
+  role        String   @default("VIEWER") // OWNER, EDITOR, VIEWER
+
+  joinedAt    DateTime @default(now()) @map("joined_at")
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@unique([workspaceId, userId]) // Prevent duplicate membership
+  @@map("workspace_members")
+}
+
+// OP-360: Collections (Recursive Folder Structure)
+model Collection {
+  id          String   @id @default(uuid())
+  workspaceId String   @map("workspace_id")
+  name        String
+  parentId    String?  @map("parent_id") // For nesting folders
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  // Relations
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  parent      Collection? @relation("SubCollections", fields: [parentId], references: [id])
+  children    Collection[] @relation("SubCollections")
+  requests    RequestDefinition[]
+
+  @@map("collections")
+}
+
+// OP-361: Request Definitions (The "Postman" Request)
+model RequestDefinition {
+  id           String   @id @default(uuid())
+  collectionId String   @map("collection_id")
+  name         String
+  method       String   // GET, POST, PUT, etc.
+  url          String
+  headers      Json?    // Storing structured data as JSONB
+  body         Json?
+  params       Json?
+  
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  collection   Collection @relation(fields: [collectionId], references: [id])
+
+  @@map("request_definitions")
+}
