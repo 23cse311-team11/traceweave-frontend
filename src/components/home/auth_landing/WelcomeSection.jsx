@@ -1,0 +1,23 @@
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Plus } from 'lucide-react';
+
+export const WelcomeSection = ({ user }) => {
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex flex-col md:flex-row justify-between items-end gap-4"
+    >
+      <div>
+        <h1 className="text-2xl font-bold text-text-primary flex items-center gap-2">
+          Welcome back, {user?.name?.split(' ')[0] || 'Human'}
+        </h1>
+        <p className="text-text-secondary mt-1">Here is what is happening in your ecosystem today.</p>
+      </div>
+      <button className="flex items-center gap-2 bg-brand-orange text-white px-4 py-2 rounded-md text-sm font-bold hover:bg-orange-600 transition-colors shadow-[0_0_15px_rgba(255,108,55,0.2)]">
+        <Plus size={16} /> New Workspace
+      </button>
+    </motion.div>
+  );
+};

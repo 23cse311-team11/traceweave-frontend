@@ -1,0 +1,76 @@
+import React from 'react';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { Network, Filter, SortDesc, MoreVertical } from 'lucide-react';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 10 },
+  show: { opacity: 1, y: 0 }
+};
+
+export const WorkspacesList = ({ workspaces }) => {
+  return (
+    <div className="lg:col-span-2 space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-bold flex items-center gap-2">
+          <Network size={18} className="text-brand-blue" /> Your Workspaces
+        </h2>
+        <div className="flex gap-2">
+          <button className="p-1.5 text-text-muted hover:text-text-primary rounded hover:bg-white/5"><Filter size={14} /></button>
+          <button className="p-1.5 text-text-muted hover:text-text-primary rounded hover:bg-white/5"><SortDesc size={14} /></button>
+        </div>
+      </div>
+
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+        className="space-y-3"
+      >
+        {workspaces.map((ws) => (
+          <motion.div variants={itemVariants} key={ws.id}>
+            <Link href={`/workspace/${ws.id}`} className="block group">
+              <div className="bg-bg-panel border border-border-subtle rounded-lg p-5 hover:border-brand-orange/50 hover:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-base font-semibold text-text-primary group-hover:text-brand-orange transition-colors">{ws.name}</h3>
+                    <p className="text-xs text-text-secondary mt-1 flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${ws.status === 'healthy' ? 'bg-emerald-500' : ws.status === 'warning' ? 'bg-amber-500' : 'bg-red-500'}`}></span>
+                      {ws.status.charAt(0).toUpperCase() + ws.status.slice(1)} • Updated {ws.updated}
+                    </p>
+                  </div>
+                  <MoreVertical size={16} className="text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+                
+                <div className="grid grid-cols-3 gap-4 border-t border-border-subtle pt-4">
+                   <div>
+                     <p className="text-[10px] text-text-muted uppercase tracking-wider mb-1">Requests</p>
+                     <p className="text-sm font-mono">{ws.metrics.req}</p>
+                   </div>
+                   <div>
+                     <p className="text-[10px] text-text-muted uppercase tracking-wider mb-1">Errors</p>
+                     <p className={`text-sm font-mono ${ws.metrics.err === '0%' ? 'text-text-primary' : 'text-red-400'}`}>{ws.metrics.err}</p>
+                   </div>
+                   <div>
+                     <p className="text-[10px] text-text-muted uppercase tracking-wider mb-1">Latency</p>
+                     <p className="text-sm font-mono">{ws.metrics.lat}</p>
+                   </div>
+                </div>
+              </div>
+            </Link>
+          </motion.div>
+        ))}
+      </motion.div>
+    </div>
+  );
+};
