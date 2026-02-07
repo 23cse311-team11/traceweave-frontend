@@ -2,8 +2,17 @@
 
 import Link from 'next/link';
 import { Mail, Lock, User, Github, Chrome, Zap } from 'lucide-react';
+import { FcGoogle } from "react-icons/fc";
 
 export default function RegisterPage() {
+  const handleGoogleLogin = () => {
+    window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/google`;
+  };
+
+  const handleGithubLogin = () => {
+    window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/github`;
+  };
+
   return (
     <div className="bg-bg-panel border border-border-subtle rounded-2xl shadow-2xl overflow-hidden">
       <div className="p-8 space-y-6">
@@ -20,10 +29,10 @@ export default function RegisterPage() {
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-            <button className="flex items-center justify-center gap-2 p-2.5 rounded-lg border border-border-subtle bg-bg-input hover:bg-bg-base hover:border-text-secondary transition-all text-text-primary text-sm font-medium">
-                <Chrome size={18} /> Google
+            <button onClick={handleGoogleLogin} className="flex items-center justify-center gap-2 p-2.5 rounded-lg border border-border-subtle bg-bg-input hover:bg-bg-base hover:border-text-secondary transition-all text-text-primary text-sm font-medium">
+                <FcGoogle size={18} /> Google
             </button>
-            <button className="flex items-center justify-center gap-2 p-2.5 rounded-lg border border-border-subtle bg-bg-input hover:bg-bg-base hover:border-text-secondary transition-all text-text-primary text-sm font-medium">
+            <button onClick={handleGithubLogin} className="flex items-center justify-center gap-2 p-2.5 rounded-lg border border-border-subtle bg-bg-input hover:bg-bg-base hover:border-text-secondary transition-all text-text-primary text-sm font-medium">
                 <Github size={18} /> GitHub
             </button>
         </div>
