@@ -1,7 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { Mail, Lock, Github, Chrome, Zap } from 'lucide-react';
+import { Mail, Lock, Github, Google, Zap } from 'lucide-react';
+import { FcGoogle } from "react-icons/fc";
+
+const handleGoogleLogin = () => {
+  window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/google`;
+}
+
+const handleGithubLogin = () => {
+  window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/github`;
+}
 
 export default function LoginPage() {
   return (
@@ -21,10 +30,10 @@ export default function LoginPage() {
 
         {/* Social Auth */}
         <div className="grid grid-cols-2 gap-3">
-            <button className="flex items-center justify-center gap-2 p-2.5 rounded-lg border border-border-subtle bg-bg-input hover:bg-bg-base hover:border-text-secondary transition-all text-text-primary text-sm font-medium">
-                <Chrome size={18} /> Google
+            <button onClick={handleGoogleLogin} className="flex items-center justify-center gap-2 p-2.5 rounded-lg border border-border-subtle bg-bg-input hover:bg-bg-base hover:border-text-secondary transition-all text-text-primary text-sm font-medium">
+                <FcGoogle size={18} /> Google
             </button>
-            <button className="flex items-center justify-center gap-2 p-2.5 rounded-lg border border-border-subtle bg-bg-input hover:bg-bg-base hover:border-text-secondary transition-all text-text-primary text-sm font-medium">
+            <button onClick={handleGithubLogin} className="flex items-center justify-center gap-2 p-2.5 rounded-lg border border-border-subtle bg-bg-input hover:bg-bg-base hover:border-text-secondary transition-all text-text-primary text-sm font-medium">
                 <Github size={18} /> GitHub
             </button>
         </div>
