@@ -3,6 +3,7 @@ import { workspaceApi } from '@/api/workspace.api';
 import { collectionApi } from '@/api/collection.api';
 import { requestApi } from '@/api/request.api';
 import { environmentApi } from '@/api/environment.api';
+import { workflowApi } from '@/api/workflow.api';
 
 // Utilities
 const createId = () => Math.random().toString(36).substr(2, 9);
@@ -1196,6 +1197,22 @@ export const useAppStore = create((set, get) => ({
                 original: error.message
             });
 
+            set({ isLoading: false, error: errorMessage });
+        }
+    },
+
+    executeWorkflow: async (workflowId) => {
+        set({ isLoading: true, error: null, response: null });
+        try {
+            const result = await workflowApi.executeWorkflow(workflowId);
+            set({
+                isLoading: false,
+                // Mark this response as a workflow report
+                response: { ...result.report, isWorkflow: true }
+            });
+        } catch (error) {
+            const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message;
+            console.warn("Workflow Execution Error (Handled):", errorMessage);
             set({ isLoading: false, error: errorMessage });
         }
     },

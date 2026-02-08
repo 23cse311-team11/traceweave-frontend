@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Loader2, Send, CheckCircle, AlertTriangle, XCircle, Info, Clock, Database, Network
@@ -18,20 +18,32 @@ export default function ResponsePane({ height }) {
   const [searchTerm, setSearchTerm] = useState('');
   const editorRef = useRef(null);
 
+  // Ensure active tab is 'Workflow' if it's a workflow response and not already set correctly
+  useEffect(() => {
+    if (response?.isWorkflow && activeTab !== 'Workflow') {
+      setActiveTab('Workflow');
+    } else if (!response?.isWorkflow && activeTab === 'Workflow') {
+      setActiveTab('Body');
+    }
+  }, [response, activeTab]);
+
   const metrics = useMemo(() => {
-    if (!response) return null;
-    const total = response.time || 0;
+    if (!response || response.isWorkflow) return null;
+    const timings = response.timings || {};
+    const total = response.time || timings.total || 0;
 
     // Estimate header size
     const headersSize = response.headers ? JSON.stringify(response.headers).length : 0;
 
     return {
       total: total,
-      socket: Math.ceil(total * 0.05),
-      dns: Math.ceil(total * 0.10),
-      tcp: Math.ceil(total * 0.05),
-      ttfb: Math.ceil(total * 0.60),
-      download: Math.ceil(total * 0.20),
+      // Use real timings if available, else fallback to estimates
+      socket: 0, // No longer using fake socket phase
+      dns: timings.dnsLookup !== undefined ? timings.dnsLookup : Math.ceil(total * 0.10),
+      tcp: timings.tcpConnection !== undefined ? timings.tcpConnection : Math.ceil(total * 0.05),
+      tls: timings.tlsHandshake || 0,
+      ttfb: timings.firstByte !== undefined ? timings.firstByte : Math.ceil(total * 0.60),
+      download: timings.download !== undefined ? timings.download : Math.ceil(total * 0.25),
       size: {
         body: response.size || (response.data ? JSON.stringify(response.data).length : 0),
         headers: headersSize
@@ -40,13 +52,14 @@ export default function ResponsePane({ height }) {
         remote: response.remoteIp || '127.0.0.1:443',
         local: '::1',
         proto: (response.protocol || 'http/1.1').toUpperCase()
-      }
+      },
+      source: response.timings ? 'Live' : 'Estimated'
     };
   }, [response]);
 
   // --- TOOLBAR HANDLERS ---
   const handleCopyBody = async () => {
-    const bodyText = JSON.stringify(response.data, null, 2);
+    const bodyText = response.isWorkflow ? JSON.stringify(response, null, 2) : JSON.stringify(response.data, null, 2);
     await navigator.clipboard.writeText(bodyText);
   };
 
@@ -68,7 +81,9 @@ export default function ResponsePane({ height }) {
 
   // --- STATUS BADGE ---
   const renderStatusBadge = () => {
-    const status = response.status;
+    const status = response.isWorkflow ? (response.status === 'COMPLETED' ? 200 : 500) : response.status;
+    const text = response.isWorkflow ? response.status : (response.text || 'OK');
+
     let color = 'text-green-500';
     let bgColor = 'bg-green-500/10';
     let Icon = CheckCircle;
@@ -91,55 +106,119 @@ export default function ResponsePane({ height }) {
           className={`flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer transition-all ${bgColor} border border-transparent ${color === 'text-green-500' ? 'hover:border-green-500/20' : color === 'text-yellow-500' ? 'hover:border-yellow-500/20' : 'hover:border-red-500/20'}`}
         >
           <Icon size={14} className={color} />
-          <span className={`font-semibold ${color} text-xs`}>{status} {response.text || 'OK'}</span>
+          <span className={`font-semibold ${color} text-xs uppercase tracking-wider`}>{text}</span>
         </motion.div>
-
-        <AnimatePresence>
-          <div className="hidden group-hover:block">
-            <TooltipContainer width="w-72">
-              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-[#1F1F1F]">
-                <Icon size={16} className={color} />
-                <span className="font-bold text-sm text-[#EDEDED]">{status} {response.text}</span>
-              </div>
-              <p className="text-xs text-[#999] leading-relaxed">
-                The server has responded successfully. The request was processed without errors.
-              </p>
-              <div className="mt-3 pt-2 border-t border-[#1F1F1F] text-[10px] text-[#666]">
-                Status codes in 2xx range indicate successful requests
-              </div>
-            </TooltipContainer>
-          </div>
-        </AnimatePresence>
       </div>
     );
   };
 
   const TimeBadge = ({ response, metrics }) => {
     const [showTooltip, setShowTooltip] = useState(false);
+    const duration = response.isWorkflow ? response.totalDuration : response.time;
+    const isLive = metrics?.source === 'Live';
 
     return (
       <div
         className="relative"
-        onMouseEnter={() => setShowTooltip(true)}
+        onMouseEnter={() => !response.isWorkflow && setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
       >
         <motion.div
           whileHover={{ scale: 1.02 }}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer transition-all bg-[#1A1A1A] hover:bg-[#252525]"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer transition-all bg-[#1A1A1A] hover:bg-[#252525] group/time"
         >
-          <Clock size={14} className="text-[#999]" />
-          <span className="text-xs font-mono text-[#EDEDED]">{response.time} ms</span>
+          <Clock size={14} className={isLive ? "text-green-500" : "text-[#999]"} />
+          <span className="text-xs font-mono text-[#EDEDED]">{duration} ms</span>
+
+          {/* Subtle live indicator */}
+          {!response.isWorkflow && (
+            <div className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-yellow-500/50'}`} />
+          )}
         </motion.div>
 
         <AnimatePresence>
-          {showTooltip && <WaterfallTooltip metrics={metrics} />}
+          {showTooltip && metrics && (
+            <div className="absolute bottom-full right-0 mb-2 z-50">
+              <WaterfallTooltip metrics={metrics} />
+              <div className="mt-1 px-2 py-1 bg-[#0A0A0A] border border-[#252525] rounded text-[9px] text-right text-[#666] uppercase tracking-widest">
+                Source: <span className={isLive ? "text-green-500 font-bold" : "text-yellow-500"}>{metrics.source}</span> Data
+              </div>
+            </div>
+          )}
         </AnimatePresence>
+      </div>
+    );
+  };
+
+  const WorkflowReport = ({ report }) => {
+    return (
+      <div className="h-full overflow-auto custom-scrollbar p-6 bg-[#050505]">
+        <div className="max-w-4xl mx-auto">
+          {/* Header Summary */}
+          <div className="mb-8 flex items-center justify-between p-4 rounded-lg bg-[#0A0A0A] border border-[#1A1A1A]">
+            <div className="flex items-center gap-4">
+              <div className={`p-3 rounded-full ${report.status === 'COMPLETED' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                {report.status === 'COMPLETED' ? <CheckCircle size={24} /> : <XCircle size={24} />}
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-[#EDEDED]">Workflow {report.status}</h3>
+                <p className="text-xs text-[#666]">Executed {new Date(report.startTime).toLocaleString()}</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-sm font-mono text-[#FF6C37] font-bold">{report.totalDuration}ms</div>
+              <div className="text-[10px] text-[#666] uppercase tracking-widest">Total Duration</div>
+            </div>
+          </div>
+
+          {/* Steps List */}
+          <div className="space-y-4">
+            <h4 className="text-[10px] uppercase tracking-[0.2em] text-[#444] font-bold mb-4">Execution Steps ({report.steps?.length || 0})</h4>
+            {report.steps?.map((step, idx) => (
+              <motion.div
+                key={step.stepId || idx}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                className="group flex flex-col p-4 rounded-lg bg-[#0A0A0A] border border-[#1A1A1A] hover:border-[#333] transition-all"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="w-6 h-6 rounded bg-[#1A1A1A] flex items-center justify-center text-[10px] text-[#666] font-mono">
+                      {idx + 1}
+                    </span>
+                    <div>
+                      <div className="text-sm font-semibold text-[#EDEDED]">{step.requestName || 'Unknown Request'}</div>
+                      <div className="text-[10px] text-[#444] font-mono">{step.requestId}</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className={`text-xs font-bold ${step.success ? 'text-green-500' : 'text-red-500'}`}>
+                        {step.status} {step.success ? 'OK' : 'FAIL'}
+                      </div>
+                      <div className="flex items-center justify-end gap-1.5 mt-0.5">
+                        <span className="text-[10px] text-[#666] font-mono">{step.executionTime}ms</span>
+                        {step.timings && step.timings.dnsLookup !== undefined && (
+                          <div className="w-1 h-1 rounded-full bg-green-500 shadow-[0_0_4px_rgba(34,197,94,0.5)]" title="Live Data Captured" />
+                        )}
+                      </div>
+                    </div>
+                    {step.success ? <CheckCircle size={14} className="text-green-500" /> : <XCircle size={14} className="text-red-500" />}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   };
 
   // --- SIZE BADGE ---
   const renderSizeBadge = () => {
+    if (!metrics) return null;
     const totalSizeKB = (metrics.size.body + metrics.size.headers) / 1024;
 
     return (
@@ -178,6 +257,7 @@ export default function ResponsePane({ height }) {
 
   // --- NETWORK BADGE ---
   const renderNetworkBadge = () => {
+    if (!metrics) return null;
     return (
       <div className="relative group">
         <motion.div
@@ -215,6 +295,10 @@ export default function ResponsePane({ height }) {
     );
   };
 
+  const tabs = response?.isWorkflow
+    ? ['Workflow', 'Body']
+    : ['Body', 'Cookies', 'Headers', 'Test Results'];
+
   return (
     <div style={{ height }} className="border-t border-[#1A1A1A] bg-[#050505] flex flex-col shrink-0 min-h-[50px]">
 
@@ -222,7 +306,7 @@ export default function ResponsePane({ height }) {
       <div className="flex items-center justify-between px-4 bg-[#0A0A0A] border-b border-[#1A1A1A] shrink-0 h-11">
         {/* Tabs */}
         <div className="flex items-center h-full gap-6">
-          {['Body', 'Cookies', 'Headers', 'Test Results'].map(tab => {
+          {tabs.map(tab => {
             const count = tab === 'Headers' ? Object.keys(response?.headers || {}).length
               : tab === 'Cookies' ? Object.keys(response?.cookies || {}).length
                 : 0;
@@ -308,9 +392,9 @@ export default function ResponsePane({ height }) {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="text-xs text-[#999] font-semibold tracking-widest"
+                className="text-xs text-[#999] font-semibold tracking-widest text-center"
               >
-                SENDING REQUEST...
+                {response?.isWorkflow ? "EXECUTING WORKFLOW STEPS..." : "SENDING REQUEST..."}
               </motion.span>
             </motion.div>
           )}
@@ -356,7 +440,7 @@ export default function ResponsePane({ height }) {
                 </div>
                 <div>
                   <div className="font-bold text-red-400 mb-1">Request Failed</div>
-                  <div className="text-sm text-[#999]">{error}</div>
+                  <div className="text-sm text-[#999] text-center">{error}</div>
                 </div>
               </div>
             </motion.div>
@@ -374,13 +458,17 @@ export default function ResponsePane({ height }) {
               transition={{ duration: 0.2 }}
               className="h-full w-full"
             >
+              {/* 0. WORKFLOW TAB */}
+              {activeTab === 'Workflow' && response.isWorkflow && (
+                <WorkflowReport report={response} />
+              )}
 
               {/* 1. BODY TAB */}
               {activeTab === 'Body' && (
                 <Editor
                   height="100%"
                   defaultLanguage="json"
-                  value={JSON.stringify(response.data, null, 2)}
+                  value={response.isWorkflow ? JSON.stringify(response, null, 2) : JSON.stringify(response.data, null, 2)}
                   theme="vs-dark"
                   onMount={(editor) => { editorRef.current = editor; }}
                   options={{
@@ -510,7 +598,7 @@ export default function ResponsePane({ height }) {
                     </motion.div>
 
                     <h3 className="text-[#EDEDED] font-bold text-xl mb-2">{allPassed ? 'All Tests Passed' : 'Some Tests Failed'}</h3>
-                    <p className="text-[#999] text-sm max-w-md mb-8">
+                    <p className="text-[#999] text-sm max-w-md mb-8 text-center leading-relaxed">
                       {allPassed ? 'The request completed successfully and passed all checks.' : 'The request completed but some checks failed.'}
                     </p>
 

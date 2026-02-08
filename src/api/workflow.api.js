@@ -7,9 +7,7 @@ export const workflowApi = {
     },
 
     getWorkflows: async (workspaceId) => {
-        // Assuming backend supports filtering by workspace via query param or route
-        // Adjust route if backend differs. Based on standard REST:
-        const response = await api.get(`/workflows?workspaceId=${workspaceId}`);
+        const response = await api.get(`/workflows/workspace/${workspaceId}`);
         return response.data;
     },
 
@@ -24,7 +22,7 @@ export const workflowApi = {
     },
 
     executeWorkflow: async (id) => {
-        const response = await api.post(`/workflows/${id}/execute`);
+        const response = await api.post(`/workflows/${id}/run`);
         return response.data;
     },
 
