@@ -13,56 +13,10 @@ import {
 import { FilterPopover } from '@/components/workspace/FilterPopover';
 import { WorkspaceItem } from '@/components/workspace/WorkspaceItem';
 
-const MOCK_WORKSPACES = [
-    {
-        id: 'ws-1',
-        name: 'Build2Break',
-        description: 'Chaos engineering test suite for payment gateway.',
-        type: 'Team',
-        access: 'Private',
-        members: 4,
-        lastActive: '2m ago',
-        status: 'active',
-        traceCount: '1.2k/min'
-    },
-    {
-        id: 'ws-2',
-        name: 'Gradia Core API',
-        description: 'Main backend services for the mobile application.',
-        type: 'Team',
-        access: 'Public',
-        members: 12,
-        lastActive: '11 months ago',
-        status: 'idle',
-        traceCount: '0/min'
-    },
-    {
-        id: 'ws-3',
-        name: 'git-lock',
-        description: 'Internal tooling for version control hooks.',
-        type: 'Personal',
-        access: 'Private',
-        members: 1,
-        lastActive: '8 days ago',
-        status: 'warning',
-        traceCount: '45/min'
-    },
-    {
-        id: 'ws-4',
-        name: 'Staging Environment',
-        description: 'Pre-production testing ground.',
-        type: 'Team',
-        access: 'Restricted',
-        members: 8,
-        lastActive: '4h ago',
-        status: 'active',
-        traceCount: '890/min'
-    }
-];
-
-
+import { useAppStore } from '@/store/useAppStore';
 
 export default function WorkspacesPage() {
+    const { availableWorkspaces, fetchWorkspaces, isLoadingWorkspaces } = useAppStore();
     const [viewMode, setViewMode] = useState('list');
     const [isFilterOpen, setIsFilterOpen] = useState(false);
 
@@ -75,6 +29,10 @@ export default function WorkspacesPage() {
     const [starredIds, setStarredIds] = useState([]);
     const [showOnlyStarred, setShowOnlyStarred] = useState(false);
     const [activeMenuId, setActiveMenuId] = useState(null);
+
+    useEffect(() => {
+        fetchWorkspaces();
+    }, []);
 
     useEffect(() => {
         const handleClickOutside = () => setActiveMenuId(null);
@@ -101,10 +59,15 @@ export default function WorkspacesPage() {
         setActiveMenuId(activeMenuId === id ? null : id);
     };
 
-    const filteredWorkspaces = MOCK_WORKSPACES.filter(ws => {
+    const filteredWorkspaces = availableWorkspaces.filter(ws => {
         const matchesSearch = ws.name.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesType = activeFilters.type.length === 0 || activeFilters.type.includes(ws.type);
-        const matchesAccess = activeFilters.access.length === 0 || activeFilters.access.includes(ws.access);
+        // Types and Access might need adjustment based on real data structure
+        // Assuming real data has similar fields or we default them
+        const type = ws.type || 'Team';
+        const access = ws.access || 'Private';
+
+        const matchesType = activeFilters.type.length === 0 || activeFilters.type.includes(type);
+        const matchesAccess = activeFilters.access.length === 0 || activeFilters.access.includes(access);
         const matchesStarred = !showOnlyStarred || starredIds.includes(ws.id);
 
         return matchesSearch && matchesType && matchesAccess && matchesStarred;
@@ -151,8 +114,8 @@ export default function WorkspacesPage() {
                     <button
                         onClick={() => setShowOnlyStarred(!showOnlyStarred)}
                         className={`flex items-center gap-2 px-3 py-2.5 border rounded-lg text-sm font-medium transition-all ${showOnlyStarred
-                                ? 'bg-yellow-500/10 border-yellow-500/50 text-yellow-500'
-                                : 'bg-bg-input border-border-subtle text-text-secondary hover:text-text-primary'
+                            ? 'bg-yellow-500/10 border-yellow-500/50 text-yellow-500'
+                            : 'bg-bg-input border-border-subtle text-text-secondary hover:text-text-primary'
                             }`}
                     >
                         <Star size={16} fill={showOnlyStarred ? "currentColor" : "none"} />
@@ -168,8 +131,8 @@ export default function WorkspacesPage() {
                                 if (!isFilterOpen) setPendingFilters(activeFilters);
                             }}
                             className={`flex items-center gap-2 px-3 py-2.5 border rounded-lg text-sm font-medium transition-colors ${isFilterOpen || activeFilters.type.length > 0 || activeFilters.access.length > 0
-                                    ? 'bg-bg-panel border-brand-orange text-brand-orange'
-                                    : 'bg-bg-input border-border-subtle text-text-secondary hover:text-text-primary'
+                                ? 'bg-bg-panel border-brand-orange text-brand-orange'
+                                : 'bg-bg-input border-border-subtle text-text-secondary hover:text-text-primary'
                                 }`}
                         >
                             <Filter size={16} />

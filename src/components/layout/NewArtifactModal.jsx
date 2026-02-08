@@ -21,15 +21,15 @@ export default function NewArtifactModal({ isOpen, onClose }) {
     if (!isOpen) return null;
 
     const handleCreate = (id) => {
-        switch(id) {
+        switch (id) {
             case 'http':
             case 'graphql':
             case 'grpc':
             case 'websocket':
-                store.createDetachedRequest(id); 
+                store.createDetachedRequest(id);
                 break;
             case 'collection':
-                store.createCollection();
+                store.createCollection('New Collection');
                 break;
             case 'environment':
                 store.createEnvironment({ name: 'Untitled Environment', isTemp: true });
@@ -46,7 +46,7 @@ export default function NewArtifactModal({ isOpen, onClose }) {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
             {/* Click outside to close */}
             <div className="absolute inset-0" onClick={onClose} />
-            
+
             <div className="bg-[#1e1e1e] border border-border-strong rounded-xl shadow-2xl w-[600px] overflow-hidden flex flex-col relative z-10 animate-in zoom-in-95 duration-200">
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-border-subtle flex justify-between items-center bg-bg-panel">
@@ -62,7 +62,7 @@ export default function NewArtifactModal({ isOpen, onClose }) {
                 {/* Grid */}
                 <div className="p-6 grid grid-cols-4 gap-4 bg-bg-base">
                     {ARTIFACTS.map(item => (
-                        <button 
+                        <button
                             key={item.id}
                             onMouseEnter={() => setHoveredId(item.id)}
                             onMouseLeave={() => setHoveredId(null)}
