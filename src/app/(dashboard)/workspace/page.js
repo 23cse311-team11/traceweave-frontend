@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { FilterPopover } from '@/components/workspace/FilterPopover';
 import { WorkspaceItem } from '@/components/workspace/WorkspaceItem';
+import { CreateWorkspaceModal } from '@/components/home/auth_landing/CreateWorkspaceModal';
 
 import { useAppStore } from '@/store/useAppStore';
 
@@ -19,6 +20,7 @@ export default function WorkspacesPage() {
     const { availableWorkspaces, fetchWorkspaces, isLoadingWorkspaces } = useAppStore();
     const [viewMode, setViewMode] = useState('list');
     const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     // Confirmed filters (what is actually applied)
     const [activeFilters, setActiveFilters] = useState({ type: [], access: [] });
@@ -90,7 +92,10 @@ export default function WorkspacesPage() {
                     </p>
                 </div>
 
-                <button className="flex items-center gap-2 bg-brand-orange text-white px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-orange-600 transition-all shadow-[0_0_20px_rgba(255,108,55,0.2)]">
+                <button
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="flex items-center gap-2 bg-brand-orange text-white px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-orange-600 transition-all shadow-[0_0_20px_rgba(255,108,55,0.2)]"
+                >
                     <Plus size={18} />
                     Create Workspace
                 </button>
@@ -204,6 +209,11 @@ export default function WorkspacesPage() {
                     ))}
                 </div>
             )}
+
+            <CreateWorkspaceModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+            />
         </div>
     );
 }

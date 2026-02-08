@@ -32,11 +32,6 @@ export const useAppStore = create((set, get) => ({
             set({ isLoadingWorkspaces: true });
             const data = await workspaceApi.getMyWorkspaces();
             // Backend returns: { data: [...] }
-            // So workspaceApi.getMyWorkspaces() returns { data: [...] }
-            // "data" variable here is the response.data from axios (api.js).
-            // Actually, look at workspace.api.js:
-            // getMyWorkspaces: async () => { ... return response.data; }
-            // So 'data' IS { data: [...] }
             const workspaces = data.data || [];
 
             let activeId = get().activeWorkspaceId;
@@ -58,6 +53,27 @@ export const useAppStore = create((set, get) => ({
         } catch (error) {
             console.warn("Failed to fetch workspaces", error);
             set({ isLoadingWorkspaces: false });
+        }
+    },
+
+    createWorkspace: async (name, description = '') => {
+        try {
+            set({ isLoadingWorkspaces: true });
+            const response = await workspaceApi.createWorkspace({ name, description });
+            // Backend returns: { data: workspace }
+            const newWorkspace = response.data;
+
+            set(state => ({
+                availableWorkspaces: [...state.availableWorkspaces, newWorkspace],
+                isLoadingWorkspaces: false
+            }));
+
+            return { success: true, workspace: newWorkspace };
+        } catch (error) {
+            const errorMessage = error.response?.data?.message || error.message;
+            console.warn("Failed to create workspace", errorMessage);
+            set({ isLoadingWorkspaces: false });
+            return { success: false, error: errorMessage };
         }
     },
 

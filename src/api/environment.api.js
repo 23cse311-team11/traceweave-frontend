@@ -16,6 +16,11 @@ export const environmentApi = {
         return response.data;
     },
 
+    updateEnvironment: async (id, data) => {
+        const response = await api.patch(`/environments/${id}`, data);
+        return response.data;
+    },
+
     // Variable operations
     createVariable: async (envId, data) => {
         const response = await api.post(`/environments/${envId}/variables`, data);

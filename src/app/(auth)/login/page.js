@@ -17,11 +17,11 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
 
     const handleGoogleLogin = () => {
-        window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/google`;
+        window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/google`;
     }
 
     const handleGithubLogin = () => {
-        window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/github`;
+        window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/github`;
     }
 
     const handleSubmit = async (e) => {
