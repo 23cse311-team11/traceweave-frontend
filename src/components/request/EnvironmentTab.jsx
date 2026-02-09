@@ -75,7 +75,7 @@ export default function EnvironmentTab({ envId }) {
                                 <div className="flex justify-center">
                                     <input
                                         type="checkbox"
-                                        checked={variable.enabled}
+                                        checked={variable.enabled ?? true}
                                         onChange={(e) => store.updateEnvironmentVariable(environment.id, idx, 'enabled', e.target.checked)}
                                         className="accent-brand-orange cursor-pointer"
                                     />

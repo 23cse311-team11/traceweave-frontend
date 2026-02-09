@@ -1,6 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
+import { useEffect } from 'react';
 import MainSidebar from '@/components/layout/MainSidebar';
 import Header from '@/components/layout/Header';
 import ResizablePanel from '@/components/layout/ResizablePanel';
@@ -10,7 +11,13 @@ import { useAppStore } from '@/store/useAppStore';
 
 export default function WorkspaceEditor() {
     const { workspaceId } = useParams();
-    const { activeView } = useAppStore();
+    const { activeView, setActiveWorkspace } = useAppStore();
+
+    useEffect(() => {
+        if (workspaceId) {
+            setActiveWorkspace(workspaceId);
+        }
+    }, [workspaceId, setActiveWorkspace]);
 
     return (
         <div className="flex h-screen w-full bg-bg-base text-text-primary overflow-hidden">

@@ -1,19 +1,43 @@
 import { create } from 'zustand';
-import { api } from '@/lib/api';
+import { authApi } from '@/api/auth.api';
 
 export const useAuthStore = create((set) => ({
   user: null,
   isAuthenticated: false,
   isChecking: true,
 
-  // Method to check if the cookie is valid
+  // Login
+  login: async (credentials) => {
+    try {
+      const data = await authApi.login(credentials);
+      // Assuming backend sets HTTPOnly cookie, but we might get user data back
+      set({ user: data.user, isAuthenticated: true });
+      return data;
+    } catch (error) {
+      console.warn('Login failed', error);
+      throw error;
+    }
+  },
+
+  // Register
+  register: async (userData) => {
+    try {
+      const data = await authApi.register(userData);
+      set({ user: data.user, isAuthenticated: true });
+      return data;
+    } catch (error) {
+      console.warn('Registration failed', error);
+      throw error;
+    }
+  },
+
+  // Check Auth
   checkAuth: async () => {
     try {
       set({ isChecking: true });
-      // OP-347: Backend must implement GET /auth/me that returns user profile
-      const { data } = await api.get('/auth/me');
+      const data = await authApi.getMe();
       console.log("Authentication check: ", data);
-      set({ user: data.user, isAuthenticated: data.isAuthenticated });
+      set({ user: data.user, isAuthenticated: true });
     } catch (error) {
       // Cookie invalid or missing
       set({ user: null, isAuthenticated: false });
@@ -22,12 +46,13 @@ export const useAuthStore = create((set) => ({
     }
   },
 
+  // Logout
   logout: async () => {
     try {
-      await api.post('/auth/logout');
+      await authApi.logout();
       set({ user: null, isAuthenticated: false });
     } catch (err) {
-      console.error('Logout failed', err);
+      console.warn('Logout failed', err);
     }
   }
 }));

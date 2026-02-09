@@ -10,14 +10,14 @@ import ContextMenu from '../ui/ContextMenu';
 
 export function SortableCollection({ collection, activeRequestId, onToggle, onRequestClick }) {
   const store = useAppStore();
-  
+
   // DISABLE dragging if pinned
-  const { setNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({ 
-    id: collection.id, 
+  const { setNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({
+    id: collection.id,
     data: { type: 'collection' },
-    disabled: collection.pinned 
+    disabled: collection.pinned
   });
-  
+
   const [contextMenu, setContextMenu] = useState({ x: null, y: null });
 
   const style = {
@@ -33,14 +33,14 @@ export function SortableCollection({ collection, activeRequestId, onToggle, onRe
   };
 
   const handleCreateRequest = (e) => {
-      e.stopPropagation();
-      store.createRequest(collection.id);
+    e.stopPropagation();
+    store.createRequest(collection.id);
   };
 
   return (
     <>
       <div ref={setNodeRef} style={style} className="mb-1 select-none">
-        <div 
+        <div
           className="group flex items-center gap-2 px-2 py-1.5 cursor-pointer text-text-secondary hover:text-text-primary rounded hover:bg-bg-panel relative"
           onClick={() => onToggle(collection.id)}
           onContextMenu={handleContextMenu}
@@ -49,44 +49,44 @@ export function SortableCollection({ collection, activeRequestId, onToggle, onRe
           {collection.pinned ? (
             <div className="w-4 h-4" /> // Spacer to maintain alignment
           ) : (
-            <div 
-              {...attributes} 
-              {...listeners} 
+            <div
+              {...attributes}
+              {...listeners}
               className="opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing p-1 text-text-tertiary hover:text-text-primary"
               onClick={(e) => e.stopPropagation()}
             >
-                <GripVertical size={12} />
+              <GripVertical size={12} />
             </div>
           )}
 
           <div className="p-1 text-brand-orange/80 relative">
-               {collection.collapsed ? <Folder size={14} /> : <FolderOpen size={14} />}
-               {collection.pinned && <div className="absolute -top-1 -right-1 bg-bg-base rounded-full p-[1px]"><Pin size={8} className="text-text-primary fill-current" /></div>}
+            {collection.collapsed ? <Folder size={14} /> : <FolderOpen size={14} />}
+            {collection.pinned && <div className="absolute -top-1 -right-1 bg-bg-base rounded-full p-[1px]"><Pin size={8} className="text-text-primary fill-current" /></div>}
           </div>
-          
+
           <span className="text-xs font-semibold select-none flex-1 truncate">
-             {collection.name}
+            {collection.name}
           </span>
-          
+
           {/* Actions */}
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <div 
-                role="button"
-                onClick={handleCreateRequest}
-                className="p-1 hover:bg-bg-input rounded text-text-primary hover:text-brand-orange"
-                title="Add Request"
-              >
-                  <Plus size={14} />
-              </div>
-              <div 
-                 role="button"
-                 onClick={(e) => { e.stopPropagation(); setContextMenu({ x: e.clientX, y: e.clientY }); }}
-                 className="p-1 hover:bg-bg-input rounded text-text-primary"
-              >
-                  <MoreHorizontal size={14} />
-              </div>
+            <div
+              role="button"
+              onClick={handleCreateRequest}
+              className="p-1 hover:bg-bg-input rounded text-text-primary hover:text-brand-orange"
+              title="Add Request"
+            >
+              <Plus size={14} />
+            </div>
+            <div
+              role="button"
+              onClick={(e) => { e.stopPropagation(); setContextMenu({ x: e.clientX, y: e.clientY }); }}
+              className="p-1 hover:bg-bg-input rounded text-text-primary"
+            >
+              <MoreHorizontal size={14} />
+            </div>
           </div>
-          
+
           <div className="text-text-muted">
             {collection.collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
           </div>
@@ -94,11 +94,11 @@ export function SortableCollection({ collection, activeRequestId, onToggle, onRe
 
         {!collection.collapsed && (
           <div className="flex flex-col gap-[2px] mt-1 pl-1 border-l border-border-subtle ml-3">
-            <SortableContext items={collection.items.map(i => i.id)} strategy={verticalListSortingStrategy}>
-              {collection.items.map(req => (
-                <SortableRequest 
-                  key={req.id} 
-                  {...req} 
+            <SortableContext items={(collection.items || []).map(i => i.id)} strategy={verticalListSortingStrategy}>
+              {collection.items && collection.items.map(req => (
+                <SortableRequest
+                  key={req.id}
+                  {...req}
                   active={activeRequestId === req.id}
                   onClick={() => onRequestClick(req.id)}
                 />
@@ -109,19 +109,25 @@ export function SortableCollection({ collection, activeRequestId, onToggle, onRe
       </div>
 
       {contextMenu.x !== null && (
-        <ContextMenu 
-            x={contextMenu.x} 
-            y={contextMenu.y} 
-            onClose={() => setContextMenu({ x: null, y: null })}
-            onRename={() => { 
-                const newName = prompt("Rename Collection:", collection.name);
-                if(newName) store.renameItem(collection.id, newName);
-                setContextMenu({ x: null, y: null });
-            }}
-            onDuplicate={() => { store.duplicateItem(collection.id); setContextMenu({ x: null, y: null }); }}
-            onDelete={() => { store.deleteItem(collection.id); setContextMenu({ x: null, y: null }); }}
-            isPinned={collection.pinned}
-            onPin={() => { store.togglePinItem(collection.id); setContextMenu({ x: null, y: null }); }}
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu({ x: null, y: null })}
+          onRename={() => {
+            console.log("Rename clicked for collection:", collection.id);
+            const newName = prompt("Rename Collection:", collection.name);
+            console.log("User entered:", newName);
+            console.log("store.renameItem exists?", typeof store.renameItem);
+            if (newName) {
+              console.log("Calling renameItem...");
+              store.renameItem(collection.id, newName);
+            }
+            setContextMenu({ x: null, y: null });
+          }}
+          onDuplicate={() => { store.duplicateItem(collection.id); setContextMenu({ x: null, y: null }); }}
+          onDelete={() => { store.deleteItem(collection.id); setContextMenu({ x: null, y: null }); }}
+          isPinned={collection.pinned}
+          onPin={() => { store.togglePinItem(collection.id); setContextMenu({ x: null, y: null }); }}
         />
       )}
     </>

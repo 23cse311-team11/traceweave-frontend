@@ -1,84 +1,61 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Clock } from "lucide-react";
+import React from 'react';
+import { motion } from 'framer-motion';
 
 const WaterfallTooltip = ({ metrics }) => {
-    const totalTime = metrics.total;
+    if (!metrics) return null;
 
-    const phases = [
-        { label: 'Socket', time: metrics.socket, color: '#FFB800', start: 0 },
-        { label: 'DNS', time: metrics.dns, color: '#FF8C00', start: metrics.socket },
-        { label: 'TCP', time: metrics.tcp, color: '#0EA5E9', start: metrics.socket + metrics.dns },
-        { label: 'TTFB', time: metrics.ttfb, color: '#EF4444', start: metrics.socket + metrics.dns + metrics.tcp },
-        { label: 'Download', time: metrics.download, color: '#10B981', start: metrics.socket + metrics.dns + metrics.tcp + metrics.ttfb }
-    ];
+    const dns = Number(metrics.dns) || 0;
+    const tcp = Number(metrics.tcp) || 0;
+    const tls = Number(metrics.tls) || 0;
+    const ttfb = Number(metrics.ttfb) || 0;
+    const download = Number(metrics.download) || 0;
+    const total = Number(metrics.total) || 1;
+
+    // Calculate starts and widths for waterfall blocks
+    const segments = [
+        { label: 'DNS Lookup', value: dns, color: 'bg-blue-500', start: 0 },
+        { label: 'TCP Connection', value: tcp, color: 'bg-orange-500', start: dns },
+        { label: 'SSL Handshake', value: tls, color: 'bg-purple-500', start: dns + tcp },
+        { label: 'TTFB', value: ttfb, color: 'bg-green-500', start: dns + tcp + tls },
+        { label: 'Downloading', value: download, color: 'bg-cyan-500', start: dns + tcp + tls + ttfb },
+    ].filter(s => s.value > 0);
 
     return (
-        <motion.div
-            initial={{ opacity: 0, y: -8, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.95 }}
-            transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute top-full right-0 mt-2 w-[90vw] sm:w-[420px] max-w-[calc(100vw-2rem)] bg-[#0A0A0A] border border-[#252525] rounded-lg shadow-2xl z-50 p-4 backdrop-blur-xl"
-            style={{
-                boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03)'
-            }}
-        >
-            {/* Header */}
-            <div className="flex justify-between items-center mb-4 pb-3 border-b border-[#1F1F1F]">
-                <div className="flex items-center gap-2">
-                    <Clock size={14} className="text-[#FF6C37]" />
-                    <span className="font-semibold text-xs text-[#EDEDED] tracking-wide">RESPONSE TIMELINE</span>
+        <div className="w-64 p-4 bg-[#0A0A0A] border border-[#252525] rounded-lg shadow-2xl backdrop-blur-xl">
+            <div className="flex justify-between items-center mb-4 pb-2 border-b border-[#1F1F1F]">
+                <span className="font-semibold text-xs text-[#EDEDED] tracking-wide uppercase">Timing Metrics</span>
+                <span className="text-xs font-mono font-bold text-[#FF6C37]">{total} ms</span>
+            </div>
+
+            <div className="space-y-3">
+                {segments.map((seg, idx) => (
+                    <div key={idx} className="space-y-1.5">
+                        <div className="flex justify-between text-[10px]">
+                            <span className="text-[#999]">{seg.label}</span>
+                            <span className="text-[#EDEDED] font-mono">{seg.value} ms</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-[#151515] rounded-full overflow-hidden relative">
+                            <motion.div
+                                initial={{ width: 0, opacity: 0 }}
+                                animate={{ width: `${(seg.value / (total || 1)) * 100}%`, opacity: 1 }}
+                                transition={{ delay: 0.2 + idx * 0.1, duration: 0.5 }}
+                                className={`h-full ${seg.color} rounded-full absolute`}
+                                style={{ left: `${(seg.start / (total || 1)) * 100}%` }}
+                            />
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-[#1F1F1F]">
+                <div className="flex justify-between items-center text-[10px]">
+                    <span className="text-[#666]">TOTAL TRIP</span>
+                    <span className="text-[#EDEDED] font-mono font-bold">{total} ms</span>
                 </div>
-                <span className="text-sm font-mono font-bold text-[#FF6C37]">{totalTime.toFixed(0)} ms</span>
             </div>
-
-            {/* Timeline Visualization */}
-            <div className="space-y-2.25">
-                {phases.map((phase, i) => {
-                    const leftPct = (phase.start / totalTime) * 100;
-                    const widthPct = Math.max((phase.time / totalTime) * 100, 0.5);
-
-                    return (
-                        <motion.div
-                            key={i}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: i * 0.05, duration: 0.3 }}
-                            className="group/row"
-                        >
-                            <div className="flex items-center justify-between mb-1">
-                                <span className="text-[10px] font-medium text-[#999] uppercase tracking-wider">
-                                    {phase.label}
-                                </span>
-                                <span className="text-xs font-mono text-[#EDEDED]">{phase.time.toFixed(1)} ms</span>
-                            </div>
-
-                            <div className="h-4 relative w-full bg-[#0D0D0D] rounded-md overflow-hidden border border-[#1A1A1A]">
-                                <motion.div
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${widthPct}%` }}
-                                    transition={{ delay: i * 0.05 + 0.1, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                                    className="absolute h-full top-0 rounded-sm"
-                                    style={{
-                                        left: `${leftPct}%`,
-                                        background: `linear-gradient(90deg, ${phase.color}ee, ${phase.color})`,
-                                        boxShadow: `0 0 8px ${phase.color}40`
-                                    }}
-                                />
-                            </div>
-                        </motion.div>
-                    );
-                })}
-            </div>
-
-            {/* Summary */}
-            <div className="mt-4 pt-3 border-t border-[#1F1F1F] flex items-center justify-between">
-                <span className="text-[10px] text-[#666] uppercase tracking-wider">Total Time</span>
-                <span className="text-sm font-mono font-bold text-[#FF6C37]">{totalTime.toFixed(0)} ms</span>
-            </div>
-        </motion.div>
+        </div>
     );
 };
 
