@@ -25,35 +25,33 @@ export default function SidebarCollections() {
     createRequest,
   } = useAppStore();
   const collections = getFilteredCollections();
-  
+
   const [activeDragItem, setActiveDragItem] = useState(null);
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
-    async () => {
-      setMounted(true);
-    }
+    setMounted(true);
   }, []);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor)
   );
-  
+
   const handleDragStart = (event) => {
     const { active } = event;
     const { type } = active.data.current || {};
-    
+
     let item = null;
     if (type === 'collection') {
-        item = collections.find(c => c.id === active.id);
+      item = collections.find(c => c.id === active.id);
     } else {
-        // Request
-        for (const col of collections) {
-            const found = col.items.find((i) => i.id === active.id);
-            if (found) {
-                item = found;
-                break;
-            }
+      // Request
+      for (const col of collections) {
+        const found = col.items.find((i) => i.id === active.id);
+        if (found) {
+          item = found;
+          break;
         }
+      }
     }
     setActiveDragItem(item);
   };
@@ -62,14 +60,14 @@ export default function SidebarCollections() {
     const { active, over } = event;
     setActiveDragItem(null);
     if (!over) return;
-    
+
     if (active.id !== over.id) {
       const type = active.data.current?.type;
-      
+
       if (type === 'collection') {
-          moveCollection(active.id, over.id);
+        moveCollection(active.id, over.id);
       } else {
-          moveRequest(active.id, over.id);
+        moveRequest(active.id, over.id);
       }
     }
   };
@@ -100,9 +98,15 @@ export default function SidebarCollections() {
             />
           ))}
           {collections.length === 0 && (
-             <div className="p-4 text-center text-xs text-text-secondary">
-               No collections in this workspace.
-             </div>
+            <div className="p-4 text-center text-xs text-text-secondary flex flex-col gap-2">
+              <span>No collections found ({collections.length}).</span>
+              <button
+                onClick={() => useAppStore.getState().fetchCollections(useAppStore.getState().activeWorkspaceId)}
+                className="text-brand-orange hover:underline"
+              >
+                Refresh
+              </button>
+            </div>
           )}
         </SortableContext>
       </div>

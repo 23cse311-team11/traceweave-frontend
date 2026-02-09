@@ -7,10 +7,10 @@ export default function KeyValueTable({ listKey, data }) {
 
     // 1. Calculate if all items are currently active
     // We check if data exists AND every item is active.
-    const isAllSelected = data.length > 0 && data.every((item) => item.active);
+    const isAllSelected = Array.isArray(data) && data.length > 0 && data.every((item) => item.active);
 
     const handleAdd = () => {
-        const lastIndex = data.length;
+        const lastIndex = Array.isArray(data) ? data.length : 0;
         store.updateRequestListConfig(listKey, lastIndex, 'key', '');
     };
 
@@ -53,7 +53,7 @@ export default function KeyValueTable({ listKey, data }) {
             </div>
 
             <div className="flex flex-col">
-                {data.map((item, index) => (
+                {(Array.isArray(data) ? data : []).map((item, index) => (
                     <div key={index} className="grid grid-cols-[30px_1fr_1fr_1fr_30px] border-b border-border-subtle text-xs text-text-primary group hover:bg-bg-input/30 transition-colors items-center">
 
                         {/* Row Active Checkbox */}
