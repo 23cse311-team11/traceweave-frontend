@@ -35,6 +35,7 @@ export const useAuthStore = create((set) => ({
   checkAuth: async () => {
     try {
       set({ isChecking: true });
+      console.log("Entered checkAuth function");
       const data = await authApi.getMe();
       console.log("Authentication check: ", data);
       set({ user: data.user, isAuthenticated: true });

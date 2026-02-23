@@ -1,7 +1,29 @@
 'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/store/useAuthStore';
 import AuthBackground from '@/components/auth/AuthBackground';
 
 export default function AuthLayout({ children }) {
+  const router = useRouter();
+  const { user, isChecking, checkAuth } = useAuthStore();
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  useEffect(() => {
+    if (!isChecking && user) {
+      console.log('User authenticated, redirecting to dashboard');
+      router.push('/');
+    }
+  }, [isChecking, user, router]);
+
+  if (user) {
+    return null; // or a spinner
+  }
+
   return (
     // 1. Outer Container: Fixed height, allows scrolling (overrides global overflow-hidden)
     <div className="relative h-screen w-full overflow-y-auto bg-bg-base">

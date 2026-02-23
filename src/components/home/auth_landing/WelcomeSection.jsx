@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
@@ -15,7 +17,7 @@ export const WelcomeSection = ({ user }) => {
       >
         <div>
           <h1 className="text-2xl font-bold text-text-primary flex items-center gap-2">
-            Welcome back, {user?.name?.split(' ')[0] || 'Human'}
+            Welcome back, {user?.fullName || 'Human'}
           </h1>
           <p className="text-text-secondary mt-1">Here is what is happening in your ecosystem today.</p>
         </div>

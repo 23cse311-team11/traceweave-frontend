@@ -20,16 +20,20 @@ describe('SidebarHistory', () => {
     const mockHistory = [
         {
             id: 'h1',
-            url: 'http://api.test/users',
-            method: 'GET',
+            config: {
+                url: 'http://api.test/users',
+                method: 'GET',
+            },
             status: 200,
             duration: 100,
             timestamp: new Date().toISOString(),
         },
         {
             id: 'h2',
-            url: 'http://api.test/login',
-            method: 'POST',
+            config: {
+                url: 'http://api.test/login',
+                method: 'POST',
+            },
             status: 401,
             duration: 50,
             timestamp: new Date().toISOString(),

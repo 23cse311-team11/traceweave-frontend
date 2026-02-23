@@ -17,7 +17,9 @@ export const authApi = {
     },
 
     getMe: async () => {
+        console.log("Checking authentication status with /auth/me");
         const response = await api.get('/auth/me');
+        console.log("getMe response:", response.data);
         return response.data;
     }
 };

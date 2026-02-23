@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, Globe, Lock, MoreVertical, Star, Users } from 'lucide-react';
 
-
 export function WorkspaceItem({ ws, viewMode, isStarred, onToggleStar, activeMenuId, setActiveMenuId }) {
     const isGrid = viewMode === 'grid';
 
@@ -111,7 +110,11 @@ export function WorkspaceItem({ ws, viewMode, isStarred, onToggleStar, activeMen
                 {/* METRICS FOOTER (Grid View Only) */}
                 {isGrid && (
                     <div className="mt-auto pt-4 border-t border-border-subtle flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2 text-text-muted"><Users size={14} /> {ws.members}</div>
+                        <div className="flex items-center gap-2 text-text-muted">
+                            <Users size={14} /> 
+                            {Array.isArray(ws.members) ? ws.members.length : 0}
+                        </div>
+                        
                         <div className="flex items-center gap-2 font-mono text-text-muted">
                             <span className={`h-2 w-2 rounded-full ${ws.status === 'active' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : ws.status === 'warning' ? 'bg-amber-500' : 'bg-gray-500'}`} />
                             {ws.traceCount}

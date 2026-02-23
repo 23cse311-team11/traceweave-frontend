@@ -91,13 +91,13 @@ const UserPopup = () => {
         onClick={() => setIsOpen(!isOpen)}
         className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 flex items-center justify-center text-xs font-bold text-white cursor-pointer hover:shadow-lg transition-shadow"
       >
-        {user?.name?.[0] || 'U'}
+        {user?.fullName?.[0] + (user?.fullName?.split(' ')[1][0] || '') || 'U'}
       </div>
 
       {isOpen && (
         <div className="absolute bottom-full left-10 mb-2 w-48 bg-bg-panel border border-border-strong rounded-lg shadow-xl py-1 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
           <div className="px-4 py-3 border-b border-border-subtle bg-bg-base/50">
-            <p className="text-sm font-semibold text-text-primary">{user?.name || 'User'}</p>
+            <p className="text-sm font-semibold text-text-primary">{user?.fullName || 'User'}</p>
             <p className="text-xs text-text-secondary truncate">{user?.email}</p>
           </div>
           <div className="p-1">

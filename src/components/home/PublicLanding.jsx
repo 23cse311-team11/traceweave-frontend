@@ -1,32 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
-import { motion, useScroll, useTransform, useSpring, useInView, AnimatePresence } from 'framer-motion';
-import { 
-  ArrowUpRight, 
-  Activity, 
-  Zap, 
-  Globe, 
-  Layers, 
-  Github,
-  Terminal,
-  Database,
-  GitBranch,
-  Code2,
-  Sparkles,
-  Play,
-  Pause,
-  Maximize2,
-  Volume2,
-  VolumeX,
-  CheckCircle2,
-  ArrowRight,
-  TrendingUp,
-  Shield,
-  Cpu
-} from 'lucide-react';
-import Image from 'next/image';
+import React from 'react';
 import { GridBackground } from './public_landing/GridBackground';
 import { FloatingElements } from './public_landing/FloatingElements';
 import { LandingNavbar } from './public_landing/sections/LandingNavbar';

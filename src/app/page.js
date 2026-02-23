@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import PublicLanding from '@/components/home/PublicLanding';
 import AuthenticatedHome from '@/components/home/AuthenticatedHome';
+import { PacmanLoader } from 'react-spinners';
 
 export default function RootPage() {
   const { isAuthenticated, isChecking, checkAuth } = useAuthStore();
@@ -17,7 +18,7 @@ export default function RootPage() {
     return (
       <div className="flex items-center justify-center h-screen bg-bg-base text-text-secondary">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-6 h-6 border-2 border-brand-orange border-t-transparent rounded-full animate-spin" />
+          <PacmanLoader color="#FF6F00" size={24} />
         </div>
       </div>
     );

@@ -21,8 +21,7 @@ export default function SidebarCollections() {
     openTab,
     moveRequest,
     moveCollection,
-    getFilteredCollections,
-    createRequest,
+    getFilteredCollections
   } = useAppStore();
   const collections = getFilteredCollections();
 
