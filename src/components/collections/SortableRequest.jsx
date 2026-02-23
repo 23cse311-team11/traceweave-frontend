@@ -6,6 +6,7 @@ import { MoreHorizontal, GripVertical, Pin, Box, Zap, Activity, ArrowRightLeft }
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/store/useAppStore';
 import ContextMenu from '../ui/ContextMenu';
+import { useModal } from '@/components/providers/ModalProvider'; // Added import
 
 // Protocol Mapping for Icons and Colors
 const PROTOCOL_CONFIG = {
@@ -17,6 +18,9 @@ const PROTOCOL_CONFIG = {
 
 export function SortableRequest({ id, protocol, method, name, active, pinned, onClick }) {
   const store = useAppStore();
+  
+  // 1. Initialize the custom modal hook
+  const { showPrompt, showConfirm } = useModal();
   
   // DISABLE dragging if pinned
   const {
@@ -133,13 +137,36 @@ export function SortableRequest({ id, protocol, method, name, active, pinned, on
             x={contextMenu.x} 
             y={contextMenu.y} 
             onClose={() => setContextMenu({ x: null, y: null })}
+            
+            // 2. Replaced native prompt
             onRename={() => { 
-                const newName = prompt("Rename Request:", name);
-                if(newName) store.renameItem(id, newName);
                 setContextMenu({ x: null, y: null });
+                showPrompt(
+                  "Enter a new name for this request:",
+                  (newName) => {
+                    if (newName && newName.trim() !== '') {
+                      store.renameItem(id, newName.trim());
+                    }
+                  },
+                  name,
+                  "Rename Request"
+                );
             }}
+            
             onDuplicate={() => { store.duplicateItem(id); setContextMenu({ x: null, y: null }); }}
-            onDelete={() => { store.deleteItem(id); setContextMenu({ x: null, y: null }); }}
+            
+            // 3. Replaced native confirm (added safety check)
+            onDelete={() => { 
+                setContextMenu({ x: null, y: null });
+                showConfirm(
+                  `Are you sure you want to delete the request "${name}"?`,
+                  () => {
+                    store.deleteItem(id);
+                  },
+                  "Delete Request"
+                );
+            }}
+            
             isPinned={pinned}
             onPin={() => { store.togglePinItem(id); setContextMenu({ x: null, y: null }); }}
         />

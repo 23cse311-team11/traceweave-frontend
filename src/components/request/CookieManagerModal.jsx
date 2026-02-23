@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { X, Trash2, Plus, Search, ChevronDown, ChevronRight, Save, Edit2 } from 'lucide-react';
 import { requestApi } from '@/api/request.api';
 import { useAppStore } from '@/store/useAppStore';
+import { useModal } from '@/components/providers/ModalProvider';
 
 // --- Helper for datetime-local input ---
 const formatDateForInput = (dateString) => {
@@ -95,6 +96,7 @@ const CookieForm = ({ domain, initialData, onSave, onCancel }) => {
 export default function CookieManagerModal({ isOpen, onClose, initialDomain }) {
     const store = useAppStore();
     const workspaceId = store.activeWorkspaceId;
+    const { showAlert, showConfirm } = useModal();
     
     const [mounted, setMounted] = useState(false);
     const [cookies, setCookies] = useState([]);
@@ -165,7 +167,7 @@ export default function CookieManagerModal({ isOpen, onClose, initialDomain }) {
             setEditingCookieId(null);
             fetchAllCookies();
         } catch (err) {
-            alert(err.response?.data?.error || 'Failed to save cookie');
+            showAlert(err.response?.data?.error || 'Failed to save cookie');
         }
     };
 
@@ -175,7 +177,15 @@ export default function CookieManagerModal({ isOpen, onClose, initialDomain }) {
     };
 
     const handleClearDomain = async (domain) => {
-        if (!confirm(`Delete all cookies for ${domain}?`)) return;
+        if (!showConfirm(
+            `Are you sure you want to delete all cookies for ${domain}?`, 
+            async () => {
+                await requestApi.clearJarCookies(domain, workspaceId);
+                setCustomDomains(prev => prev.filter(d => d !== domain));
+                fetchAllCookies();
+            },
+            'Clear Domain'
+        )) return;
         await requestApi.clearJarCookies(domain, workspaceId);
         setCustomDomains(prev => prev.filter(d => d !== domain));
         fetchAllCookies();

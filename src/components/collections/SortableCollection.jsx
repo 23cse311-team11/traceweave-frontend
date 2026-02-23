@@ -7,9 +7,12 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { SortableRequest } from './SortableRequest';
 import { useAppStore } from '@/store/useAppStore';
 import ContextMenu from '../ui/ContextMenu';
+import { useModal } from '@/components/providers/ModalProvider';
 
 export function SortableCollection({ collection, activeRequestId, onToggle, onRequestClick }) {
   const store = useAppStore();
+  // 1. Destructure showPrompt alongside showConfirm
+  const { showConfirm, showPrompt } = useModal();
 
   // DISABLE dragging if pinned
   const { setNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({
@@ -115,21 +118,46 @@ export function SortableCollection({ collection, activeRequestId, onToggle, onRe
           x={contextMenu.x}
           y={contextMenu.y}
           onClose={() => setContextMenu({ x: null, y: null })}
+          
+          // 2. Updated onRename using custom showPrompt
           onRename={() => {
-            console.log("Rename clicked for collection:", collection.id);
-            const newName = prompt("Rename Collection:", collection.name);
-            console.log("User entered:", newName);
-            console.log("store.renameItem exists?", typeof store.renameItem);
-            if (newName) {
-              console.log("Calling renameItem...");
-              store.renameItem(collection.id, newName);
-            }
-            setContextMenu({ x: null, y: null });
+            setContextMenu({ x: null, y: null }); // Close menu first
+            
+            showPrompt(
+              "Enter a new name for this collection:",
+              (newName) => {
+                if (newName && newName.trim() !== '') {
+                  store.renameItem(collection.id, newName.trim());
+                }
+              },
+              collection.name,
+              "Rename Collection"
+            );
           }}
-          onDuplicate={() => { store.duplicateItem(collection.id); setContextMenu({ x: null, y: null }); }}
-          onDelete={() => { store.deleteItem(collection.id); setContextMenu({ x: null, y: null }); }}
+
+          onDuplicate={() => { 
+            store.duplicateItem(collection.id); 
+            setContextMenu({ x: null, y: null }); 
+          }}
+          
+          // 3. Updated onDelete using custom showConfirm
+          onDelete={() => { 
+            setContextMenu({ x: null, y: null }); // Close menu first
+            
+            showConfirm(
+              `Are you sure you want to delete the collection "${collection.name}"?`,
+              () => {
+                store.deleteItem(collection.id);
+              },
+              "Delete Collection"
+            );
+          }}
+          
           isPinned={collection.pinned}
-          onPin={() => { store.togglePinItem(collection.id); setContextMenu({ x: null, y: null }); }}
+          onPin={() => { 
+            store.togglePinItem(collection.id); 
+            setContextMenu({ x: null, y: null }); 
+          }}
         />
       )}
     </>
