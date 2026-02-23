@@ -1,14 +1,21 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { Save, Loader2, Zap, FileJson } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Save, Loader2, Zap, FileJson, ArrowRightLeft, Box, Activity, Check } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { Tabs } from '@/components/ui/Tabs';
 import ResponsePane from '@/components/request/ResponsePane';
 import SaveRequestModal from '@/components/request/SaveRequestModal';
 
+const PROTOCOLS = [
+    { id: 'http', label: 'HTTP', icon: ArrowRightLeft, color: 'text-emerald-500' },
+    { id: 'graphql', label: 'GraphQL', icon: Box, color: 'text-pink-500' },
+    { id: 'grpc', label: 'gRPC', icon: Zap, color: 'text-blue-400' },
+    { id: 'websocket', label: 'WebSocket', icon: Activity, color: 'text-orange-400' },
+];
+
 export default function GrpcRequestPanel({ activeId }) {
   const store = useAppStore();
-  const activeReqState = store.requestStates[activeId] || { url: '' };
+  const activeReqState = store.requestStates[activeId] || { config: { url: '' } };
 
   // Local State
   const [configTab, setConfigTab] = useState('Message');
@@ -16,6 +23,20 @@ export default function GrpcRequestPanel({ activeId }) {
   const [tempName, setTempName] = useState('');
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   
+  // Protocol Dropdown State
+  const [isProtocolOpen, setIsProtocolOpen] = useState(false);
+  const protocolMenuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+        if (protocolMenuRef.current && !protocolMenuRef.current.contains(event.target)) {
+            setIsProtocolOpen(false);
+        }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   // Resize Logic
   const [isResizing, setIsResizing] = useState(false);
   const [dragStart, setDragStart] = useState({ y: 0, h: 0 });
@@ -56,7 +77,38 @@ export default function GrpcRequestPanel({ activeId }) {
             ) : (
               <span className="text-text-primary font-medium cursor-text hover:border-b" onDoubleClick={() => { setTempName(activeItemName); setIsRenaming(true); }}>{activeItemName}</span>
             )}
-            <span className="ml-2 text-[10px] px-1.5 py-0.5 bg-blue-900/30 text-blue-400 border border-blue-800 rounded">gRPC</span>
+            
+            {/* --- PROTOCOL SWITCHER --- */}
+            <div className="relative ml-2" ref={protocolMenuRef}>
+                <span 
+                    onClick={() => setIsProtocolOpen(!isProtocolOpen)}
+                    className="flex items-center gap-1.5 px-1.5 py-0.5 bg-bg-panel border border-border-subtle rounded text-text-secondary cursor-pointer hover:text-text-primary hover:border-text-secondary transition-colors text-[10px]"
+                    title="Change Protocol"
+                >
+                    <Zap size={10} className="text-blue-400" />
+                    gRPC
+                </span>
+
+                {isProtocolOpen && (
+                    <div className="absolute top-full left-0 mt-1 w-[140px] bg-bg-panel border border-border-strong rounded shadow-xl py-1 z-[60] flex flex-col">
+                        <div className="px-3 py-1.5 text-[10px] font-semibold text-text-muted uppercase tracking-wider">Switch Protocol</div>
+                        {PROTOCOLS.map((proto) => {
+                            const Icon = proto.icon;
+                            return (
+                                <div
+                                    key={proto.id}
+                                    onClick={() => { store.updateActiveRequest('protocol', proto.id); setIsProtocolOpen(false); }}
+                                    className="px-3 py-2 text-xs flex items-center gap-2 cursor-pointer hover:bg-bg-input/50 transition-colors text-text-primary"
+                                >
+                                    <Icon size={14} className={proto.color} />
+                                    <span>{proto.label}</span>
+                                    {proto.id === 'grpc' && <Check size={12} className="ml-auto text-brand-orange" />}
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
           </div>
           <button onClick={handleSave} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border transition ${isDirty ? 'bg-bg-input border-brand-orange text-text-primary' : 'bg-bg-input border-border-subtle text-text-secondary'}`}>
             <Save size={14} /> {isDirty ? 'Save*' : 'Saved'}
@@ -71,7 +123,7 @@ export default function GrpcRequestPanel({ activeId }) {
           <input 
             className="flex-1 bg-transparent px-3 text-xs text-text-primary focus:outline-none placeholder-text-secondary/50"
             placeholder="grpc.server.com:50051"
-            value={activeReqState.url}
+            value={activeReqState.config.url}
             onChange={(e) => store.updateActiveRequest('url', e.target.value)}
           />
           <button onClick={store.executeRequest} disabled={store.isLoading} className="bg-brand-blue hover:bg-blue-600 text-white font-medium px-4 flex items-center gap-2 rounded-r w-[90px] justify-center">
@@ -90,7 +142,7 @@ export default function GrpcRequestPanel({ activeId }) {
               <textarea 
                 className="flex-1 w-full bg-bg-panel border border-border-subtle rounded p-2 text-xs font-mono text-text-primary resize-none focus:outline-none focus:border-border-strong"
                 placeholder="{}"
-                defaultValue={activeReqState.body?.raw || ''}
+                defaultValue={activeReqState.config.body?.raw || ''}
               />
            </div>
         )}

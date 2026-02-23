@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { Search, Bell, LogOut, User, Building2 } from 'lucide-react';
@@ -55,7 +57,7 @@ export const DashboardHeader = ({ user, logout }) => {
                 className="absolute right-0 mt-2 w-56 bg-[#1A1A1A] border border-border-strong rounded-lg shadow-xl py-1 z-50"
               >
                 <div className="px-3 py-2 border-b border-border-subtle">
-                  <p className="text-sm font-medium text-text-primary truncate">{user?.name || 'Engineer'}</p>
+                  <p className="text-sm font-medium text-text-primary truncate">{user?.fullName || 'Engineer'}</p>
                   <p className="text-xs text-text-secondary truncate">{user?.email}</p>
                 </div>
                 <div className="py-1">

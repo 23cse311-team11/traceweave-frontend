@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 import { Layers, Plus, Edit2, Globe, Check, MoreHorizontal, Pin } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';

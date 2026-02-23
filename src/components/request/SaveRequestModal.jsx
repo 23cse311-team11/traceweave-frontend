@@ -1,5 +1,6 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, FolderPlus, Folder } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -8,6 +9,14 @@ export default function SaveRequestModal({ isOpen, onClose, requestId }) {
     const [selectedCollectionId, setSelectedCollectionId] = useState(null);
     const [newCollectionName, setNewCollectionName] = useState('');
     const [isCreatingCol, setIsCreatingCol] = useState(false);
+    
+    // Portal mounting state
+    const [mounted, setMounted] = useState(false);
+
+    // FIX: Added useEffect to mount the portal on the client side
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     // Get Request Name
     const request = store.requestStates[requestId];
@@ -15,7 +24,7 @@ export default function SaveRequestModal({ isOpen, onClose, requestId }) {
 
     const collections = store.getFilteredCollections();
 
-    if (!isOpen) return null;
+    if (!isOpen || !mounted) return null;
 
     const handleSave = () => {
         if (!selectedCollectionId) return;
@@ -32,8 +41,9 @@ export default function SaveRequestModal({ isOpen, onClose, requestId }) {
         // but for now we just refresh the list (auto via store)
     };
 
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    const modalContent = (
+        // Increased z-index to 9999
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm">
             <div className="bg-bg-panel border border-border-strong rounded-lg shadow-2xl w-[450px] overflow-hidden flex flex-col max-h-[80vh]">
                 {/* Header */}
                 <div className="px-5 py-3 border-b border-border-subtle flex justify-between items-center bg-bg-base">
@@ -121,4 +131,7 @@ export default function SaveRequestModal({ isOpen, onClose, requestId }) {
             </div>
         </div>
     );
+
+    // Return the portal targeting document.body
+    return createPortal(modalContent, document.body);
 }

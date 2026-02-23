@@ -10,12 +10,13 @@ import WaterfallTooltip from './response_panel/WaterfallTooltip';
 import BodyToolbar from './response_panel/BodyToolbar';
 import TooltipContainer from './response_panel/TooltipContainer';
 
-// --- SUB-COMPONENTS (Defined outside to prevent re-initialization on every render) ---
-
 const StatusBadge = ({ response }) => {
   if (!response) return null;
   const status = response.isWorkflow ? (response.status === 'COMPLETED' ? 200 : 500) : response.status;
-  const text = response.isWorkflow ? response.status : (response.text || 'OK');
+  
+  // FIX: Combine status code and text (e.g., "200 OK")
+  const statusText = response.isWorkflow ? response.status : (response.statusText || 'OK');
+  const displayText = `${status} ${statusText}`;
 
   let color = 'text-green-500';
   let bgColor = 'bg-green-500/10';
@@ -39,7 +40,7 @@ const StatusBadge = ({ response }) => {
         className={`flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer transition-all ${bgColor} border border-transparent ${color === 'text-green-500' ? 'hover:border-green-500/20' : color === 'text-yellow-500' ? 'hover:border-yellow-500/20' : 'hover:border-red-500/20'}`}
       >
         <Icon size={14} className={color} />
-        <span className={`font-semibold ${color} text-xs uppercase tracking-wider`}>{text}</span>
+        <span className={`font-semibold ${color} text-xs uppercase tracking-wider`}>{displayText}</span>
       </motion.div>
     </div>
   );

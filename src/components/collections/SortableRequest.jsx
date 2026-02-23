@@ -2,12 +2,20 @@
 import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { MoreHorizontal, GripVertical, Pin } from 'lucide-react';
+import { MoreHorizontal, GripVertical, Pin, Box, Zap, Activity, ArrowRightLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/store/useAppStore';
 import ContextMenu from '../ui/ContextMenu';
 
-export function SortableRequest({ id, method, name, active, pinned, onClick }) {
+// Protocol Mapping for Icons and Colors
+const PROTOCOL_CONFIG = {
+  http: { icon: ArrowRightLeft, color: 'text-emerald-500' },
+  graphql: { icon: Box, color: 'text-pink-500' },
+  grpc: { icon: Zap, color: 'text-blue-400' },
+  websocket: { icon: Activity, color: 'text-orange-400' },
+};
+
+export function SortableRequest({ id, protocol, method, name, active, pinned, onClick }) {
   const store = useAppStore();
   
   // DISABLE dragging if pinned
@@ -34,7 +42,7 @@ export function SortableRequest({ id, method, name, active, pinned, onClick }) {
   };
 
   const methodColors = {
-    GET: 'text-method-get',
+    GET: 'text-emerald-500', // Aligned with your HTTP colors
     POST: 'text-brand-orange',
     PUT: 'text-blue-400',
     DELETE: 'text-red-500',
@@ -55,6 +63,24 @@ export function SortableRequest({ id, method, name, active, pinned, onClick }) {
   const handleDoubleClick = (e) => {
       e.stopPropagation();
       store.openTab(id, false);
+  };
+
+  // Helper to render the method text OR the protocol icon
+  const renderProtocolIndicator = () => {
+    const safeProtocol = protocol || 'http';
+    
+    if (safeProtocol === 'http') {
+      return (
+        <span className={`text-[9px] font-bold ${methodColors[method] || 'text-gray-400'}`}>
+          {method || 'GET'}
+        </span>
+      );
+    }
+
+    const ProtoIcon = PROTOCOL_CONFIG[safeProtocol]?.icon || Box;
+    const protoColor = PROTOCOL_CONFIG[safeProtocol]?.color || 'text-gray-400';
+
+    return <ProtoIcon size={14} className={protoColor} title={safeProtocol.toUpperCase()} />;
   };
 
   return (
@@ -84,9 +110,10 @@ export function SortableRequest({ id, method, name, active, pinned, onClick }) {
           </div>
         )}
 
-        <span className={`text-[9px] font-bold w-8 ${methodColors[method] || 'text-gray-400'}`}>
-          {method}
-        </span>
+        {/* --- REPLACED: Icon or Method Text --- */}
+        <div className="w-8 flex justify-center items-center">
+          {renderProtocolIndicator()}
+        </div>
         
         <span className="text-xs truncate flex-1 flex items-center gap-2">
             {name}

@@ -99,6 +99,8 @@ export function SortableCollection({ collection, activeRequestId, onToggle, onRe
                 <SortableRequest
                   key={req.id}
                   {...req}
+                  protocol={req.protocol || 'http'}
+                  method={req.config?.method || req.method || 'GET'}
                   active={activeRequestId === req.id}
                   onClick={() => onRequestClick(req.id)}
                 />

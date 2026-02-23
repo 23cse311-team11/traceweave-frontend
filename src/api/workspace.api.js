@@ -26,8 +26,10 @@ export const workspaceApi = {
         return response.data;
     },
 
-    getWorkspaceHistory: async (id) => {
-        const response = await api.get(`/workspaces/${id}/history`);
+    getWorkspaceHistory: async (workspaceId, { page = 1, limit = 100 } = {}) => {
+        const response = await api.get(`/workspaces/${workspaceId}/history`, {
+            params: { page, limit }
+        });
         return response.data;
     },
 
