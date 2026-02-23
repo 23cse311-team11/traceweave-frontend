@@ -22,13 +22,40 @@ export const requestApi = {
     },
 
     executeRequest: async (requestId, payload) => {
-        const config = payload instanceof FormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {};
+        const isElectron = typeof window !== "undefined" && window.electronAPI;
+
+        if (isElectron) {
+            const result = await window.electronAPI.executeRequest({
+                type: "saved",
+                requestId,
+                payload,
+            });
+            return result;
+        }
+
+        const config = payload instanceof FormData
+            ? { headers: { 'Content-Type': 'multipart/form-data' } }
+            : {};
+
         const res = await api.post(`/requests/${requestId}/send`, payload, config);
         return res.data;
     },
 
     executeAdHocRequest: async (payload) => {
-        const config = payload instanceof FormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {};
+        const isElectron = typeof window !== "undefined" && window.electronAPI;
+
+        if (isElectron) {
+            const result = await window.electronAPI.executeRequest({
+                type: "adhoc",
+                payload,
+            });
+            return result;
+        }
+
+        const config = payload instanceof FormData
+            ? { headers: { 'Content-Type': 'multipart/form-data' } }
+            : {};
+
         const response = await api.post('/requests/execute', payload, config);
         return response.data;
     },
@@ -65,6 +92,19 @@ export const requestApi = {
     },
 
     connectWs: async (connectionId, url, headers = {}, params = {}, environmentId = null, workspaceId = null) => {
+        const isElectron = typeof window !== "undefined" && window.electronAPI;
+
+        if (isElectron) {
+            return window.electronAPI.wsConnect({
+                connectionId,
+                url,
+                headers,
+                params,
+                environmentId,
+                workspaceId,
+            });
+        }
+
         const response = await api.post('/requests/ws/connect', { 
             connectionId, 
             url, 
@@ -73,15 +113,28 @@ export const requestApi = {
             environmentId, 
             workspaceId 
         });
+
         return response.data;
     },
 
     sendWsMessage: async (connectionId, message) => {
+        const isElectron = typeof window !== "undefined" && window.electronAPI;
+
+        if (isElectron) {
+            return window.electronAPI.wsSend({ connectionId, message });
+        }
+
         const response = await api.post('/requests/ws/send', { connectionId, message });
         return response.data;
     },
 
     disconnectWs: async (connectionId) => {
+        const isElectron = typeof window !== "undefined" && window.electronAPI;
+
+        if (isElectron) {
+            return window.electronAPI.wsDisconnect({ connectionId });
+        }
+
         const response = await api.post('/requests/ws/disconnect', { connectionId });
         return response.data;
     },
