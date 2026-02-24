@@ -74,7 +74,15 @@ export default function KeyValueTable({ listKey, data, variant = 'standard' }) {
                                             type="file"
                                             onChange={(e) => {
                                                 const file = e.target.files[0];
-                                                if (file) store.updateRequestListConfig(listKey, index, 'value', file);
+                                                if (file) {
+                                                    let actualPath = file.path;
+                                                    // Use our new secure preload function to get the real path
+                                                    if (typeof window !== "undefined" && window.electronAPI?.getFilePath) {
+                                                        actualPath = window.electronAPI.getFilePath(file);
+                                                    }
+                                                    // Use our targeted Zustand action
+                                                    store.attachFileToFormdata(index, file, actualPath);
+                                                }
                                             }}
                                             className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
                                         />

@@ -228,6 +228,29 @@ export const createExecutionSlice = (set, get) => ({
                 if (!req.isDetached && state.unsavedRequests.has(activeId)) {
                     await get().saveRequest(activeId);
                 }
+
+                // SYNC DESKTOP EXECUTION TO CLOUD HISTORY
+                try {
+                    // Do not await this. Let it sync in the background so it doesn't slow down the UI
+                    requestApi.syncExecutionHistory({
+                        requestId: req.isDetached ? null : activeId,
+                        workspaceId: state.activeWorkspaceId,
+                        protocol: req.protocol,
+                        url: result.url || finalConfig.url, // Ensure we have the URL
+                        method: finalConfig.method || 'GET',
+                        responseMeta: {
+                            status: result.status,
+                            statusText: result.statusText,
+                            time: result.duration,
+                            size: result.size || 0,
+                        }
+                    }).then(() => {
+                        // Re-fetch history to update the sidebar silently after sync
+                        get().fetchHistory('workspace');
+                    });
+                } catch (syncErr) {
+                    console.warn("Failed to sync local execution history:", syncErr);
+                }
             } else {
                 if (req.isDetached) {
                     result = await requestApi.executeAdHocRequest(apiPayload);
@@ -239,7 +262,9 @@ export const createExecutionSlice = (set, get) => ({
                 }
             }
 
-            get().addToHistory(req, result);
+            if (!isElectron) {
+                get().addToHistory(req, result);
+            }
             set({ isLoading: false, response: result });
 
         } catch (error) {

@@ -174,4 +174,10 @@ export const requestApi = {
         const response = await api.post('/requests/ws/disconnect', { connectionId });
         return response.data;
     },
+
+    syncExecutionHistory: async (payload) => {
+        // Fire-and-forget payload sent to the backend
+        const response = await api.post('/requests/history/sync', payload);
+        return response.data;
+    },
 };
