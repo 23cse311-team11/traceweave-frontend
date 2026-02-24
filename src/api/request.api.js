@@ -66,28 +66,64 @@ export const requestApi = {
     },
 
     getJarCookies: async (workspaceId, domain = null) => {
+        const isElectron = typeof window !== "undefined" && window.electronAPI;
+        if (isElectron) {
+            return await window.electronAPI.getJarCookies({ domain });
+        }
+
         const params = { workspaceId };
         if (domain) params.domain = domain;
-        
         const res = await api.get(`/requests/jar/cookies`, { params });
         return res.data;
     },
 
     createJarCookie: async (cookieData) => {
+        const isElectron = typeof window !== "undefined" && window.electronAPI;
+        if (isElectron) {
+            // ✨ FIX: Safely fallback between 'key' and 'name'
+            const cookieName = cookieData.key || cookieData.name || 'unnamed_cookie';
+            const cookieValue = cookieData.value || '';
+            return await window.electronAPI.createJarCookie({
+                url: cookieData.domain.startsWith('http') ? cookieData.domain : `http://${cookieData.domain}`,
+                cookieString: `${cookieName}=${cookieValue}; Domain=${cookieData.domain}; Path=${cookieData.path || '/'}`
+            });
+        }
+
         const res = await api.post(`/requests/jar/cookies`, cookieData);
         return res.data;
     },
 
     updateJarCookie: async (cookieId, cookieData) => {
+        const isElectron = typeof window !== "undefined" && window.electronAPI;
+        if (isElectron) {
+            // ✨ FIX: Safely fallback between 'key' and 'name'
+            const cookieName = cookieData.key || cookieData.name || 'unnamed_cookie';
+            const cookieValue = cookieData.value || '';
+            return await window.electronAPI.createJarCookie({
+                url: cookieData.domain.startsWith('http') ? cookieData.domain : `http://${cookieData.domain}`,
+                cookieString: `${cookieName}=${cookieValue}; Domain=${cookieData.domain}; Path=${cookieData.path || '/'}`
+            });
+        }
+
         const res = await api.patch(`/requests/jar/cookies/${cookieId}`, cookieData);
         return res.data;
     },
 
-    deleteJarCookie: async (cookieId) => {
+    deleteJarCookie: async (cookieId, domain, key) => { 
+        const isElectron = typeof window !== "undefined" && window.electronAPI;
+        if (isElectron) {
+            return await window.electronAPI.deleteJarCookie({ domain, key });
+        }
+
         await api.delete(`/requests/jar/cookies/${cookieId}`);
     },
 
     clearJarCookies: async (domain, workspaceId) => { 
+        const isElectron = typeof window !== "undefined" && window.electronAPI;
+        if (isElectron) {
+            return await window.electronAPI.clearJarCookies({ domain });
+        }
+
         await api.delete(`/requests/jar/cookies`, { params: { domain, workspaceId } });
     },
 

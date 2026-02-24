@@ -320,48 +320,102 @@ export const createRequestSlice = (set, get) => ({
         const req = state.requestStates[id];
         if (!req) return {};
 
-        // Deep clone the request to avoid mutation
+        // 1. 🔥 RESCUE MISSION: Extract existing files and paths before JSON.parse destroys them
+        let existingFiles = {};
+        let existingPaths = {};
+        
+        let origArray = req;
+        for (let k of listKeyArray) {
+            origArray = origArray?.[k];
+        }
+        
+        if (Array.isArray(origArray)) {
+            origArray.forEach((item, i) => {
+                if (item.value instanceof File) existingFiles[i] = item.value;
+                if (item.path) existingPaths[i] = item.path;
+            });
+        }
+
+        // 2. Deep Clone
         const newReq = JSON.parse(JSON.stringify(req));
         
-        // --- Special Handling for File Objects ---
-        // JSON.stringify strips out File objects. If we detect a file in our existing state,
-        // or if the *new* value is a File, we must restore/inject it manually.
-        let isFileUpdate = value instanceof File;
-
-        // Traverse to the parent object containing the array
+        // 3. Traverse cloned object
         let current = newReq;
         for (let i = 0; i < listKeyArray.length - 1; i++) {
             if (!current[listKeyArray[i]]) current[listKeyArray[i]] = {};
             current = current[listKeyArray[i]];
         }
-        
         const arrayName = listKeyArray[listKeyArray.length - 1];
         if (!Array.isArray(current[arrayName])) {
             current[arrayName] = [];
         }
 
-        // --- Restore lost files from the original state before we mutate ---
-        // (Because our deep clone wiped them out)
-        let originalArray = req;
-        for (let i = 0; i < listKeyArray.length; i++) {
-             originalArray = originalArray?.[listKeyArray[i]];
-        }
-        if (Array.isArray(originalArray)) {
-             originalArray.forEach((origItem, idx) => {
-                 if (origItem.value instanceof File && current[arrayName][idx]) {
-                     current[arrayName][idx].value = origItem.value;
-                 }
-             });
-        }
+        // 4. 🔥 RESTORE MISSION: Put the files and paths back into the clone
+        current[arrayName].forEach((item, i) => {
+            if (existingFiles[i]) item.value = existingFiles[i];
+            if (existingPaths[i]) item.path = existingPaths[i];
+        });
 
-        // Apply the update
+        // 5. Apply the new UI update
         if (!current[arrayName][index]) current[arrayName][index] = { key: '', value: '', active: true, valueType: 'text' };
         current[arrayName][index][key] = value;
+
+        // 6. 🔥 THE EXTRACTOR: If the user just uploaded a file, grab the path as a string NOW
+        if (value instanceof File) {
+            current[arrayName][index].path = value.path; // Save absolute path for Electron
+            current[arrayName][index].isFile = true;
+            current[arrayName][index].valueType = 'file';
+        }
 
         // Auto-add new row logic
         if (index === current[arrayName].length - 1 && (key === 'key' || key === 'value') && value !== '') {
             current[arrayName].push({ key: '', value: '', active: true, valueType: 'text' });
         }
+
+        return {
+            unsavedRequests: new Set(state.unsavedRequests).add(id),
+            requestStates: { ...state.requestStates, [id]: newReq }
+        };
+    }),
+
+    attachFileToFormdata: (index, file, pathStr) => set(state => {
+        const id = state.activeTabId;
+        const req = state.requestStates[id];
+        if (!req) return {};
+
+        // Shallow clone down to the formdata array (No JSON.parse!)
+        const newReq = { ...req, config: { ...req.config, body: { ...req.config.body } } };
+        const newFormdata = [...(newReq.config.body.formdata || [])];
+        
+        if (!newFormdata[index]) {
+            newFormdata[index] = { key: '', active: true, valueType: 'file' };
+        }
+        
+        newFormdata[index] = {
+            ...newFormdata[index],
+            value: file,
+            path: pathStr, // Save the secure path string explicitly
+            isFile: true,
+            valueType: 'file'
+        };
+
+        newReq.config.body.formdata = newFormdata;
+
+        return {
+            unsavedRequests: new Set(state.unsavedRequests).add(id),
+            requestStates: { ...state.requestStates, [id]: newReq }
+        };
+    }),
+
+    attachBinaryFile: (file, pathStr) => set(state => {
+        const id = state.activeTabId;
+        const req = state.requestStates[id];
+        if (!req) return {};
+
+        const newReq = { ...req, config: { ...req.config, body: { ...req.config.body } } };
+        
+        newReq.config.body.binaryFile = file;
+        newReq.config.body.binaryFilePath = pathStr; // Save secure path
 
         return {
             unsavedRequests: new Set(state.unsavedRequests).add(id),

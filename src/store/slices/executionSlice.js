@@ -2,7 +2,7 @@ import { requestApi } from '@/api/request.api';
 import { workflowApi } from '@/api/workflow.api';
 import { workspaceApi } from '@/api/workspace.api';
 
-// --- Helpers (Keep exactly as they are) ---
+// --- Helpers 
 const formatListToObject = (listOrObject) => {
     if (!listOrObject) return {};
     if (!Array.isArray(listOrObject) && typeof listOrObject === 'object') return listOrObject;
@@ -39,7 +39,8 @@ export const createExecutionSlice = (set, get) => ({
 
         try {
             let finalConfig = { ...req.config };
-            let hasFiles = false; // Flag to determine how we send payload
+            let hasFiles = false; 
+            const isElectron = typeof window !== "undefined" && window.electronAPI;
 
             if (req.protocol === 'http' || req.protocol === 'graphql') {
                 const userHeaders = formatListToObject(req.config.headers);
@@ -76,62 +77,61 @@ export const createExecutionSlice = (set, get) => ({
                     } else if (bodyType === 'formdata') {
                         const processedFormData = (req.config.body.formdata || []).map(item => {
                             if (!item.active || !item.key) return null;
-                            
-                            // 1. Check valueType (which survives reloads) OR instanceof File
-                            if (item.valueType === 'file' || item.value instanceof File) {
-                                if (item.value instanceof File) {
-                                    hasFiles = true;
-                                }
-                                // Tell backend it's a file, even if the actual File object was lost
-                                return { key: item.key, isFile: true }; 
+
+                            // Check for our safely stored 'path' string
+                            if (item.valueType === 'file' || item.value instanceof File || item.isFile || item.path) {
+                                hasFiles = true;
+                                const absolutePath = item.path || item.value?.path;
+                                console.log(`[Renderer Debug] Preparing file: ${item.key}, Path extracted: ${absolutePath}`);
+                                
+                                return { 
+                                    key: item.key, 
+                                    isFile: true, 
+                                    path: absolutePath // We now guarantee this is a string
+                                }; 
                             }
-                            
-                            // 2. Protect against corrupted objects passing as text values
-                            let safeValue = item.value;
-                            if (typeof safeValue === 'object' && safeValue !== null) {
-                                safeValue = ''; // Strip dead objects so they don't crash the server
-                            }
-                            
-                            return { key: item.key, value: safeValue, isFile: false };
+                            return { key: item.key, value: item.value, isFile: false };
                         }).filter(Boolean);
 
                         finalBodyPayload = { type: 'formdata', formdata: processedFormData };
-                        delete userHeaders['Content-Type'];
-                        delete impliedHeaders['Content-Type'];
                     } else if (bodyType === 'binary') {
-                        if (req.config.body.binaryFile instanceof File) {
+                        if (req.config.body.binaryFile instanceof File || req.config.body.binaryFilePath) {
                             hasFiles = true;
-                            finalBodyPayload = { type: 'binary', binaryFile: { isFile: true } };
+                            const absolutePath = req.config.body.binaryFilePath || req.config.body.binaryFile?.path;
+                            console.log(`[Renderer Debug] Preparing binary file. Path extracted: ${absolutePath}`);
+
+                            finalBodyPayload = { 
+                                type: 'binary', 
+                                binaryFile: { 
+                                    isFile: true,
+                                    path: absolutePath 
+                                } 
+                            };
                         } else {
                             finalBodyPayload = { type: 'binary', binaryFile: null };
                         }
-                    }
+                    }   
 
                     finalConfig.body = finalBodyPayload;
                 }
 
                 if (req.protocol === 'graphql') {
                     impliedHeaders['Content-Type'] = 'application/json';
-
                     const gql = req.config.body?.graphql || {};
 
                     let parsedVariables = {};
                     if (gql.variables) {
                         try {
-                            parsedVariables =
-                                typeof gql.variables === 'string'
-                                    ? JSON.parse(gql.variables || '{}')
-                                    : gql.variables;
+                            parsedVariables = typeof gql.variables === 'string'
+                                ? JSON.parse(gql.variables || '{}')
+                                : gql.variables;
                         } catch {
                             throw new Error('Invalid JSON in GraphQL variables');
                         }
                     }
 
                     finalBodyPayload = {
-                        graphql: {
-                            query: gql.query || '',
-                            variables: parsedVariables,
-                        }
+                        graphql: { query: gql.query || '', variables: parsedVariables }
                     };
 
                     finalConfig.body = finalBodyPayload;
@@ -158,66 +158,89 @@ export const createExecutionSlice = (set, get) => ({
 
                 finalConfig = { ...finalConfig, headers: finalHeaders, params: userParams };
             } 
-            // grpc / ws skipped here for brevity...
 
             // --- PAYLOAD CONSTRUCTION ---
             const envs = state.workspaceEnvironments[state.activeWorkspaceId] || [];
             const activeEnv = envs[state.selectedEnvIndex];
             const envId = activeEnv ? activeEnv.id : null;
-            const envValues = activeEnv?.variables || {};
+
+            // ✨ EXTRACT ENVIRONMENT VARIABLES FOR OFFLINE DESKTOP INJECTION
+            const environmentValues = activeEnv ? activeEnv.variables.reduce((acc, v) => {
+                if (v.key && v.active !== false) acc[v.key] = v.value;
+                return acc;
+            }, {}) : {};
 
             let apiPayload;
 
-            // If we have actual file objects, switch to multipart/form-data
-            if (hasFiles) {
-                apiPayload = new FormData();
-                
+            if (isElectron) {
+                // PASS ENVIRONMENT VALUES TO ELECTRON MAIN PROCESS
                 if (req.isDetached) {
-                    apiPayload.append('workspaceId', state.activeWorkspaceId);
-                    apiPayload.append('protocol', req.protocol);
-                    if (envId) apiPayload.append('environmentId', envId);
-                    apiPayload.append('config', JSON.stringify(finalConfig));
+                    apiPayload = { 
+                        workspaceId: state.activeWorkspaceId, 
+                        protocol: req.protocol, 
+                        config: finalConfig, 
+                        environmentId: envId || null,
+                        environmentValues 
+                    };
                 } else {
-                    if (envId) apiPayload.append('environmentId', envId);
-                    apiPayload.append('overrides', JSON.stringify({ config: finalConfig }));
+                    apiPayload = { 
+                        environmentId: envId || null, 
+                        overrides: { config: finalConfig },
+                        environmentValues 
+                    };
                 }
+            } else {
+                if (hasFiles) {
+                    apiPayload = new FormData();
+                    if (req.isDetached) {
+                        apiPayload.append('workspaceId', state.activeWorkspaceId);
+                        apiPayload.append('protocol', req.protocol);
+                        if (envId) apiPayload.append('environmentId', envId);
+                        apiPayload.append('config', JSON.stringify(finalConfig));
+                    } else {
+                        if (envId) apiPayload.append('environmentId', envId);
+                        apiPayload.append('overrides', JSON.stringify({ config: finalConfig }));
+                    }
 
-                // Append the raw files so Multer can grab them
-                if (req.config.body?.type === 'formdata') {
-                    req.config.body.formdata.forEach(item => {
-                        if (item.active && item.key && item.value instanceof File) {
-                            apiPayload.append(item.key, item.value);
-                        }
-                    });
-                } else if (req.config.body?.type === 'binary' && req.config.body.binaryFile instanceof File) {
-                    apiPayload.append('binary_upload', req.config.body.binaryFile);
-                }
-            } 
-            // Otherwise, normal JSON payload
-            else {
-                if (req.isDetached) {
-                    apiPayload = { workspaceId: state.activeWorkspaceId, protocol: req.protocol, config: finalConfig, environmentId: envId,  environmentValues: envValues || null };
+                    if (req.config.body?.type === 'formdata') {
+                        req.config.body.formdata.forEach(item => {
+                            if (item.active && item.key && item.value instanceof File) {
+                                apiPayload.append(item.key, item.value);
+                            }
+                        });
+                    }
                 } else {
-                    apiPayload = { environmentId: envId, environmentValues: envValues || null, overrides: { config: finalConfig } };
+                    if (req.isDetached) {
+                        apiPayload = { workspaceId: state.activeWorkspaceId, protocol: req.protocol, config: finalConfig, environmentId: envId || null };
+                    } else {
+                        apiPayload = { environmentId: envId || null, overrides: { config: finalConfig } };
+                    }
                 }
             }
 
             // --- EXECUTION ---
-            if (req.isDetached) {
-                const result = await requestApi.executeAdHocRequest(apiPayload);
-                get().addToHistory(req, result);
-                set({ isLoading: false, response: result });
-            } else {
-                if (state.unsavedRequests.has(activeId)) {
+            let result;
+
+            if (isElectron) {
+                result = await window.electronAPI.executeRequest(apiPayload);
+                if (result?.error) throw new Error(result.error);
+
+                if (!req.isDetached && state.unsavedRequests.has(activeId)) {
                     await get().saveRequest(activeId);
                 }
-                const result = await requestApi.executeRequest(activeId, apiPayload);
-                console.log("===== RENDERER RECEIVED =====");
-                console.log(result);
-                console.log("=============================");
-                get().addToHistory(req, result);
-                set({ isLoading: false, response: result });
+            } else {
+                if (req.isDetached) {
+                    result = await requestApi.executeAdHocRequest(apiPayload);
+                } else {
+                    if (state.unsavedRequests.has(activeId)) {
+                        await get().saveRequest(activeId);
+                    }
+                    result = await requestApi.executeRequest(activeId, apiPayload);
+                }
             }
+
+            get().addToHistory(req, result);
+            set({ isLoading: false, response: result });
 
         } catch (error) {
             const status = error.response?.status;
@@ -253,11 +276,10 @@ export const createExecutionSlice = (set, get) => ({
                 const pagination = response.pagination || {};
                 
                 set((state) => ({ 
-                    // Replace on page 1, append on subsequent pages
                     history: page === 1 ? historyItems : [...state.history, ...historyItems] 
                 }));
 
-                return pagination; // Return this so the UI knows if it should show "Load More"
+                return pagination;
             }
         } catch (error) { 
             console.warn('Failed to fetch history:', error); 
