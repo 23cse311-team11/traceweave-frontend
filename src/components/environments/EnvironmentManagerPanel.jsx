@@ -2,11 +2,13 @@
 import { useState } from 'react';
 import { X, Plus, Trash2, Save, Globe } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
+import { useModal } from '@/components/providers/ModalProvider';
 
 export default function EnvironmentManagerPanel({ isOpen, onClose, environment }) {
     const store = useAppStore();
     const [newKey, setNewKey] = useState('');
     const [newValue, setNewValue] = useState('');
+    const { showConfirm } = useModal();
 
     if (!isOpen || !environment) return null;
 
@@ -101,7 +103,16 @@ export default function EnvironmentManagerPanel({ isOpen, onClose, environment }
                 <div className="px-6 py-4 border-t border-border-subtle bg-bg-panel flex justify-between items-center">
                     <button 
                         className="text-xs text-red-500 hover:text-red-400 font-medium flex items-center gap-2 px-3 py-2 hover:bg-red-500/10 rounded transition"
-                        onClick={() => { if(confirm('Delete environment?')) { store.deleteEnvironment(environment.id); onClose(); }}}
+                        onClick={() => {
+                            showConfirm(
+                                'Are you sure you want to delete this environment?', 
+                                () => {
+                                    store.deleteEnvironment(environment.id);
+                                    onClose();
+                                },
+                                'Delete Environment' // Optional title
+                            );
+                        }}
                     >
                         <Trash2 size={14} /> Delete Environment
                     </button>

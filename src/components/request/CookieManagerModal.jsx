@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { X, Trash2, Plus, Search, ChevronDown, ChevronRight, Save, Edit2 } from 'lucide-react';
 import { requestApi } from '@/api/request.api';
 import { useAppStore } from '@/store/useAppStore';
+import { useModal } from '@/components/providers/ModalProvider';
 
 // --- Helper for datetime-local input ---
 const formatDateForInput = (dateString) => {
@@ -95,6 +96,7 @@ const CookieForm = ({ domain, initialData, onSave, onCancel }) => {
 export default function CookieManagerModal({ isOpen, onClose, initialDomain }) {
     const store = useAppStore();
     const workspaceId = store.activeWorkspaceId;
+    const { showAlert, showConfirm } = useModal();
     
     const [mounted, setMounted] = useState(false);
     const [cookies, setCookies] = useState([]);
@@ -165,20 +167,25 @@ export default function CookieManagerModal({ isOpen, onClose, initialDomain }) {
             setEditingCookieId(null);
             fetchAllCookies();
         } catch (err) {
-            alert(err.response?.data?.error || 'Failed to save cookie');
+            showAlert(err.response?.data?.error || 'Failed to save cookie');
         }
     };
 
-    const handleDeleteCookie = async (id) => {
-        await requestApi.deleteJarCookie(id);
+    const handleDeleteCookie = async (id, domain, key) => {
+        await requestApi.deleteJarCookie(id, domain, key);
         fetchAllCookies();
     };
 
     const handleClearDomain = async (domain) => {
-        if (!confirm(`Delete all cookies for ${domain}?`)) return;
-        await requestApi.clearJarCookies(domain, workspaceId);
-        setCustomDomains(prev => prev.filter(d => d !== domain));
-        fetchAllCookies();
+        if (!showConfirm(
+            `Are you sure you want to delete all cookies for ${domain}?`, 
+            async () => {
+                await requestApi.clearJarCookies(domain, workspaceId);
+                setCustomDomains(prev => prev.filter(d => d !== domain));
+                fetchAllCookies();
+            },
+            'Clear Domain'
+        )) return;
     };
 
     const handleAddDomain = () => {
@@ -243,7 +250,7 @@ export default function CookieManagerModal({ isOpen, onClose, initialDomain }) {
                     ) : (
                         <div className="space-y-6">
                             {Object.entries(groupedCookies).map(([domain, cookiesList]) => (
-                                <div key={domain} className="group/domain">
+                                <div key={`domain-group-${domain}`} className="group/domain">
                                     <div className="flex items-center justify-between mb-2 select-none">
                                         <div 
                                             className="flex items-center gap-2 cursor-pointer hover:text-white"
@@ -264,13 +271,16 @@ export default function CookieManagerModal({ isOpen, onClose, initialDomain }) {
                                     {expandedDomains[domain] && (
                                         <div className="pl-6 border-l border-[#333] ml-2">
                                             <div className="flex flex-col gap-2 mb-3">
-                                                {cookiesList.map(cookie => (
-                                                    editingCookieId === cookie._id ? (
+                                                {/* ✨ FIX: Added fallback keys to array elements to prevent React Key warning */}
+                                                {cookiesList.map((cookie, idx) => {
+                                                    const uniqueKey = cookie._id || `cookie-${domain}-${cookie.key}-${idx}`;
+                                                    
+                                                    return editingCookieId === uniqueKey ? (
                                                         <CookieForm 
-                                                            key={`edit-${cookie._id}`}
+                                                            key={`edit-${uniqueKey}`}
                                                             domain={domain}
                                                             initialData={{
-                                                                _id: cookie._id,
+                                                                _id: uniqueKey,
                                                                 key: cookie.key,
                                                                 value: cookie.value,
                                                                 path: cookie.path,
@@ -283,10 +293,10 @@ export default function CookieManagerModal({ isOpen, onClose, initialDomain }) {
                                                         />
                                                     ) : (
                                                         <div 
-                                                            key={cookie._id} 
+                                                            key={`display-${uniqueKey}`} 
                                                             onClick={() => {
                                                                 setAddingCookieTo(null);
-                                                                setEditingCookieId(cookie._id);
+                                                                setEditingCookieId(uniqueKey);
                                                             }}
                                                             className="flex items-center justify-between bg-[#2A2A2A] border border-[#333] rounded px-3 py-2 cursor-pointer hover:border-[#555] group/chip transition-colors"
                                                         >
@@ -299,7 +309,7 @@ export default function CookieManagerModal({ isOpen, onClose, initialDomain }) {
                                                                 <button 
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
-                                                                        handleDeleteCookie(cookie._id);
+                                                                        handleDeleteCookie(cookie._id, domain, cookie.key);
                                                                     }}
                                                                     className="text-[#666] hover:text-red-500 p-1"
                                                                 >
@@ -308,7 +318,7 @@ export default function CookieManagerModal({ isOpen, onClose, initialDomain }) {
                                                             </div>
                                                         </div>
                                                     )
-                                                ))}
+                                                })}
                                             </div>
                                             
                                             {!addingCookieTo && (

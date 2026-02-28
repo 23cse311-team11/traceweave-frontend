@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Layers, Plus, Edit2, Globe, Check, MoreHorizontal, Pin } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import ContextMenu from '../ui/ContextMenu';
+import { useModal } from '@/components/providers/ModalProvider';
 
 export default function SidebarEnvironments() {
     const store = useAppStore();
@@ -11,6 +12,7 @@ export default function SidebarEnvironments() {
     const [contextMenu, setContextMenu] = useState({ x: null, y: null, targetId: null });
     const [renamingId, setRenamingId] = useState(null);
     const [renameValue, setRenameValue] = useState('');
+    const { showConfirm } = useModal();
 
     const handleContextMenu = (e, envId) => {
         e.preventDefault();
@@ -146,9 +148,13 @@ export default function SidebarEnvironments() {
                         setContextMenu({ x: null, y: null, targetId: null });
                     }}
                     onDelete={() => {
-                        if (confirm('Are you sure you want to delete this environment?')) {
-                            store.deleteEnvironment(contextMenu.targetId);
-                        }
+                        showConfirm(
+                            'Are you sure you want to delete this environment?', 
+                            () => {
+                                store.deleteEnvironment(contextMenu.targetId);
+                            },
+                            'Delete Environment'
+                        );
                         setContextMenu({ x: null, y: null, targetId: null });
                     }}
                 />
