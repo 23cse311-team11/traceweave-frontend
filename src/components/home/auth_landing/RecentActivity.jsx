@@ -31,7 +31,7 @@ export const RecentActivity = () => {
   const getMethodColor = (method) => {
     const colors = {
       GET: 'text-emerald-500',
-      POST: 'text-brand-orange',
+      POST: 'text-brand-primary',
       PUT: 'text-blue-500',
       DELETE: 'text-red-500',
     };
@@ -46,7 +46,7 @@ export const RecentActivity = () => {
         </h3>
         <Link
           href="/history"
-          className="text-xs text-brand-orange hover:underline"
+          className="text-xs text-brand-primary hover:underline"
         >
           View All
         </Link>

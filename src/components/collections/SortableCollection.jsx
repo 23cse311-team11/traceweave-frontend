@@ -90,9 +90,9 @@ export function SortableCollection({ collection, activeRequestId, onToggle, onRe
           // Added conditional classes for the active highlight
           className={`group flex items-center gap-2 px-2 py-1.5 cursor-pointer rounded relative transition-colors ${
             hasActiveItem && collection.collapsed 
-              ? 'bg-brand-orange/5 text-brand-orange' 
+              ? 'bg-brand-primary/5 text-brand-primary' 
               : 'text-text-secondary hover:text-text-primary hover:bg-bg-panel'
-          } ${isOver && !isDragging ? 'ring-2 ring-brand-orange ring-inset bg-brand-orange/10' : ''}`}
+          } ${isOver && !isDragging ? 'ring-2 ring-brand-primary ring-inset bg-brand-primary/10' : ''}`}
           onClick={() => onToggle(collection.id)}
           onContextMenu={handleContextMenu}
         >
@@ -109,7 +109,7 @@ export function SortableCollection({ collection, activeRequestId, onToggle, onRe
             </div>
           )}
 
-          <div className={`p-1 relative shrink-0 ${hasActiveItem && collection.collapsed ? 'text-brand-orange' : 'text-brand-orange/80'}`}>
+          <div className={`p-1 relative shrink-0 ${hasActiveItem && collection.collapsed ? 'text-brand-primary' : 'text-brand-primary/80'}`}>
             {collection.collapsed ? <Folder size={14} /> : <FolderOpen size={14} />}
             {collection.pinned && <div className="absolute -top-1 -right-1 bg-bg-base rounded-full p-[1px]"><Pin size={8} className="text-text-primary fill-current" /></div>}
           </div>
@@ -123,7 +123,7 @@ export function SortableCollection({ collection, activeRequestId, onToggle, onRe
             <div
               role="button"
               onClick={handleCreateSubCollection}
-              className="p-1 hover:bg-bg-input rounded text-text-primary hover:text-brand-orange"
+              className="p-1 hover:bg-bg-input rounded text-text-primary hover:text-brand-primary"
               title="Add Sub-collection"
             >
               <FolderPlus size={14} />
@@ -131,7 +131,7 @@ export function SortableCollection({ collection, activeRequestId, onToggle, onRe
             <div
               role="button"
               onClick={handleCreateRequest}
-              className="p-1 hover:bg-bg-input rounded text-text-primary hover:text-brand-orange"
+              className="p-1 hover:bg-bg-input rounded text-text-primary hover:text-brand-primary"
               title="Add Request"
             >
               <Plus size={14} />
@@ -151,7 +151,7 @@ export function SortableCollection({ collection, activeRequestId, onToggle, onRe
         </div>
 
         {!collection.collapsed && (
-          <div className={`flex flex-col gap-[2px] mt-1 pl-1 border-l ml-3 ${hasActiveItem ? 'border-brand-orange/30' : 'border-border-subtle'}`}>
+          <div className={`flex flex-col gap-[2px] mt-1 pl-1 border-l ml-3 ${hasActiveItem ? 'border-brand-primary/30' : 'border-border-subtle'}`}>
             {isEmpty ? (
               <div className="py-2 pl-6 pr-2">
                 <div className="text-[10px] text-text-muted italic py-3 border border-dashed border-border-subtle/50 rounded flex items-center justify-center pointer-events-none">

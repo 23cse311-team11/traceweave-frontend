@@ -130,7 +130,7 @@ const SizeBadge = ({ metrics }) => {
         <TooltipContainer width="w-56">
           <div className="flex justify-between items-center mb-3 pb-2 border-b border-[#1F1F1F]">
             <span className="font-semibold text-xs text-[#EDEDED] tracking-wide uppercase">RESPONSE SIZE</span>
-            <span className="text-xs font-mono font-bold text-[#FF6C37]">{totalSizeKB.toFixed(2)} KB</span>
+            <span className="text-xs font-mono font-bold text-[var(--brand-primary)]">{totalSizeKB.toFixed(2)} KB</span>
           </div>
           <div className="space-y-2">
             <div className="flex justify-between items-center text-xs">
@@ -162,7 +162,7 @@ const NetworkBadge = ({ metrics }) => {
       <div className="hidden group-hover:block">
         <TooltipContainer width="w-72">
           <div className="flex items-center gap-2 mb-3 pb-2 border-b border-[#1F1F1F]">
-            <Network size={14} className="text-[#FF6C37]" />
+            <Network size={14} className="text-[var(--brand-primary)]" />
             <span className="font-semibold text-xs text-[#EDEDED] tracking-wide uppercase">NETWORK INFO</span>
           </div>
           <div className="space-y-2.5">
@@ -201,7 +201,7 @@ const WorkflowReport = ({ report }) => {
             </div>
           </div>
           <div className="text-right">
-            <div className="text-sm font-mono text-[#FF6C37] font-bold">{report.totalDuration}ms</div>
+            <div className="text-sm font-mono text-[var(--brand-primary)] font-bold">{report.totalDuration}ms</div>
             <div className="text-[10px] text-[#666] uppercase tracking-widest">Total Duration</div>
           </div>
         </div>
@@ -323,16 +323,16 @@ export default function ResponsePane({ height }) {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 whileHover={{ y: -1 }}
-                className={`relative h-full text-xs font-semibold transition-all flex items-center gap-2 tracking-wide whitespace-nowrap ${activeTab === tab ? 'text-[#FF6C37]' : 'text-[#999] hover:text-[#EDEDED]'}`}
+                className={`relative h-full text-xs font-semibold transition-all flex items-center gap-2 tracking-wide whitespace-nowrap ${activeTab === tab ? 'text-[var(--brand-primary)]' : 'text-[#999] hover:text-[#EDEDED]'}`}
               >
                 {tab}
                 {count > 0 && (
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded ${activeTab === tab ? 'bg-[#FF6C37]/20 text-[#FF6C37]' : 'bg-[#1A1A1A] text-[#666]'}`}>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded ${activeTab === tab ? 'bg-[var(--brand-primary)]/20 text-[var(--brand-primary)]' : 'bg-[#1A1A1A] text-[#666]'}`}>
                     {count}
                   </span>
                 )}
                 {activeTab === tab && (
-                  <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#FF6C37]" />
+                  <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--brand-primary)]" />
                 )}
               </motion.button>
             )
@@ -365,7 +365,7 @@ export default function ResponsePane({ height }) {
           {isLoading && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 flex flex-col items-center justify-center bg-[#050505]/90 z-20 backdrop-blur-sm">
               <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>
-                <Loader2 className="text-[#FF6C37]" size={36} />
+                <Loader2 className="text-[var(--brand-primary)]" size={36} />
               </motion.div>
               <span className="text-xs text-[#999] font-semibold tracking-widest mt-4">
                 {response?.isWorkflow ? "EXECUTING WORKFLOW..." : "SENDING REQUEST..."}

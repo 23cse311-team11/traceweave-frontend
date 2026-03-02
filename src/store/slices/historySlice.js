@@ -6,15 +6,28 @@ export const createHistorySlice = (set, get) => ({
     activeExecution: null,
     isHistoryLoading: false,
 
-    fetchHistory: async (page = 1, limit = 20) => {
+    fetchHistory: async (scope = 'all', page = 1, limit = 20) => {
         set({ isHistoryLoading: true });
         try {
-            const data = await historyApi.getGlobalHistory({ page, limit });
+            const state = get();
+            const wsId = state.activeWorkspaceId;
+            let data;
+            
+            if (scope === 'workspace' && wsId) {
+                data = await historyApi.getWorkspaceHistory(wsId, { page, limit });
+            } else {
+                data = await historyApi.getGlobalHistory({ page, limit });
+            }
+            
+            const fetchedLogs = data.data || [];
+            const newLogs = page === 1 ? fetchedLogs : [...state.historyLogs, ...fetchedLogs];
+            
             set({ 
-                historyLogs: data.data || [], 
+                historyLogs: newLogs, 
                 historyPagination: data.pagination || { total: 0, page: 1, limit: 20, pages: 1 },
                 isHistoryLoading: false 
             });
+            return data.pagination;
         } catch (error) {
             console.error("Failed to fetch history:", error);
             set({ isHistoryLoading: false });

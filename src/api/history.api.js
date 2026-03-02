@@ -7,6 +7,11 @@ export const historyApi = {
         return response.data;
     },
     
+    getWorkspaceHistory: async (workspaceId, params = { page: 1, limit: 20 }) => {
+        const response = await api.get(`/workspaces/${workspaceId}/history`, { params });
+        return response.data;
+    },
+    
     // Fetch detailed data for a specific execution
     getExecutionDetails: async (execId) => {
         const response = await api.get(`/executions/${execId}`);

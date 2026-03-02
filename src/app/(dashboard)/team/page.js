@@ -112,7 +112,7 @@ export default function TeamPage() {
       <div className="w-full md:w-64 border-r border-border-subtle p-6 flex flex-col gap-4 bg-bg-panel/30">
         <div>
           <h2 className="text-lg font-bold flex items-center gap-2 mb-4">
-            <Building size={18} className="text-brand-orange" />
+            <Building size={18} className="text-brand-primary" />
             Directories
           </h2>
           <div className="space-y-1">
@@ -122,7 +122,7 @@ export default function TeamPage() {
                 onClick={() => setActiveWorkspace(ws.id)}
                 className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-between ${
                   activeWorkspaceId === ws.id 
-                    ? 'bg-brand-orange/10 text-brand-orange border border-brand-orange/20' 
+                    ? 'bg-brand-primary/10 text-brand-primary border border-brand-primary/20' 
                     : 'text-text-secondary hover:bg-bg-input hover:text-text-primary border border-transparent'
                 }`}
               >
@@ -160,7 +160,7 @@ export default function TeamPage() {
                 {canManage && (
                   <button
                     onClick={() => setIsInviteModalOpen(true)}
-                    className="flex items-center gap-2 bg-brand-orange text-white px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-orange-600 transition-all shadow-[0_0_20px_rgba(255,108,55,0.2)]"
+                    className="flex items-center gap-2 bg-brand-primary text-brand-surface px-5 py-2.5 rounded-lg text-sm font-black hover:bg-brand-glow transition-all shadow-glow-sm"
                   >
                     <Mail size={16} /> Invite Member
                   </button>
@@ -181,10 +181,10 @@ export default function TeamPage() {
                 <tbody className="divide-y divide-border-subtle">
                   {/* {console.log(workspaceMembers)} */}
                   {workspaceMembers.map((member) => (
-                    <tr key={member.id} className={`${member.userId === user?.id ? 'bg-brand-orange/10' : ''} hover:bg-white/5 transition-colors`}>
+                    <tr key={member.id} className={`${member.userId === user?.id ? 'bg-brand-primary/10' : ''} hover:bg-white/5 transition-colors`}>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-blue to-brand-orange flex items-center justify-center text-white font-bold text-xs">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-blue to-brand-primary flex items-center justify-center text-white font-bold text-xs">
                             {member.user?.fullName?.charAt(0) || member.user?.email?.charAt(0).toUpperCase()}
                           </div>
                           <div>
@@ -200,7 +200,7 @@ export default function TeamPage() {
                           <select 
                             value={member.role}
                             onChange={(e) => handleRoleChange(member.userId, e.target.value)}
-                            className="bg-bg-input border border-border-subtle rounded-md text-xs py-1.5 px-2 focus:outline-none focus:border-brand-orange text-text-secondary"
+                            className="bg-bg-input border border-border-subtle rounded-md text-xs py-1.5 px-2 focus:outline-none focus:border-brand-primary text-text-secondary"
                           >
                             <option value="VIEWER">Viewer</option>
                             <option value="EDITOR">Editor</option>
@@ -208,10 +208,10 @@ export default function TeamPage() {
                           </select>
                         ) : (
                           <div className="flex items-center gap-1.5 text-xs font-medium">
-                            {member.role === 'OWNER' && <ShieldAlert size={14} className="text-brand-orange" />}
+                            {member.role === 'OWNER' && <ShieldAlert size={14} className="text-brand-primary" />}
                             {member.role === 'EDITOR' && <ShieldCheck size={14} className="text-emerald-500" />}
                             {member.role === 'VIEWER' && <UserIcon size={14} className="text-text-muted" />}
-                            <span className={member.role === 'OWNER' ? 'text-brand-orange' : 'text-text-secondary'}>
+                            <span className={member.role === 'OWNER' ? 'text-brand-primary' : 'text-text-secondary'}>
                               {member.role.charAt(0) + member.role.slice(1).toLowerCase()}
                             </span>
                           </div>
@@ -256,7 +256,7 @@ export default function TeamPage() {
                           <td className="px-6 py-3 font-medium text-text-primary">{invite.email}</td>
                           <td className="px-6 py-3 text-xs text-text-secondary">{invite.role}</td>
                           <td className="px-6 py-3 text-xs text-text-muted">{invite.inviter?.fullName || 'Unknown'}</td>
-                          <td className="px-6 py-3 text-xs text-brand-orange">
+                          <td className="px-6 py-3 text-xs text-brand-primary">
                             {new Date(invite.expiresAt).toLocaleDateString()}
                           </td>
                         </tr>
@@ -286,13 +286,13 @@ export default function TeamPage() {
                 <div className="flex gap-4 text-sm font-medium">
                 <button 
                     onClick={() => setInviteTab('email')}
-                    className={`pb-2 border-b-2 transition-colors ${inviteTab === 'email' ? 'border-brand-orange text-text-primary' : 'border-transparent text-text-muted hover:text-text-secondary'}`}
+                    className={`pb-2 border-b-2 transition-colors ${inviteTab === 'email' ? 'border-brand-primary text-text-primary' : 'border-transparent text-text-muted hover:text-text-secondary'}`}
                 >
                     Invite via Email
                 </button>
                 <button 
                     onClick={() => setInviteTab('link')}
-                    className={`pb-2 border-b-2 transition-colors ${inviteTab === 'link' ? 'border-brand-orange text-text-primary' : 'border-transparent text-text-muted hover:text-text-secondary'}`}
+                    className={`pb-2 border-b-2 transition-colors ${inviteTab === 'link' ? 'border-brand-primary text-text-primary' : 'border-transparent text-text-muted hover:text-text-secondary'}`}
                 >
                     Invite Link
                 </button>
@@ -311,7 +311,7 @@ export default function TeamPage() {
                     <label className="block text-xs font-semibold text-text-secondary mb-1">Email Address</label>
                     <input 
                         type="email" required value={inviteEmail} onChange={e => setInviteEmail(e.target.value)}
-                        className="w-full bg-bg-input border border-border-subtle rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-orange" 
+                        className="w-full bg-bg-input border border-border-subtle rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-primary" 
                         placeholder="colleague@example.com"
                     />
                     </div>
@@ -319,7 +319,7 @@ export default function TeamPage() {
                     <label className="block text-xs font-semibold text-text-secondary mb-1">Role</label>
                     <select 
                         value={inviteRole} onChange={e => setInviteRole(e.target.value)}
-                        className="w-full bg-bg-input border border-border-subtle rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-orange"
+                        className="w-full bg-bg-input border border-border-subtle rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-primary"
                     >
                         <option value="VIEWER">Viewer</option>
                         <option value="EDITOR">Editor</option>
@@ -328,7 +328,7 @@ export default function TeamPage() {
                     </div>
                     <div className="flex gap-3 justify-end mt-6 pt-4 border-t border-border-subtle">
                     <button type="button" onClick={resetModal} className="px-4 py-2 text-sm font-medium hover:bg-bg-input rounded-lg">Done</button>
-                    <button type="submit" disabled={isLoading} className="px-4 py-2 text-sm font-bold bg-brand-orange text-white rounded-lg hover:bg-orange-600 disabled:opacity-50">
+                    <button type="submit" disabled={isLoading} className="px-4 py-2 text-sm font-black bg-brand-primary text-brand-surface rounded-lg hover:bg-brand-glow disabled:opacity-50 shadow-glow-sm">
                         {isLoading ? 'Sending...' : 'Send Invite'}
                     </button>
                     </div>
@@ -376,7 +376,7 @@ export default function TeamPage() {
                         
                         <button 
                         onClick={() => useAppStore.getState().resetCommonLink()}
-                        className="flex items-center gap-2 text-xs text-text-muted hover:text-brand-orange transition-colors px-1"
+                        className="flex items-center gap-2 text-xs text-text-muted hover:text-brand-primary transition-colors px-1"
                         >
                         <RefreshCw size={12} /> Generate new link
                         </button>

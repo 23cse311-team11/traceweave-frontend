@@ -107,7 +107,7 @@ export default function SidebarCollections() {
               <span>No collections found.</span>
               <button
                 onClick={() => useAppStore.getState().fetchCollections(useAppStore.getState().activeWorkspaceId)}
-                className="text-brand-orange hover:underline"
+                className="text-brand-primary hover:underline"
               >
                 Refresh
               </button>
@@ -120,7 +120,7 @@ export default function SidebarCollections() {
           <DragOverlay>
             {activeDragItem ? (
               <div className="bg-bg-panel border border-brand-blue/50 shadow-2xl rounded opacity-90 p-2 w-[240px] flex items-center gap-2">
-                <span className="text-[10px] font-mono text-brand-orange">
+                <span className="text-[10px] font-mono text-brand-primary">
                   MOVING
                 </span>
                 <span className="text-xs text-text-primary font-semibold">
