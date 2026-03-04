@@ -247,11 +247,19 @@ export const parseCurlToConfig = (curlString) => {
 /**
  * 3. Generate cURL from HTTP Config (Export)
  */
-export const generateCurlFromConfig = (config) => {
+export const generateCurlFromConfig = (config, envResolver = null) => {
     if (!config) return '';
 
+    const interpolate = (str) => {
+        if (!str || typeof str !== 'string' || !envResolver) return str;
+        return str.replace(/\{\{(.*?)\}\}/g, (match, varName) => {
+            const resolved = envResolver(varName.trim());
+            return resolved !== null && resolved !== undefined ? resolved : match;
+        });
+    };
+
     let curl = `curl -X ${config.method || 'GET'}`;
-    const escapeBash = (str) => `'${(str || '').replace(/'/g, "'\\''")}'`;
+    const escapeBash = (str) => `'${interpolate(str || '').replace(/'/g, "'\\''")}'`;
 
     // 1. URL & Params
     let finalUrl = config.url || '';
@@ -331,11 +339,22 @@ export const generateCurlFromConfig = (config) => {
 /**
  * 4. Generate PowerShell (Because you work on Windows, this is highly recommended for testing)
  */
-export const generatePowerShellFromConfig = (config) => {
+export const generatePowerShellFromConfig = (config, envResolver = null) => {
     if (!config) return '';
+
+    const interpolate = (str) => {
+        if (!str || typeof str !== 'string' || !envResolver) return str;
+        return str.replace(/\{\{(.*?)\}\}/g, (match, varName) => {
+            const resolved = envResolver(varName.trim());
+            return resolved !== null && resolved !== undefined ? resolved : match;
+        });
+    };
 
     let ps = `Invoke-RestMethod -Method ${config.method || 'GET'}`;
     
+    // Helper to interpolate and escape for PowerShell strings
+    const escapePs = (str) => interpolate(str || '').replace(/'/g, "''");
+
     let finalUrl = config.url || '';
     const paramsRaw = Array.isArray(config.params) ? config.params : Object.values(config.params || {});
     const activeParams = paramsRaw.filter(p => p && p.active !== false && p.key);
@@ -343,17 +362,19 @@ export const generatePowerShellFromConfig = (config) => {
         const queryString = activeParams.map(p => `${encodeURIComponent(p.key)}=${encodeURIComponent(p.value || '')}`).join('&');
         finalUrl += finalUrl.includes('?') ? `&${queryString}` : `?${queryString}`;
     }
-    ps += ` -Uri "${finalUrl}"`;
+    ps += ` -Uri "${interpolate(finalUrl)}"`;
 
     let headersObj = {};
     
     // Auth to Headers for PowerShell
     if (config.auth && config.auth.type !== 'none') {
         if (config.auth.type === 'basic' && config.auth.basic?.username) {
-            const base64 = btoa(`${config.auth.basic.username}:${config.auth.basic.password || ''}`);
+            const user = interpolate(config.auth.basic.username);
+            const pass = interpolate(config.auth.basic.password || '');
+            const base64 = btoa(`${user}:${pass}`);
             headersObj['Authorization'] = `Basic ${base64}`;
         } else if (config.auth.type === 'bearer' && config.auth.bearer?.token) {
-            headersObj['Authorization'] = `Bearer ${config.auth.bearer.token}`;
+            headersObj['Authorization'] = `Bearer ${interpolate(config.auth.bearer.token)}`;
         }
     }
 
@@ -377,7 +398,7 @@ export const generatePowerShellFromConfig = (config) => {
     }
 
     if (Object.keys(headersObj).length > 0) {
-        let headersDict = Object.entries(headersObj).map(([k, v]) => `'${k}' = '${(v || '').replace(/'/g, "''")}'`).join('; ');
+        let headersDict = Object.entries(headersObj).map(([k, v]) => `'${interpolate(k)}' = '${escapePs(v)}'`).join('; ');
         ps += ` -Headers @{ ${headersDict} }`;
     }
 
@@ -385,13 +406,13 @@ export const generatePowerShellFromConfig = (config) => {
     if (config.body && !['GET', 'HEAD'].includes(config.method)) {
         if (['raw', 'json'].includes(config.body.type)) {
             const rawText = config.body.raw || '';
-            if (rawText) ps += ` -Body '${rawText.replace(/'/g, "''")}'`;
+            if (rawText) ps += ` -Body '${escapePs(rawText)}'`;
         } else if (config.body.type === 'urlencoded') {
             const urlEncodedRaw = Array.isArray(config.body.urlencoded) ? config.body.urlencoded : Object.values(config.body.urlencoded || {});
             const activeUrlEncoded = urlEncodedRaw.filter(f => f && f.active !== false && f.key);
             if (activeUrlEncoded.length > 0) {
-                const formDataStr = activeUrlEncoded.map(f => `${encodeURIComponent(f.key)}=${encodeURIComponent(f.value || '')}`).join('&');
-                ps += ` -Body '${formDataStr.replace(/'/g, "''")}'`;
+                const formDataStr = activeUrlEncoded.map(f => `${encodeURIComponent(interpolate(f.key))}=${encodeURIComponent(interpolate(f.value || ''))}`).join('&');
+                ps += ` -Body '${escapePs(formDataStr)}'`;
             }
         }
     }

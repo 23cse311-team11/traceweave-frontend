@@ -22,6 +22,29 @@ const formatCookiesToHeader = (cookieList) => {
         .join('; ');
 };
 
+const resolveUrlWithEnvs = (url, envValues) => {
+    if (!url) return '';
+    return url.replace(/{{([^}]+)}}/g, (match, key) => {
+        return envValues[key.trim()] || match; // Replace {{var}} with value, or keep as is
+    });
+};
+
+const isLocalhostUrl = (urlString) => {
+    if (!urlString) return false;
+    try {
+        // Detect ANY protocol (http, ws, wss, grpc, etc.) before parsing
+        const hasProtocol = /^[a-zA-Z]+:\/\//.test(urlString);
+        const urlToParse = hasProtocol ? urlString : `http://${urlString}`;
+        const parsedUrl = new URL(urlToParse);
+        const hostname = parsedUrl.hostname.toLowerCase();
+        
+        // Catch standard local loopbacks
+        return ['localhost', '127.0.0.1', '0.0.0.0', '[::1]'].includes(hostname);
+    } catch (e) {
+        return false; 
+    }
+};
+
 export const createExecutionSlice = (set, get) => ({
     isLoading: false,
     response: null,
@@ -190,6 +213,16 @@ export const createExecutionSlice = (set, get) => ({
                     };
                 }
             } else {
+                const resolvedUrl = resolveUrlWithEnvs(finalConfig.url || '', environmentValues);
+
+                if (isLocalhostUrl(resolvedUrl)) {
+                    set({ 
+                        isLoading: false, 
+                        error: "⚠️ Local API Blocked\n\nWeb browsers restrict requests to local servers (localhost, 127.0.0.1) due to strict security policies.\n\nTo test local APIs, please use the Desktop Application." 
+                    });
+                    return;
+                }
+
                 if (hasFiles) {
                     apiPayload = new FormData();
                     if (req.isDetached) {

@@ -7,7 +7,7 @@ import { generateCurlFromConfig, generatePowerShellFromConfig, parseCurlToConfig
 import { useAppStore } from '@/store/useAppStore';
 
 export default function CurlManagerModal({ isOpen, onClose, requestConfig }) {
-    const { updateActiveRequest } = useAppStore();
+    const { updateActiveRequest, getEnvVariable } = useAppStore();
     const [activeTab, setActiveTab] = useState('export'); // 'export' | 'import'
 
     // Export State
@@ -25,9 +25,9 @@ export default function CurlManagerModal({ isOpen, onClose, requestConfig }) {
         setMounted(true);
         if (isOpen && requestConfig) {
             if (codeFormat === 'curl') {
-                setExportCode(generateCurlFromConfig(requestConfig));
+                setExportCode(generateCurlFromConfig(requestConfig, getEnvVariable));
             } else {
-                setExportCode(generatePowerShellFromConfig(requestConfig));
+                setExportCode(generatePowerShellFromConfig(requestConfig, getEnvVariable));
             }
             setImportInput('');
             setImportError('');
@@ -96,8 +96,8 @@ export default function CurlManagerModal({ isOpen, onClose, requestConfig }) {
                         <button
                             onClick={() => setActiveTab('export')}
                             className={`pb-2 border-b-2 flex items-center gap-2 transition-colors ${activeTab === 'export'
-                                    ? 'border-brand-orange text-text-primary'
-                                    : 'border-transparent text-text-muted hover:text-text-secondary'
+                                ? 'border-brand-orange text-text-primary'
+                                : 'border-transparent text-text-muted hover:text-text-secondary'
                                 }`}
                         >
                             <ArrowUpFromLine size={14} /> Export (HTTP → cURL)
@@ -105,8 +105,8 @@ export default function CurlManagerModal({ isOpen, onClose, requestConfig }) {
                         <button
                             onClick={() => setActiveTab('import')}
                             className={`pb-2 border-b-2 flex items-center gap-2 transition-colors ${activeTab === 'import'
-                                    ? 'border-brand-orange text-text-primary'
-                                    : 'border-transparent text-text-muted hover:text-text-secondary'
+                                ? 'border-brand-orange text-text-primary'
+                                : 'border-transparent text-text-muted hover:text-text-secondary'
                                 }`}
                         >
                             <ArrowDownToLine size={14} /> Import (cURL → HTTP)

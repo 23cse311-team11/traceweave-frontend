@@ -4,8 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Copy, CheckCircle2, TerminalSquare } from 'lucide-react';
 import { generateCurlFromConfig } from '@/utils/curlUtils';
+import { useAppStore } from '@/store/useAppStore';
 
 export default function GenerateCodeModal({ isOpen, onClose, requestConfig }) {
+    const { getEnvVariable } = useAppStore();
     const [copied, setCopied] = useState(false);
     const [curlCode, setCurlCode] = useState('');
     const [mounted, setMounted] = useState(false);
@@ -13,7 +15,7 @@ export default function GenerateCodeModal({ isOpen, onClose, requestConfig }) {
     useEffect(() => {
         setMounted(true);
         if (isOpen && requestConfig) {
-            setCurlCode(generateCurlFromConfig(requestConfig));
+            setCurlCode(generateCurlFromConfig(requestConfig, getEnvVariable));
         }
     }, [isOpen, requestConfig]);
 
