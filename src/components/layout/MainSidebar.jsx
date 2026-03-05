@@ -1,6 +1,6 @@
 'use client';
 
-import { Layout, Clock, Box, Layers, Settings, Activity, LogOut } from 'lucide-react';
+import { Layout, Clock, Box, Layers, Settings, Activity, LogOut, GitBranch } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
 import logo from '@/assets/traceWeaveLogo.png';
@@ -14,6 +14,7 @@ const SIDEBAR_ITEMS = [
   { id: 'Monitor', icon: Activity, view: 'runner' },
   { id: 'Environments', icon: Layers, view: 'runner' },
   { id: 'History', icon: Clock, view: 'runner' },
+  { id: 'Workflows', icon: GitBranch, view: 'workflow' },
   { id: 'APIs', icon: Box, view: 'runner' },
 ];
 
