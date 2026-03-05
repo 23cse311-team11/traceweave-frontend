@@ -177,3 +177,22 @@ code {
   color: var(--brand-primary);
   border: 1px solid rgba(234, 194, 255, 0.1);
 }
+
+@utility no-scrollbar {
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Professional Scroll Hint: Masking */
+@utility mask-fade {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    black 10%,
+    black 90%,
+    transparent 100%
+  );
+}
