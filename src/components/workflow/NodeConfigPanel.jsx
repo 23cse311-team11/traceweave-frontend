@@ -4,9 +4,12 @@ import { Settings2, GitBranch, Globe, X, FileJson, Clock, FlaskConical, Terminal
 import { useAppStore } from '@/store/useAppStore';
 
 export default function NodeConfigPanel({ selectedNode, updateNodeData, onClose }) {
-  // Pull requests from the store so the user can select one to run
   const { requestStates } = useAppStore();
   const allRequests = Object.values(requestStates || {});
+
+  // Custom dropdown state
+  const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
+  const [dropdownSearch, setDropdownSearch] = React.useState('');
 
   if (!selectedNode) return null;
 
@@ -52,25 +55,86 @@ export default function NodeConfigPanel({ selectedNode, updateNodeData, onClose 
         {/* --- REQUEST NODE CONFIG --- */}
         {type === 'requestNode' && (
           <div className="space-y-4 animate-in fade-in">
-            <div>
+            <div className="relative">
               <label className="block text-xs font-semibold text-text-secondary mb-1.5">Select Request to Execute</label>
-              <select
-                value={data.requestId || ''}
-                onChange={(e) => {
-                  const req = requestStates[e.target.value];
-                  handleDataChange('requestId', e.target.value);
-                  handleDataChange('method', req?.config?.method || 'GET');
-                  handleDataChange('url', req?.config?.url || '');
-                }}
-                className="w-full bg-bg-input border border-border-subtle rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-blue"
+
+              {/* Custom Dropdown Toggle */}
+              <div
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="w-full bg-[#0d0d0d] border border-border-subtle hover:border-brand-blue/50 rounded-lg px-3 py-2 text-sm cursor-pointer flex items-center justify-between transition-colors"
               >
-                <option value="" disabled>-- Choose a Request --</option>
-                {allRequests.map(req => (
-                  <option key={req.id} value={req.id}>
-                    [{req.config?.method || 'GET'}] {req.name || 'Untitled'}
-                  </option>
-                ))}
-              </select>
+                {data.requestId && requestStates[data.requestId] ? (
+                  <div className="flex items-center gap-2 truncate">
+                    <span className={`text-[10px] font-black tracking-widest px-1.5 py-0.5 rounded bg-white/5 uppercase ${requestStates[data.requestId]?.config?.method === 'GET' ? 'text-emerald-400' :
+                        requestStates[data.requestId]?.config?.method === 'POST' ? 'text-amber-400' :
+                          requestStates[data.requestId]?.config?.method === 'PUT' ? 'text-blue-400' :
+                            requestStates[data.requestId]?.config?.method === 'DELETE' ? 'text-rose-400' :
+                              'text-text-muted'
+                      }`}>
+                      {requestStates[data.requestId]?.config?.method || 'GET'}
+                    </span>
+                    <span className="truncate text-white text-xs font-medium">
+                      {requestStates[data.requestId].name || 'Untitled Request'}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-text-muted text-xs">-- Choose a Request --</span>
+                )}
+                {/* Arrow */}
+                <svg className={`w-4 h-4 text-text-muted transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+
+              {/* Dropdown Menu */}
+              {isDropdownOpen && (
+                <div className="absolute z-50 top-full left-0 right-0 mt-2 bg-bg-panel border border-border-strong rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.8)] overflow-hidden animate-in fade-in slide-in-from-top-2">
+                  <div className="p-2 border-b border-white/5 bg-black/20">
+                    <input
+                      type="text"
+                      placeholder="Search requests..."
+                      value={dropdownSearch}
+                      onChange={(e) => setDropdownSearch(e.target.value)}
+                      className="w-full bg-transparent text-xs text-white placeholder-text-muted focus:outline-none px-1"
+                      autoFocus
+                    />
+                  </div>
+                  <div className="max-h-60 overflow-y-auto no-scrollbar py-1">
+                    {allRequests
+                      .filter(r => r.name.toLowerCase().includes(dropdownSearch.toLowerCase()) || (r.config?.url && r.config.url.toLowerCase().includes(dropdownSearch.toLowerCase())))
+                      .map(req => (
+                        <div
+                          key={req.id}
+                          onClick={() => {
+                            handleDataChange('requestId', req.id);
+                            handleDataChange('method', req.config?.method || 'GET');
+                            handleDataChange('url', req.config?.url || '');
+                            setIsDropdownOpen(false);
+                            setDropdownSearch('');
+                          }}
+                          className={`px-3 py-2 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors ${data.requestId === req.id ? 'bg-brand-blue/10 border-l-2 border-brand-blue' : 'border-l-2 border-transparent'}`}
+                        >
+                          <div className="flex items-center gap-2 overflow-hidden">
+                            <span className={`text-[9px] font-black tracking-widest px-1 py-0.5 rounded bg-black/40 uppercase shrink-0 ${req.config?.method === 'GET' ? 'text-emerald-400' :
+                                req.config?.method === 'POST' ? 'text-amber-400' :
+                                  req.config?.method === 'PUT' ? 'text-blue-400' :
+                                    req.config?.method === 'DELETE' ? 'text-rose-400' :
+                                      'text-text-muted'
+                              }`}>
+                              {req.config?.method || 'GET'}
+                            </span>
+                            <span className="truncate text-xs font-semibold text-text-primary">
+                              {req.name || 'Untitled Request'}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    {allRequests.filter(r => r.name.toLowerCase().includes(dropdownSearch.toLowerCase())).length === 0 && (
+                      <div className="p-3 text-center text-xs text-text-muted">No requests found</div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
@@ -79,12 +143,13 @@ export default function NodeConfigPanel({ selectedNode, updateNodeData, onClose 
                 type="number"
                 value={data.timeout || 5000}
                 onChange={(e) => handleDataChange('timeout', parseInt(e.target.value))}
-                className="w-full bg-bg-input border border-border-subtle rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-blue font-mono"
+                className="w-full bg-[#0d0d0d] border border-border-subtle rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-blue font-mono text-text-primary"
               />
             </div>
 
-            <p className="text-xs text-text-muted bg-brand-blue/5 border border-brand-blue/20 p-3 rounded-lg leading-relaxed">
-              When this node runs, the response will be stored in the runtime context as <code className="text-brand-blue bg-bg-base px-1 rounded">responses['{id}']</code>.
+            <p className="text-xs text-text-muted bg-brand-blue/5 border border-brand-blue/20 p-3 rounded-lg leading-relaxed flex items-start gap-2 mt-4">
+              <Globe size={14} className="text-brand-blue shrink-0 mt-0.5" />
+              <span>Response will be stored in <code className="text-brand-blue font-mono bg-black/30 px-1 py-0.5 rounded text-[10px]">responses['{id}']</code>.</span>
             </p>
           </div>
         )}

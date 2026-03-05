@@ -12,7 +12,12 @@ export default function WorkflowBuilderPage() {
   const router = useRouter();
   const { workspaceId, workflowId } = params;
   
-  const { activeWorkflow, fetchWorkflow, saveWorkflowGraph } = useAppStore();
+  const { activeWorkflow, fetchWorkflow, saveWorkflowGraph, setActiveSidebarItem } = useAppStore();
+
+  // Highlight Workflows in sidebar
+  useEffect(() => {
+    setActiveSidebarItem('Workflows');
+  }, [setActiveSidebarItem]);
 
   useEffect(() => {
     if (workflowId) {

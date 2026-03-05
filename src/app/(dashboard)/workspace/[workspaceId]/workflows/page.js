@@ -8,15 +8,22 @@ import { GitMerge, Plus, Search, Play, Clock, MoreVertical } from 'lucide-react'
 export default function WorkflowsDashboard() {
   const router = useRouter();
   const { workspaceId } = useParams();
-  const { workflows, activeWorkspaceId, workspaces = [], fetchWorkspacesWorkflows, createWorkflow } = useAppStore();
+  const { workflows, activeWorkspaceId, workspaces = [], fetchWorkspacesWorkflows, createWorkflow, setActiveSidebarItem } = useAppStore();
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Make sure sidebar highlights 'Workflows'
   useEffect(() => {
-    if (activeWorkspaceId) fetchWorkspacesWorkflows(activeWorkspaceId);
-  }, [activeWorkspaceId]);
+    setActiveSidebarItem('Workflows');
+  }, [setActiveSidebarItem]);
+
+  useEffect(() => {
+    if (workspaceId) {
+        fetchWorkspacesWorkflows(workspaceId);
+    }
+  }, [workspaceId]);
 
   const handleCreateWorkflow = async () => {
-      const workspace = activeWorkspaceId || (workspaces.length > 0 ? workspaces[0].id : null);
+      const workspace = workspaceId || activeWorkspaceId || (workspaces.length > 0 ? workspaces[0].id : null);
       if (!workspace) {
           alert("Please select a workspace first to create a workflow.");
           return;
@@ -34,7 +41,7 @@ export default function WorkflowsDashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-bg-base text-text-primary flex flex-col p-8 max-w-7xl mx-auto w-full">
+    <div className="flex-1 overflow-y-auto no-scrollbar bg-transparent text-text-primary flex flex-col p-8 w-full relative z-10">
       
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">

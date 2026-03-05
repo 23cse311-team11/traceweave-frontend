@@ -60,10 +60,27 @@ function CanvasEditor({ initialData, onSave }) {
     const [clientId] = useState(() => Math.random().toString(36).substring(7));
     const [isRunning, setIsRunning] = useState(false);
 
+    // TRACK CHANGES FOR SAVE BUTTON
+    const [isDirty, setIsDirty] = useState(false);
+
     const { screenToFlowPosition, getNodes, getEdges } = useReactFlow();
 
+    // Wrapper for changes to set dirty
+    const handleNodesChange = useCallback((changes) => {
+        onNodesChange(changes);
+        setIsDirty(true);
+    }, [onNodesChange]);
+
+    const handleEdgesChange = useCallback((changes) => {
+        onEdgesChange(changes);
+        setIsDirty(true);
+    }, [onEdgesChange]);
+
     const onConnect = useCallback(
-        (params) => setEdges((eds) => addEdge({ ...params, animated: true, style: { stroke: '#FF6F00', strokeWidth: 2 } }, eds)),
+        (params) => {
+            setEdges((eds) => addEdge({ ...params, animated: true, style: { stroke: '#FF6F00', strokeWidth: 2 } }, eds));
+            setIsDirty(true);
+        },
         [setEdges],
     );
 
@@ -89,11 +106,11 @@ function CanvasEditor({ initialData, onSave }) {
 
             setNodes((nds) => nds.concat(newNode));
             setSelectedNodeId(newNode.id); // Auto-select on drop
+            setIsDirty(true);
         },
         [screenToFlowPosition, setNodes],
     );
 
-    // ✨ HANDLER TO UPDATE NODE DATA INSTANTLY
     const updateNodeData = useCallback((nodeId, newData) => {
         setNodes((nds) =>
             nds.map((node) => {
@@ -103,11 +120,16 @@ function CanvasEditor({ initialData, onSave }) {
                 return node;
             })
         );
+        // We only mark as dirty if it's not an executionStatus update
+        if (!newData.hasOwnProperty('executionStatus') && !newData.hasOwnProperty('error')) {
+            setIsDirty(true);
+        }
     }, [setNodes]);
 
     const handleSaveWorkflow = () => {
         const flowData = { nodes: getNodes(), edges: getEdges() };
         if (onSave) onSave(flowData);
+        setIsDirty(false); // Reset dirty state
     };
 
     // ✨ WEBSOCKET CONNECTION
@@ -135,13 +157,53 @@ function CanvasEditor({ initialData, onSave }) {
 
     // ✨ RUN WORKFLOW
     const handleRunWorkflow = async () => {
+        if (isRunning) {
+            // "Stop" clicked
+            setIsRunning(false);
+            // Revert executing nodes to idle
+            setNodes((nds) => nds.map((n) => (n.data.executionStatus === 'running' ? { ...n, data: { ...n.data, executionStatus: 'idle' } } : n)));
+            return;
+        }
+
         setIsRunning(true);
         // Reset node states
         setNodes((nds) => nds.map((n) => ({ ...n, data: { ...n.data, executionStatus: 'idle', error: null } })));
 
-        const flowData = { nodes: getNodes(), edges: getEdges() };
+        // 1. Gather Environment Variables from the Global Store
+        const store = useAppStore.getState();
+        const envs = store.workspaceEnvironments[store.activeWorkspaceId] || [];
+        const activeEnv = envs[store.selectedEnvIndex];
+
+        const environmentValues = activeEnv ? activeEnv.variables.reduce((acc, v) => {
+            if (v.key && v.active !== false) acc[v.key] = v.value;
+            return acc;
+        }, {}) : {};
+
+        // 2. Hydrate Request Nodes with their full configurations
+        const hydratedNodes = getNodes().map(node => {
+            if (node.type === 'requestNode' && node.data.requestId) {
+                const fullReq = store.requestStates[node.data.requestId];
+                if (fullReq) {
+                    return {
+                        ...node,
+                        data: {
+                            ...node.data,
+                            requestConfig: fullReq.config // Includes headers, params, body, auth
+                        }
+                    };
+                }
+            }
+            return node;
+        });
+
+        const flowData = { nodes: hydratedNodes, edges: getEdges() };
+
         try {
-            await api.post('/workflows/run-canvas', { workflow: flowData, clientId });
+            await api.post('/workflows/run-canvas', {
+                workflow: flowData,
+                clientId,
+                environmentValues
+            });
         } catch (err) {
             console.error(err);
             setIsRunning(false);
@@ -159,8 +221,8 @@ function CanvasEditor({ initialData, onSave }) {
                 <ReactFlow
                     nodes={nodes}
                     edges={edges}
-                    onNodesChange={onNodesChange}
-                    onEdgesChange={onEdgesChange}
+                    onNodesChange={handleNodesChange}
+                    onEdgesChange={handleEdgesChange}
                     onConnect={onConnect}
                     onDrop={onDrop}
                     onDragOver={onDragOver}
@@ -174,19 +236,20 @@ function CanvasEditor({ initialData, onSave }) {
                     <Panel position="top-right" className="m-4 flex items-center gap-3">
                         <button
                             onClick={handleRunWorkflow}
-                            disabled={isRunning}
-                            className={`flex items-center gap-2 font-bold py-2 px-4 rounded-lg shadow-lg transition-colors ${isRunning ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                            className={`flex items-center gap-2 font-bold py-2 px-4 rounded-lg shadow-lg transition-colors ${isRunning ? 'bg-red-600 hover:bg-red-500 text-white' : 'bg-emerald-600 hover:bg-emerald-500 text-white'
                                 }`}
                         >
-                            {isRunning ? <Square size={16} className="animate-pulse" /> : <Play size={16} />}
-                            {isRunning ? 'Running...' : 'Run Workflow'}
+                            {isRunning ? <Square size={16} /> : <Play size={16} />}
+                            {isRunning ? 'Stop Running' : 'Run Workflow'}
                         </button>
 
                         <button
                             onClick={handleSaveWorkflow}
-                            className="flex items-center gap-2 bg-brand-orange hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-colors"
+                            disabled={!isDirty}
+                            className={`flex items-center gap-2 font-bold py-2 px-4 rounded-lg shadow-lg transition-colors ${isDirty ? 'bg-brand-orange hover:bg-orange-600 text-white' : 'bg-bg-panel border border-border-strong text-text-muted cursor-default'
+                                }`}
                         >
-                            <Save size={16} /> Save
+                            <Save size={16} /> {isDirty ? 'Save' : 'Saved'}
                         </button>
                     </Panel>
 
