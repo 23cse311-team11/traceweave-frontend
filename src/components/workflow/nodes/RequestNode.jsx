@@ -1,60 +1,96 @@
 'use client';
 import { Handle, Position } from '@xyflow/react';
-import { Globe, Settings2, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
-import { useAppStore } from '@/store/useAppStore';
+import { Globe, Loader2, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
 
-export default function RequestNode({ data }) {
-    const { requestStates } = useAppStore();
-    const request = data.requestId ? requestStates[data.requestId] : null;
-    const reqName = request ? request.name : 'Unconfigured Request';
-    const reqMethod = request?.config?.method || data.method || 'GET';
-    const reqUrl = request?.config?.url || data.url || (data.requestId ? 'No URL Configured' : 'Select endpoint...');
-    
-    return (
-        <div className={`bg-bg-panel border-2 rounded-xl shadow-lg min-w-[220px] transition-all group relative ${
-            data.executionStatus === 'running' ? 'border-brand-blue shadow-[0_0_15px_rgba(59,130,246,0.4)]' :
-            data.executionStatus === 'success' ? 'border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]' :
-            data.executionStatus === 'failed' ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.4)]' :
-            'border-border-strong hover:border-brand-blue'
-        }`}>
-            <Handle type="target" position={Position.Left} className="w-3 h-3 bg-border-strong group-hover:bg-brand-blue border-2 border-bg-panel" />
+const METHOD_STYLES = {
+  GET:    { bg: 'bg-emerald-500/15', text: 'text-emerald-400', border: 'border-emerald-500/30' },
+  POST:   { bg: 'bg-blue-500/15',   text: 'text-blue-400',    border: 'border-blue-500/30' },
+  PUT:    { bg: 'bg-amber-500/15',  text: 'text-amber-400',   border: 'border-amber-500/30' },
+  PATCH:  { bg: 'bg-orange-500/15', text: 'text-orange-400',  border: 'border-orange-500/30' },
+  DELETE: { bg: 'bg-red-500/15',    text: 'text-red-400',     border: 'border-red-500/30' },
+};
 
-            <div className="p-3 border-b border-border-subtle flex items-center justify-between bg-bg-base/50 rounded-t-xl group-hover:bg-bg-input/50 transition-colors">
-                <div className="flex items-center gap-2 overflow-hidden pr-2">
-                    <Globe size={14} className="text-brand-blue shrink-0" />
-                    <span className="font-bold text-xs text-text-primary truncate" title={reqName}>{reqName}</span>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                    {data.executionStatus === 'running' && <Loader2 size={14} className="text-brand-blue animate-spin" />}
-                    {data.executionStatus === 'success' && <CheckCircle2 size={14} className="text-emerald-500" />}
-                    {data.executionStatus === 'failed' && <AlertCircle size={14} className="text-red-500" />}
-                    <Settings2 size={12} className="text-text-muted opacity-0 group-hover:opacity-100 cursor-pointer hover:text-brand-orange transition-all" />
-                </div>
-            </div>
+export default function RequestNode({ data, selected }) {
+  const { executionStatus, method = 'GET', url = '', requestConfig } = data;
+  const displayMethod = (requestConfig?.method || method || 'GET').toUpperCase();
+  const displayUrl = requestConfig?.url || url || '';
+  const displayName = requestConfig?.name || 'Untitled Request';
+  const ms = displayMethod;
+  const mStyle = METHOD_STYLES[ms] || METHOD_STYLES.GET;
 
-            <div className="p-3 bg-black/20 flex flex-col gap-1.5 rounded-b-xl">
-                <div className="flex items-center gap-2 overflow-hidden">
-                    <span className={`text-[9px] font-black tracking-widest px-1.5 py-0.5 rounded uppercase shrink-0 ${
-                        reqMethod === 'GET' ? 'bg-emerald-500/10 text-emerald-500' :
-                        reqMethod === 'POST' ? 'bg-amber-500/10 text-amber-500' :
-                        reqMethod === 'PUT' ? 'bg-blue-500/10 text-blue-500' :
-                        reqMethod === 'DELETE' ? 'bg-rose-500/10 text-rose-500' :
-                        'bg-brand-orange/10 text-brand-orange'
-                    }`}>
-                        {reqMethod}
-                    </span>
-                    <span className="text-[10px] text-text-secondary truncate font-mono flex-1" title={reqUrl}>
-                        {reqUrl}
-                    </span>
-                </div>
-                {data.error && (
-                    <div className="text-[10px] text-red-400 bg-red-500/10 p-1.5 rounded mt-1 border border-red-500/20 leading-tight">
-                        {data.error}
-                    </div>
-                )}
-            </div>
+  // Strip protocol for cleaner display
+  const cleanUrl = displayUrl.replace(/^https?:\/\//, '').split('?')[0];
 
-            <Handle type="source" position={Position.Right} className="w-3 h-3 bg-border-strong group-hover:bg-brand-blue border-2 border-bg-panel" />
+  return (
+    <div className="relative group" style={{ filter: selected ? 'drop-shadow(0 0 14px rgba(59,130,246,0.4))' : undefined }}>
+      {selected && <div className="absolute inset-0 rounded-2xl border-2 border-blue-400/60 animate-pulse pointer-events-none" />}
+
+      <div className={`relative bg-gradient-to-br from-[#0d1525] to-[#0a1020] border rounded-2xl shadow-xl min-w-[240px] max-w-[280px] transition-all duration-200 overflow-hidden
+        ${executionStatus === 'running' ? 'border-blue-400 shadow-[0_0_24px_rgba(59,130,246,0.4)]' :
+          executionStatus === 'success' ? 'border-emerald-500 shadow-[0_0_14px_rgba(16,185,129,0.3)]' :
+          executionStatus === 'failed'  ? 'border-red-500 shadow-[0_0_14px_rgba(239,68,68,0.4)]' :
+          'border-blue-900/50 hover:border-blue-700/50'}`}
+      >
+        <div className="h-0.5 bg-gradient-to-r from-blue-500 via-blue-400 to-transparent" />
+
+        {/* Header */}
+        <div className="px-3 py-2.5 flex items-center justify-between bg-blue-500/5 border-b border-blue-900/30">
+          <div className="flex items-center gap-2">
+            <Globe size={13} className="text-blue-400 shrink-0" />
+            <span className="text-xs font-bold text-white truncate max-w-[140px]">{displayName}</span>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {executionStatus === 'running' && <Loader2 size={13} className="text-blue-400 animate-spin" />}
+            {executionStatus === 'success' && <CheckCircle2 size={13} className="text-emerald-400" />}
+            {executionStatus === 'failed'  && <AlertCircle  size={13} className="text-red-400" />}
+          </div>
         </div>
-    );
+
+        {/* Body */}
+        <div className="px-3 py-2.5 space-y-2">
+          {/* Method + URL */}
+          <div className="flex items-center gap-2">
+            <span className={`text-[9px] font-black px-1.5 py-0.5 rounded border uppercase tracking-wider shrink-0 ${mStyle.bg} ${mStyle.text} ${mStyle.border}`}>
+              {displayMethod}
+            </span>
+            <span className="text-[11px] font-mono text-white/50 truncate">
+              {cleanUrl || <span className="text-white/25 italic">No URL configured</span>}
+            </span>
+          </div>
+
+          {/* Timeout badge */}
+          {data.timeout && (
+            <div className="flex items-center gap-1 text-[10px] text-white/30">
+              <Clock size={9} />
+              <span>{data.timeout}ms timeout</span>
+            </div>
+          )}
+
+          {/* Error display */}
+          {data.error && executionStatus === 'failed' && (
+            <div className="text-[10px] text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-2 py-1.5 leading-snug">
+              ✗ {data.error}
+            </div>
+          )}
+
+          {/* No request configured state */}
+          {!data.requestId && (
+            <div className="text-[10px] text-amber-400/70 bg-amber-500/5 border border-amber-500/15 rounded-lg px-2 py-1.5">
+              ⚡ Click to configure request
+            </div>
+          )}
+        </div>
+
+        {/* Running shimmer */}
+        {executionStatus === 'running' && (
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/5 to-transparent animate-[shimmer_1.2s_ease-in-out_infinite]" />
+        )}
+      </div>
+
+      <Handle type="target" position={Position.Left}
+        className="!w-3.5 !h-3.5 !bg-blue-500 !border-2 !border-[#0a1020] transition-transform group-hover:!scale-125" />
+      <Handle type="source" position={Position.Right}
+        className="!w-3.5 !h-3.5 !bg-blue-500 !border-2 !border-[#0a1020] transition-transform group-hover:!scale-125" />
+    </div>
+  );
 }
