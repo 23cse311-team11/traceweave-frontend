@@ -12,7 +12,8 @@ const SIDEBAR_MAPPING = {
     monitor: 'Monitor',
     environments: 'Environments',
     history: 'History',
-    apis: 'APIs'
+    apis: 'APIs',
+    workflows: 'Workflows'
 };
 
 export default function WorkspaceEditor() {

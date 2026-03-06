@@ -6,6 +6,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { ArrowLeft, GitMerge } from 'lucide-react';
 import WorkflowCanvasWrapper from '@/components/workflow/WorkflowCanvas';
 import { PacmanLoader } from 'react-spinners';
+import { useModal } from '@/components/providers/ModalProvider';
 
 export default function WorkflowBuilderPage() {
   const params = useParams();
@@ -14,7 +15,8 @@ export default function WorkflowBuilderPage() {
   
   const { activeWorkflow, fetchWorkflow, saveWorkflowGraph, setActiveSidebarItem } = useAppStore();
 
-  // Highlight Workflows in sidebar
+  const { showAlert } = useModal();
+
   useEffect(() => {
     setActiveSidebarItem('Workflows');
   }, [setActiveSidebarItem]);
@@ -35,11 +37,11 @@ export default function WorkflowBuilderPage() {
 
   const handleSave = async (flowData) => {
     await saveWorkflowGraph(workflowId, flowData);
-    alert('Workflow Saved!');
+    showAlert('Workflow Saved!');
   };
 
   return (
-    <div className="h-screen w-full flex flex-col bg-bg-base overflow-hidden">
+    <div className="h-full w-full flex flex-col bg-bg-base overflow-hidden">
       
       {/* Slim Header for Fullscreen Mode */}
       <div className="h-14 shrink-0 bg-bg-panel border-b border-border-strong px-4 flex items-center justify-between z-10 shadow-sm">
@@ -66,7 +68,7 @@ export default function WorkflowBuilderPage() {
       </div>
 
       {/* Canvas Area */}
-      <div className="flex-1 w-full relative">
+      <div className="flex-1 w-full relative min-h-0"> 
         <WorkflowCanvasWrapper 
           initialData={activeWorkflow.flowData} 
           onSave={handleSave} 

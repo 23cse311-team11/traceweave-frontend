@@ -1,10 +1,10 @@
 'use client';
 import React from 'react';
-import { Settings2, GitBranch, Globe, X, FileJson, Clock, FlaskConical, Terminal, Flag } from 'lucide-react';
+import { Settings2, GitBranch, Globe, X, FileJson, Clock, FlaskConical, Terminal, Flag, Trash2 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 
 export default function NodeConfigPanel({ selectedNode, updateNodeData, onClose }) {
-  const { requestStates } = useAppStore();
+  const { requestStates, deleteNode } = useAppStore();
   const allRequests = Object.values(requestStates || {});
 
   // Custom dropdown state
@@ -17,6 +17,11 @@ export default function NodeConfigPanel({ selectedNode, updateNodeData, onClose 
 
   const handleDataChange = (key, value) => {
     updateNodeData(id, { [key]: value });
+  };
+
+   const handleDelete = () => {
+    deleteNode(id);
+    onClose();
   };
 
   return (
@@ -255,6 +260,17 @@ export default function NodeConfigPanel({ selectedNode, updateNodeData, onClose 
           <p className="text-xs text-text-muted text-center mt-4">
             The End node marks the completion of a workflow path.
           </p>
+        )}
+
+        {type !== 'startNode' && (
+        <div className="p-4 border-t border-border-subtle bg-bg-base/30">
+            <button 
+                onClick={handleDelete}
+                className="w-full flex items-center justify-center gap-2 text-red-500 hover:bg-red-500/10 border border-red-500/20 py-2 rounded-lg text-sm font-bold transition-colors"
+            >
+                <Trash2 size={16} /> Delete Node
+            </button>
+          </div>
         )}
       </div>
     </div>
