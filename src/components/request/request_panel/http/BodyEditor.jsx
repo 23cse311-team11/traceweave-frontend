@@ -1,8 +1,10 @@
 'use client';
+import { useState } from 'react';
 import { useAppStore } from '@/store/useAppStore';
-import { ChevronDown, UploadCloud, File, X } from 'lucide-react';
+import { ChevronDown, UploadCloud, File, X, Cloud, Loader2 } from 'lucide-react';
 import Editor from '@monaco-editor/react';
 import KeyValueTable from '@/components/request/KeyValueTable';
+import { api } from '@/lib/api';
 
 const BODY_TYPES = [
     { id: 'none', label: 'none' },
@@ -22,12 +24,39 @@ const RAW_LANGUAGES = [
 
 export default function BodyEditor() {
     const store = useAppStore();
+    const [isUploading, setIsUploading] = useState(false);
+    
     const activeId = store.activeTabId;
     const request = store.requestStates[activeId];
     const bodyState = request?.config?.body || { type: 'none', language: 'json' };
 
     const updateBody = (field, value) => {
         store.updateActiveRequestDeep(['config', 'body', field], value);
+    };
+
+    const handleBinaryUpload = async (file) => {
+        try {
+            setIsUploading(true);
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const res = await api.post('/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            const secureUrl = res.data?.secure_url || res.data?.url || res.data;
+            updateBody('binaryFile', {
+                isCloud: true,
+                url: secureUrl,
+                name: file.name,
+                type: file.type,
+                size: file.size
+            });
+        } catch (error) {
+            console.error("Binary cloud upload failed", error);
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     return (
@@ -105,8 +134,19 @@ export default function BodyEditor() {
                 {bodyState.type === 'binary' && (
                     <div className="flex flex-col items-center justify-center h-full text-text-secondary">
                         <div className="border border-dashed border-border-strong rounded-lg p-8 flex flex-col items-center gap-4 bg-bg-input/20 relative">
-                            {/* If a file is selected, show it. Otherwise, show upload prompt */}
-                            {bodyState.binaryFile instanceof File ? (
+                            
+                            {bodyState.binaryFile?.isCloud ? (
+                                <>
+                                    <Cloud size={32} className="text-blue-400" />
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm font-semibold text-text-primary">{bodyState.binaryFile.name}</span>
+                                        <span className="text-[10px] bg-blue-400/20 text-blue-400 px-1.5 py-0.5 rounded">Cloud</span>
+                                        <button onClick={() => updateBody('binaryFile', null)} className="text-text-secondary hover:text-red-500 ml-2">
+                                            <X size={16} />
+                                        </button>
+                                    </div>
+                                </>
+                            ) : bodyState.binaryFile instanceof File ? (
                                 <>
                                     <File size={32} className="text-emerald-500" />
                                     <div className="flex items-center gap-2">
@@ -116,6 +156,15 @@ export default function BodyEditor() {
                                         </button>
                                     </div>
                                     <span className="text-xs text-text-muted">{(bodyState.binaryFile.size / 1024).toFixed(2)} KB</span>
+                                    
+                                    <button 
+                                        onClick={() => handleBinaryUpload(bodyState.binaryFile)}
+                                        disabled={isUploading}
+                                        className="mt-2 bg-brand-primary text-black px-4 py-2 rounded-md text-xs font-bold flex items-center gap-2 hover:bg-brand-primary/80 transition-colors"
+                                    >
+                                        {isUploading ? <Loader2 size={14} className="animate-spin" /> : <Cloud size={14} />}
+                                        {isUploading ? 'Uploading...' : 'Save to Cloudinary'}
+                                    </button>
                                 </>
                             ) : (
                                 <>
@@ -129,7 +178,7 @@ export default function BodyEditor() {
                                             if (file) updateBody('binaryFile', file);
                                         }}
                                     />
-                                    <span className="bg-brand-primary text-white px-4 py-2 rounded-full text-xs font-bold pointer-events-none">Choose File</span>
+                                    <span className="bg-brand-primary text-black px-4 py-2 rounded-full text-xs font-bold pointer-events-none">Choose File</span>
                                 </>
                             )}
                         </div>
