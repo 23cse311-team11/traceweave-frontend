@@ -41,7 +41,7 @@ export default function HistoryPage() {
 
   return (
     // ✨ Full screen height, no outer padding
-    <div className="h-screen bg-bg-base text-text-primary flex flex-col w-full overflow-hidden">
+    <div className="h-screen bg-bg-base text-text-primary flex flex-col w-full overflow-hidden no-scrollbar">
       
       {/* Header - Edge to Edge */}
       <div className="flex items-center justify-between px-6 py-5 border-b border-border-subtle bg-bg-panel/40 shrink-0">
@@ -64,7 +64,7 @@ export default function HistoryPage() {
       </div>
 
       {/* Datagrid Container - Takes remaining height */}
-      <div className="flex-1 overflow-auto bg-bg-base">
+      <div className="flex-1 overflow-auto bg-bg-base no-scrollbar">
         <table className="w-full text-left text-sm whitespace-nowrap">
           <thead className="bg-bg-panel/80 text-text-muted sticky top-0 backdrop-blur-md border-b border-border-subtle uppercase tracking-wider text-[11px] font-semibold z-10">
             <tr>

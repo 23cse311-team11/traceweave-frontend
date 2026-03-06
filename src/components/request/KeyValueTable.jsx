@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Check, Trash2, Plus, FileUp, AlertTriangle, Cloud, Loader2, X } from 'lucide-react';
+import { Check, Trash2, Plus, FileUp, AlertTriangle, Cloud, Loader2, X, ExternalLink } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { api } from '@/lib/api';
 
@@ -104,11 +104,35 @@ export default function KeyValueTable({ listKey, data, variant = 'standard' }) {
                                                 <input type="file" className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" onChange={(e) => e.target.files[0] && store.attachFileToFormdata(index, e.target.files[0], e.target.files[0].path)} />
                                             </div>
                                         ) : item.value?.isCloud ? (
-                                            <div className="flex items-center gap-1.5 text-blue-400 bg-blue-400/10 px-2 py-1 rounded text-[10px] border border-blue-400/20 w-full truncate relative z-20">
-                                                <Cloud size={12} className="shrink-0" />
-                                                <span className="truncate">{item.value.name}</span>
-                                                <button onClick={() => store.updateRequestListConfig(listKey, index, 'value', null)} className="ml-auto hover:text-red-400 z-30">
-                                                    <X size={12} />
+                                            <div className="flex items-center gap-2 text-blue-400 bg-blue-400/10 px-2.5 py-1.5 rounded text-[11px] border border-blue-400/20 w-full relative z-20 group transition-all hover:bg-blue-400/20">
+                                                <Cloud size={14} className="shrink-0" />
+                                                
+                                                {/* Clickable secure link */}
+                                                <a 
+                                                    href={item.value.url} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer" 
+                                                    className="truncate font-medium hover:underline flex items-center gap-1.5 flex-1"
+                                                    title="View uploaded file in new tab"
+                                                >
+                                                    {item.value.name}
+                                                    <ExternalLink size={10} className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                                                </a>
+                                                
+                                                {/* File size indicator */}
+                                                <span className="text-[9px] text-blue-400/70 ml-2 bg-blue-400/10 px-1.5 py-0.5 rounded font-mono hidden xl:block shrink-0">
+                                                    {(item.value.size / 1024).toFixed(1)} KB
+                                                </span>
+
+                                                <button 
+                                                    onClick={(e) => { 
+                                                        e.preventDefault(); 
+                                                        store.updateRequestListConfig(listKey, index, 'value', null); 
+                                                    }} 
+                                                    className="ml-2 text-blue-400/70 hover:text-red-400 transition-colors z-30 p-0.5 rounded hover:bg-red-400/10 shrink-0"
+                                                    title="Remove file"
+                                                >
+                                                    <X size={14} />
                                                 </button>
                                             </div>
                                         ) : item.value instanceof File ? (

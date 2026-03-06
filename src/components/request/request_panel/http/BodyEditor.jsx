@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useAppStore } from '@/store/useAppStore';
-import { ChevronDown, UploadCloud, File, X, Cloud, Loader2 } from 'lucide-react';
+import { ChevronDown, UploadCloud, File, X, Cloud, Loader2, ExternalLink } from 'lucide-react';
 import Editor from '@monaco-editor/react';
 import KeyValueTable from '@/components/request/KeyValueTable';
 import { api } from '@/lib/api';
@@ -133,19 +133,44 @@ export default function BodyEditor() {
 
                 {bodyState.type === 'binary' && (
                     <div className="flex flex-col items-center justify-center h-full text-text-secondary">
-                        <div className="border border-dashed border-border-strong rounded-lg p-8 flex flex-col items-center gap-4 bg-bg-input/20 relative">
+                        <div className="border border-dashed border-border-strong rounded-xl p-10 flex flex-col items-center gap-4 bg-bg-input/10 relative min-w-[300px]">
                             
                             {bodyState.binaryFile?.isCloud ? (
-                                <>
-                                    <Cloud size={32} className="text-blue-400" />
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-sm font-semibold text-text-primary">{bodyState.binaryFile.name}</span>
-                                        <span className="text-[10px] bg-blue-400/20 text-blue-400 px-1.5 py-0.5 rounded">Cloud</span>
-                                        <button onClick={() => updateBody('binaryFile', null)} className="text-text-secondary hover:text-red-500 ml-2">
-                                            <X size={16} />
+                                <div className="flex flex-col items-center gap-3 w-full">
+                                    <div className="relative">
+                                        <Cloud size={48} className="text-blue-400" />
+                                        <div className="absolute -bottom-1 -right-1 bg-bg-panel rounded-full p-0.5 border border-border-subtle shadow-sm">
+                                            <Check size={12} className="text-emerald-500" />
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex flex-col items-center text-center w-full px-4">
+                                        <a 
+                                            href={bodyState.binaryFile.url} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="text-sm font-semibold text-text-primary hover:text-blue-400 transition-colors flex items-center justify-center gap-1.5 group w-full"
+                                        >
+                                            <span className="truncate max-w-[200px]">{bodyState.binaryFile.name}</span>
+                                            <ExternalLink size={12} className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                                        </a>
+                                        <span className="text-[11px] text-text-muted mt-1.5 font-mono">
+                                            {(bodyState.binaryFile.size / 1024).toFixed(2)} KB • {bodyState.binaryFile.type || 'binary'}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex items-center gap-4 mt-5 w-full justify-center border-t border-border-subtle pt-5">
+                                        <span className="text-[10px] uppercase tracking-wider font-bold bg-blue-400/10 text-blue-400 border border-blue-400/20 px-2 py-1 rounded">
+                                            Cloud Storage Active
+                                        </span>
+                                        <button 
+                                            onClick={() => updateBody('binaryFile', null)} 
+                                            className="text-xs text-text-secondary hover:text-red-400 flex items-center gap-1.5 px-2 py-1 rounded hover:bg-red-400/10 transition-colors"
+                                        >
+                                            <X size={14} /> Remove
                                         </button>
                                     </div>
-                                </>
+                                </div>
                             ) : bodyState.binaryFile instanceof File ? (
                                 <>
                                     <File size={32} className="text-emerald-500" />
