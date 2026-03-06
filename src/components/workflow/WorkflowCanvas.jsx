@@ -14,7 +14,7 @@ import {
     Panel
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Save, Play, Square, Terminal, X, AlignLeft, Variable, ListTree } from 'lucide-react';
+import { Save, Play, Square, Terminal, X, AlignLeft, Variable, ListTree, Trash2 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { api, WS_URL } from '@/lib/api';
 import { nanoid } from 'nanoid';
@@ -47,26 +47,51 @@ const initialNodes = [
 
 const getId = () => `node_${nanoid()}`;
 
+// ✨ CONTEXT MENU COMPONENT
+const ContextMenu = ({ id, top, left, type, onClose, onDelete }) => {
+    return (
+        <div
+            style={{ top, left }}
+            className="fixed z-[100] min-w-[160px] bg-bg-panel border border-border-strong rounded-lg shadow-2xl py-1 animate-in fade-in zoom-in-95 duration-100"
+            onClick={(e) => e.stopPropagation()}
+        >
+            <div className="px-3 py-1.5 text-[10px] font-bold text-text-muted uppercase tracking-wider border-b border-border-subtle mb-1">
+                {type === 'node' ? 'Node' : 'Edge'} Actions
+            </div>
+            <button
+                onClick={() => {
+                    onDelete(id, type);
+                    onClose();
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 transition-colors text-left"
+            >
+                <Trash2 size={14} /> Delete {type === 'node' ? 'Node' : 'Edge'}
+            </button>
+        </div>
+    );
+};
+
 function CanvasEditor({ initialData, onSave }) {
     const reactFlowWrapper = useRef(null);
     const [nodes, setNodes, onNodesChange] = useNodesState(initialData?.nodes?.length > 0 ? initialData.nodes : initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialData?.edges?.length > 0 ? initialData.edges : []);
 
     const [selectedNodeId, setSelectedNodeId] = useState(null);
-    const { activeWorkflow } = useAppStore(); // We need this to pass the Workflow ID to the backend for DB storage
+    const { activeWorkflow } = useAppStore();
 
     const [clientId] = useState(() => Math.random().toString(36).substring(7));
     const [isRunning, setIsRunning] = useState(false);
     const [isDirty, setIsDirty] = useState(false);
 
-    // ✨ DEBUG CONSOLE STATE
     const [executionResults, setExecutionResults] = useState(null);
     const [isConsoleOpen, setIsConsoleOpen] = useState(false);
-    const [consoleTab, setConsoleTab] = useState('logs'); // 'logs' | 'variables' | 'responses'
+    const [consoleTab, setConsoleTab] = useState('logs');
 
-    // ✨ RESIZE STATE
     const [consoleHeight, setConsoleHeight] = useState(300);
     const [isResizing, setIsResizing] = useState(false);
+
+    // ✨ CONTEXT MENU STATE
+    const [menu, setMenu] = useState(null);
 
     const { screenToFlowPosition, getNodes, getEdges } = useReactFlow();
 
@@ -75,15 +100,62 @@ function CanvasEditor({ initialData, onSave }) {
         setIsDirty(true);
     }, [onNodesChange]);
 
+    const handleNodesDelete = useCallback((deleted) => {
+        setIsDirty(true);
+        if (deleted.some(n => n.id === selectedNodeId)) setSelectedNodeId(null);
+    }, [selectedNodeId]);
+
     const handleEdgesChange = useCallback((changes) => {
         onEdgesChange(changes);
         setIsDirty(true);
     }, [onEdgesChange]);
 
+    const handleEdgesDelete = useCallback(() => {
+        setIsDirty(true);
+    }, []);
+
+    // ✨ REFACTORED DELETE LOGIC
+    const deleteElement = useCallback((id, type) => {
+        if (type === 'node') {
+            setNodes((nds) => nds.filter((n) => n.id !== id));
+            setEdges((eds) => eds.filter((e) => e.source !== id && e.target !== id));
+            if (id === selectedNodeId) setSelectedNodeId(null);
+        } else {
+            setEdges((eds) => eds.filter((e) => e.id !== id));
+        }
+        setIsDirty(true);
+    }, [setNodes, setEdges, selectedNodeId]);
+
     const onConnect = useCallback((params) => {
         setEdges((eds) => addEdge({ ...params, animated: true, style: { stroke: '#FF6F00', strokeWidth: 2 } }, eds));
         setIsDirty(true);
     }, [setEdges]);
+
+    // ✨ RIGHT CLICK HANDLERS
+    const onNodeContextMenu = useCallback((event, node) => {
+        event.preventDefault();
+        setMenu({
+            id: node.id,
+            type: 'node',
+            top: event.clientY,
+            left: event.clientX,
+        });
+    }, []);
+
+    const onEdgeContextMenu = useCallback((event, edge) => {
+        event.preventDefault();
+        setMenu({
+            id: edge.id,
+            type: 'edge',
+            top: event.clientY,
+            left: event.clientX,
+        });
+    }, []);
+
+    const onPaneClick = useCallback(() => {
+        setMenu(null);
+        setSelectedNodeId(null);
+    }, []);
 
     const onDragOver = useCallback((event) => {
         event.preventDefault();
@@ -127,13 +199,10 @@ function CanvasEditor({ initialData, onSave }) {
         setIsDirty(false);
     };
 
-    // ✨ RESIZE LOGIC
     useEffect(() => {
         const handleMouseMove = (e) => {
             if (!isResizing) return;
-            // Calculate height from bottom of the screen
             const newHeight = window.innerHeight - e.clientY;
-            // Set bounds: min 150px, max 80% of window
             if (newHeight > 150 && newHeight < window.innerHeight * 0.8) {
                 setConsoleHeight(newHeight);
             }
@@ -141,11 +210,11 @@ function CanvasEditor({ initialData, onSave }) {
 
         const handleMouseUp = () => {
             setIsResizing(false);
-            document.body.style.userSelect = ''; // Restore text selection
+            document.body.style.userSelect = '';
         };
 
         if (isResizing) {
-            document.body.style.userSelect = 'none'; // Prevent text highlighting while dragging
+            document.body.style.userSelect = 'none';
             document.addEventListener('mousemove', handleMouseMove);
             document.addEventListener('mouseup', handleMouseUp);
         }
@@ -156,7 +225,6 @@ function CanvasEditor({ initialData, onSave }) {
         };
     }, [isResizing]);
 
-    // ✨ WEBSOCKET CONNECTION
     useEffect(() => {
         const ws = new WebSocket(`${WS_URL}/?clientId=${clientId}`);
 
@@ -173,7 +241,7 @@ function CanvasEditor({ initialData, onSave }) {
                     setIsRunning(false);
                     if (data.context) {
                         setExecutionResults(data.context);
-                        setIsConsoleOpen(true); // Automatically open console when done
+                        setIsConsoleOpen(true);
                     }
                 }
             } catch (e) { }
@@ -182,7 +250,6 @@ function CanvasEditor({ initialData, onSave }) {
         return () => ws.close();
     }, [clientId, updateNodeData]);
 
-    // ✨ RUN WORKFLOW
     const handleRunWorkflow = async () => {
         if (isRunning) {
             setIsRunning(false);
@@ -191,10 +258,8 @@ function CanvasEditor({ initialData, onSave }) {
         }
 
         setIsRunning(true);
-        setIsConsoleOpen(false); // Hide console while running
+        setIsConsoleOpen(false);
         setExecutionResults(null);
-
-        // Reset all node visual states
         setNodes((nds) => nds.map((n) => ({ ...n, data: { ...n.data, executionStatus: 'idle', error: null } })));
 
         const store = useAppStore.getState();
@@ -219,7 +284,7 @@ function CanvasEditor({ initialData, onSave }) {
 
         try {
             await api.post('/workflows/run-canvas', {
-                workflowId: activeWorkflow?.id, // Passing ID saves it to DB!
+                workflowId: activeWorkflow?.id,
                 workflow: flowData,
                 clientId,
                 environmentValues
@@ -236,7 +301,6 @@ function CanvasEditor({ initialData, onSave }) {
         <div className="w-full h-full relative bg-[#0B0B0B] flex overflow-hidden" ref={reactFlowWrapper}>
             <NodeLibrary />
 
-            {/* CANVAS CONTAINER */}
             <div className="flex-1 h-full relative flex flex-col">
                 <ReactFlow
                     nodes={nodes}
@@ -246,13 +310,16 @@ function CanvasEditor({ initialData, onSave }) {
                     onConnect={onConnect}
                     onDrop={onDrop}
                     onDragOver={onDragOver}
-                    onNodeClick={(e, node) => setSelectedNodeId(node.id)}
-                    onPaneClick={() => setSelectedNodeId(null)}
+                    onNodeClick={(e, node) => { setMenu(null); setSelectedNodeId(node.id); }}
+                    onPaneClick={onPaneClick}
+                    onNodeContextMenu={onNodeContextMenu}
+                    onEdgeContextMenu={onEdgeContextMenu}
+                    onNodesDelete={handleNodesDelete}
+                    onEdgesDelete={handleEdgesDelete}
                     nodeTypes={nodeTypes}
                     fitView
                     colorMode="dark"
                 >
-                    {/* ✨ POLISHED TOP-RIGHT PANEL */}
                     <Panel position="top-right" className="m-4 z-40">
                         <div className="flex items-center gap-1 bg-bg-panel/80 backdrop-blur-md p-1.5 rounded-xl border border-border-strong shadow-2xl">
                             <button
@@ -284,7 +351,6 @@ function CanvasEditor({ initialData, onSave }) {
                         </div>
                     </Panel>
 
-                    {/* Button to reopen console if we have results but closed it */}
                     {executionResults && !isConsoleOpen && (
                         <Panel position="bottom-right" className="m-4 z-40">
                              <button 
@@ -306,13 +372,15 @@ function CanvasEditor({ initialData, onSave }) {
                     <Background variant={BackgroundVariant.Dots} gap={16} size={1} color="#333" />
                 </ReactFlow>
 
+                {/* ✨ RENDER CONTEXT MENU */}
+                {menu && <ContextMenu {...menu} onClose={() => setMenu(null)} onDelete={deleteElement} />}
+
                 {/* ✨ RESIZABLE BOTTOM DEBUG CONSOLE ✨ */}
                 {isConsoleOpen && executionResults && (
                     <div 
                         style={{ height: `${consoleHeight}px` }}
                         className="absolute bottom-0 left-0 right-0 bg-[#0F0F0F]/95 backdrop-blur-xl border-t border-border-strong shadow-[0_-10px_50px_rgba(0,0,0,0.6)] z-40 flex flex-col transition-transform duration-300 ease-out"
                     >
-                        {/* Drag Handle Area */}
                         <div 
                             className="absolute top-0 left-0 right-0 h-2 cursor-ns-resize flex items-center justify-center group -mt-1 z-50"
                             onMouseDown={() => setIsResizing(true)}
@@ -320,7 +388,6 @@ function CanvasEditor({ initialData, onSave }) {
                             <div className={`w-12 h-1 rounded-full transition-colors ${isResizing ? 'bg-brand-orange' : 'bg-border-strong group-hover:bg-text-muted'}`} />
                         </div>
 
-                        {/* Console Header & Tabs */}
                         <div className="flex items-center justify-between px-4 pt-2 border-b border-border-subtle bg-transparent shrink-0">
                             <div className="flex items-center gap-6">
                                 <h3 className="text-sm font-bold font-mono text-text-primary flex items-center gap-2 py-3 border-r border-border-subtle pr-6">
@@ -346,7 +413,6 @@ function CanvasEditor({ initialData, onSave }) {
                             </button>
                         </div>
 
-                        {/* Console Body */}
                         <div className="flex-1 overflow-auto custom-scrollbar p-5">
                             {consoleTab === 'logs' && (
                                 <ul className="space-y-2 font-mono text-[13px] leading-relaxed">
@@ -374,11 +440,11 @@ function CanvasEditor({ initialData, onSave }) {
                 )}
             </div>
 
-            {/* THE SIDEBAR CONFIG PANEL */}
             {selectedNode && (
                 <NodeConfigPanel
                     selectedNode={selectedNode}
                     updateNodeData={updateNodeData}
+                    deleteNode={(id) => deleteElement(id, 'node')}
                     onClose={() => setSelectedNodeId(null)}
                 />
             )}

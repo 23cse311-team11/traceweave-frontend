@@ -8,28 +8,22 @@ import WorkflowCanvasWrapper from '@/components/workflow/WorkflowCanvas';
 import { PacmanLoader } from 'react-spinners';
 import { useModal } from '@/components/providers/ModalProvider';
 
-export default function WorkflowBuilderPage() {
-  const params = useParams();
+export default function MainCanvas({ workflowId }) {
+  const { workspaceId } = useParams();
   const router = useRouter();
-  const { workspaceId, workflowId } = params;
   
-  const { activeWorkflow, fetchWorkflow, saveWorkflowGraph, setActiveSidebarItem } = useAppStore();
-
+  const { activeWorkflow, fetchWorkflow, saveWorkflowGraph } = useAppStore();
   const { showAlert } = useModal();
-
-  useEffect(() => {
-    setActiveSidebarItem('Workflows');
-  }, [setActiveSidebarItem]);
 
   useEffect(() => {
     if (workflowId) {
       fetchWorkflow(workflowId);
     }
-  }, [workflowId]);
+  }, [workflowId, fetchWorkflow]);
 
   if (!activeWorkflow) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center h-screen bg-bg-base text-text-secondary">
+      <div className="flex-1 flex flex-col items-center justify-center h-full bg-bg-base text-text-secondary">
         <PacmanLoader color="#FF6F00" size={20} />
       </div>
     );
@@ -42,7 +36,6 @@ export default function WorkflowBuilderPage() {
 
   return (
     <div className="h-full w-full flex flex-col bg-bg-base overflow-hidden">
-      
       {/* Slim Header for Fullscreen Mode */}
       <div className="h-14 shrink-0 bg-bg-panel border-b border-border-strong px-4 flex items-center justify-between z-10 shadow-sm">
         <div className="flex items-center gap-4">
@@ -74,7 +67,6 @@ export default function WorkflowBuilderPage() {
           onSave={handleSave} 
         />
       </div>
-
     </div>
   );
 }
