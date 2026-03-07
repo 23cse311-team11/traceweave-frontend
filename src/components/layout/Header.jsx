@@ -59,7 +59,9 @@ export default function Header() {
                 const ws = store.availableWorkspaces.find(w => w.name === name);
                 if (ws) {
                   store.setActiveWorkspace(ws.id);
-                  router.push(`/workspace/${ws.id}`);
+                  // ✨ FIX: Grab the current active tab and append it to the URL
+                  const currentTab = store.activeSidebarItem?.toLowerCase() || 'collections';
+                  router.push(`/workspace/${ws.id}/${currentTab}`);
                 }
               }}
               onOpen={() => store.fetchWorkspaces()}

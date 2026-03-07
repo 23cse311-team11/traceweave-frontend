@@ -33,8 +33,10 @@ export const createWorkspaceSlice = (set, get) => ({
             get().fetchWorkspaceData(activeId);
         }
         } catch (error) {
-        console.warn("Failed to fetch workspaces", error);
-        set({ isLoadingWorkspaces: false, availableWorkspaces: [] });
+            if (process.env.NODE_ENV !== 'test') {
+                console.warn("Failed to fetch global history", error);
+            }
+            set({ isLoadingWorkspaces: false, availableWorkspaces: [] });
         }
     },
 
