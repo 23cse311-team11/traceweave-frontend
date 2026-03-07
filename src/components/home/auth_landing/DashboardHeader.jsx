@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, Bell, LogOut, User, Building2 } from 'lucide-react';
+import { Search, Bell, LogOut, User, Building2, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const DashboardHeader = ({ user, logout }) => {
@@ -38,19 +38,23 @@ export const DashboardHeader = ({ user, logout }) => {
           <Bell size={18} />
           <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-brand-primary rounded-full border-2 border-bg-base"></span>
         </button>
-        
+
         {/* User Profile Dropdown */}
         <div className="relative" ref={profileRef}>
-          <button 
+          <button
             onClick={() => setIsProfileOpen(!isProfileOpen)}
-            className="w-8 h-8 rounded-full bg-gradient-to-tr from-gray-700 to-gray-600 border border-border-subtle flex items-center justify-center text-xs font-medium text-white hover:ring-2 ring-border-subtle transition-all"
+            className="w-8 h-8 rounded-full bg-gradient-to-tr from-gray-700 to-gray-600 border border-border-subtle flex items-center justify-center text-xs font-medium text-white hover:ring-2 ring-border-subtle transition-all overflow-hidden shrink-0"
           >
-            {user?.email?.substring(0, 2).toUpperCase() || 'ME'}
+            {user?.avatarUrl ? (
+              <img src={user.avatarUrl} alt="User Avatar" className="w-full h-full object-cover" />
+            ) : (
+              user?.email?.substring(0, 2).toUpperCase() || 'ME'
+            )}
           </button>
 
           <AnimatePresence>
             {isProfileOpen && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 8, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 8, scale: 0.95 }}
@@ -61,11 +65,14 @@ export const DashboardHeader = ({ user, logout }) => {
                   <p className="text-xs text-text-secondary truncate">{user?.email}</p>
                 </div>
                 <div className="py-1">
-                  <Link href="/profile" className="flex items-center gap-2 px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5">
-                    <User size={14} /> Profile Settings
+                  <Link href="/profile" className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors">
+                    <User size={14} className="text-brand-primary" /> Profile
                   </Link>
-                  <Link href="/billing" className="flex items-center gap-2 px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5">
-                    <Building2 size={14} /> Billing & Plan
+                  <Link href="/settings" className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors">
+                    <Settings size={14} className="text-text-muted" /> Settings
+                  </Link>
+                  <Link href="/billing" className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors">
+                    <Building2 size={14} className="text-emerald-500" /> Billing & Plan
                   </Link>
                 </div>
                 <div className="py-1 border-t border-border-subtle">

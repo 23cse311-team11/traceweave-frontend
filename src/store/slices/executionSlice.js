@@ -18,7 +18,7 @@ const formatCookiesToHeader = (cookieList) => {
     if (!Array.isArray(cookieList) || cookieList.length === 0) return null;
     return cookieList
         .filter(c => c.key && c.active !== false)
-        .map(c => `${c.key}=${c.value}`)
+        .map(c => `${c.key}=${c.value !== undefined ? c.value : ''}`)
         .join('; ');
 };
 
@@ -175,8 +175,15 @@ export const createExecutionSlice = (set, get) => ({
 
                 const cookieHeader = formatCookiesToHeader(req.cookies);
                 if (cookieHeader) {
-                    if (finalHeaders['Cookie']) finalHeaders['Cookie'] += `; ${cookieHeader}`;
-                    else finalHeaders['Cookie'] = cookieHeader;
+                    const existingCookieKey = Object.keys(finalHeaders).find(k => k.toLowerCase() === 'cookie');
+                    
+                    if (existingCookieKey) {
+                        finalHeaders[existingCookieKey] = finalHeaders[existingCookieKey] 
+                            ? `${finalHeaders[existingCookieKey]}; ${cookieHeader}` 
+                            : cookieHeader;
+                    } else {
+                        finalHeaders['Cookie'] = cookieHeader;
+                    }
                 }
 
                 finalConfig = { ...finalConfig, headers: finalHeaders, params: userParams };

@@ -22,7 +22,7 @@ export default function MainSidebar() {
   const router = useRouter();
   const { workspaceId } = useParams();
   const { activeSidebarItem, setActiveSidebarItem, setActiveView } = useAppStore();
-  
+
   // NEW: State to track which item is hovered and where it is on the screen
   const [hoveredData, setHoveredData] = useState(null);
 
@@ -59,18 +59,26 @@ export default function MainSidebar() {
 
       {/* 3. BOTTOM SECTION */}
       <div className="mt-auto flex flex-col items-center gap-8 pb-10 relative z-10 shrink-0">
-        <UserPopup 
-          onHover={(rect) => setHoveredData({ label: 'Profile', rect })} 
-          onLeave={() => setHoveredData(null)} 
+        <UserPopup
+          onHover={(rect) => setHoveredData({ label: 'Profile', rect })}
+          onLeave={() => setHoveredData(null)}
         />
 
-        <div 
+        <div
           className="relative flex justify-center"
-          onMouseEnter={(e) => setHoveredData({ label: 'Settings', rect: e.currentTarget.getBoundingClientRect() })}
+          onMouseEnter={(e) => setHoveredData({ label: 'Workspace Settings', rect: e.currentTarget.getBoundingClientRect() })}
           onMouseLeave={() => setHoveredData(null)}
         >
-          <motion.div whileHover={{ rotate: 90, scale: 1.1 }} transition={{ duration: 0.4 }}>
-            <Settings size={22} className="text-text-muted hover:text-white cursor-pointer transition-colors" />
+          <motion.div
+            whileHover={{ rotate: 90, scale: 1.1 }}
+            transition={{ duration: 0.4 }}
+            onClick={() => {
+              setActiveSidebarItem('Settings');
+              setActiveView('settings');
+              router.push(`/workspace/${workspaceId}/settings`);
+            }}
+          >
+            <Settings size={22} className={`cursor-pointer transition-colors ${activeSidebarItem === 'Settings' ? 'text-brand-primary' : 'text-text-muted hover:text-white'}`} />
           </motion.div>
         </div>
       </div>
@@ -82,8 +90,8 @@ export default function MainSidebar() {
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -10 }}
-            style={{ 
-              position: 'fixed', 
+            style={{
+              position: 'fixed',
               top: hoveredData.rect.top + hoveredData.rect.height / 2,
               left: hoveredData.rect.right + 12,
               transform: 'translateY(-50%)'
@@ -106,7 +114,7 @@ const SidebarItem = ({ item, active, onClick, onHover, onLeave }) => {
   const itemRef = useRef(null);
 
   return (
-    <div 
+    <div
       ref={itemRef}
       className="relative w-full flex justify-center"
       onMouseEnter={() => onHover(itemRef.current.getBoundingClientRect())}
@@ -132,11 +140,10 @@ const SidebarItem = ({ item, active, onClick, onHover, onLeave }) => {
         )}
 
         <div
-          className={`p-2 rounded-xl transition-all duration-300 ${
-            active
+          className={`p-2 rounded-xl transition-all duration-300 ${active
               ? 'bg-brand-primary/10 flex items-center justify-center relative translate-x-1 shadow-[0_0_20px_rgba(234,194,255,0.15)]'
               : 'group-hover:bg-white/5 flex items-center justify-center'
-          }`}
+            }`}
         >
           <item.icon
             size={20}
@@ -145,9 +152,8 @@ const SidebarItem = ({ item, active, onClick, onHover, onLeave }) => {
           />
         </div>
 
-        <span className={`text-[8px] mt-2 font-black tracking-[0.05em] uppercase transition-opacity duration-200 ${
-            active ? 'opacity-100 text-brand-primary' : 'opacity-70 group-hover:opacity-100'
-        }`}>
+        <span className={`text-[8px] mt-2 font-black tracking-[0.05em] uppercase transition-opacity duration-200 ${active ? 'opacity-100 text-brand-primary' : 'opacity-70 group-hover:opacity-100'
+          }`}>
           {item.id}
         </span>
       </motion.div>
@@ -178,8 +184,12 @@ const UserPopup = ({ onHover, onLeave }) => {
         onClick={() => setIsOpen(!isOpen)}
         className="w-10 h-10 rounded-2xl bg-gradient-to-br from-brand-primary/40 to-brand-glow/40 p-[1px] cursor-pointer hover:shadow-glow transition-all"
       >
-        <div className="w-full h-full rounded-2xl bg-bg-base flex items-center justify-center text-xs font-black text-white">
-          {user?.fullName?.[0] + (user?.fullName?.split(' ')[1]?.[0] || '') || 'U'}
+        <div className="w-full h-full rounded-2xl bg-bg-base flex items-center justify-center text-xs font-black text-white overflow-hidden shrink-0">
+          {user?.avatarUrl ? (
+            <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+          ) : (
+            user?.fullName?.[0] + (user?.fullName?.split(' ')[1]?.[0] || '') || 'U'
+          )}
         </div>
       </motion.div>
 

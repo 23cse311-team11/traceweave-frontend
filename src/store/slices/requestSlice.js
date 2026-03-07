@@ -64,7 +64,14 @@ export const createRequestSlice = (set, get) => ({
             const data = await requestApi.getRequestsByCollection(collectionId);
             const requests = data || [];
             const reqMap = {};
-            requests.forEach(r => { reqMap[r.id] = r; });
+            requests.forEach(r => { 
+                // Unpack cookies and scripts back to the top level for the UI
+                reqMap[r.id] = {
+                    ...r,
+                    cookies: r.config?.cookies || [],
+                    scripts: r.config?.scripts || { pre: '', post: '' }
+                }; 
+            });
 
             set(state => ({
                 requestStates: { ...state.requestStates, ...reqMap },
@@ -317,12 +324,13 @@ export const createRequestSlice = (set, get) => ({
         };
     }),
 
-    updateRequestListConfig: (listKeyArray, index, key, value) => set(state => {
+    updateRequestListConfig: (listKeyArrayRaw, index, key, value) => set(state => {
+        const listKeyArray = Array.isArray(listKeyArrayRaw) ? listKeyArrayRaw : [listKeyArrayRaw];
         const id = state.activeTabId;
         const req = state.requestStates[id];
         if (!req) return {};
 
-        // 1. 🔥 RESCUE MISSION: Extract existing files and paths before JSON.parse destroys them
+        // 1. Extract existing files and paths before JSON.parse destroys them
         let existingFiles = {};
         let existingPaths = {};
         
@@ -425,7 +433,8 @@ export const createRequestSlice = (set, get) => ({
         };
     }),
 
-    removeRequestListItem: (listKeyArray, index) => set(state => {
+    removeRequestListItem: (listKeyArrayRaw, index) => set(state => {
+        const listKeyArray = Array.isArray(listKeyArrayRaw) ? listKeyArrayRaw : [listKeyArrayRaw];
         const id = state.activeTabId;
         const req = state.requestStates[id];
         if (!req) return {};
@@ -462,10 +471,16 @@ export const createRequestSlice = (set, get) => ({
 
             // console.log("Saving Request with Config:", req.config);
             // console.log("Protocol:", req.protocol);
+            const safeConfig = {
+                ...req.config,
+                cookies: req.cookies || [],
+                scripts: req.scripts || { pre: '', post: '' }
+            };
+
             const updateData = {
                 name: req.name,
                 protocol: req.protocol,
-                config: req.config 
+                config: safeConfig 
             };
 
             await requestApi.updateRequest(id, updateData);
