@@ -60,7 +60,7 @@ export default function WorkspaceEditor() {
     }
 
     if (activeView === 'workflow') {
-        // ✨ Render Workflow Logic based on whether a workflowId exists in the URL
+        // Render Workflow Logic based on whether a workflowId exists in the URL
         if (workflowId) {
             return <MainCanvas workflowId={workflowId} />;
         } else {

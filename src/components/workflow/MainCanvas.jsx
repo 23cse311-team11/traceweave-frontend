@@ -24,7 +24,7 @@ export default function MainCanvas({ workflowId }) {
   if (!activeWorkflow) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center h-full bg-bg-base text-text-secondary">
-        <PacmanLoader color="#FF6F00" size={20} />
+        <PacmanLoader color="#EAC2FF" size={20} />
       </div>
     );
   }

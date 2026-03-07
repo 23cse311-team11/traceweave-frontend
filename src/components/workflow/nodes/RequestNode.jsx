@@ -1,6 +1,7 @@
 'use client';
 import { Handle, Position } from '@xyflow/react';
 import { Globe, Loader2, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
+import { useAppStore } from '@/store/useAppStore';
 
 const METHOD_STYLES = {
   GET:    { bg: 'bg-emerald-500/15', text: 'text-emerald-400', border: 'border-emerald-500/30' },
@@ -11,10 +12,11 @@ const METHOD_STYLES = {
 };
 
 export default function RequestNode({ data, selected }) {
-  const { executionStatus, method = 'GET', url = '', requestConfig } = data;
-  const displayMethod = (requestConfig?.method || method || 'GET').toUpperCase();
-  const displayUrl = requestConfig?.url || url || '';
-  const displayName = requestConfig?.name || 'Untitled Request';
+  const { executionStatus, method = 'GET', url = '', requestId } = data;
+  const liveRequest = useAppStore((state) => state.requestStates[requestId]);
+  const displayMethod = (liveRequest?.method || method || 'GET').toUpperCase();
+  const displayUrl = liveRequest?.url || url || '';
+  const displayName = liveRequest?.name || 'Untitled Request';
   const ms = displayMethod;
   const mStyle = METHOD_STYLES[ms] || METHOD_STYLES.GET;
 

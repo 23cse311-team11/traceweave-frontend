@@ -4,7 +4,7 @@ import {
   Settings2, GitBranch, Globe, X, FileJson, Clock, FlaskConical, Terminal,
   Flag, Trash2, Eye, EyeOff, Copy, CheckCircle2, Info, ChevronDown,
   ChevronRight, Play, Lightbulb, ArrowRight, Hash, Braces, BookOpen,
-  AlertTriangle, Zap
+  AlertTriangle, Zap, Folder
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -313,18 +313,63 @@ export default function NodeConfigPanel({ selectedNode, nodes, deleteNode, updat
   const [dropdownSearch, setDropdownSearch] = useState('');
   const [previewReqId, setPreviewReqId] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [expandedCollections, setExpandedCollections] = useState(new Set());
 
-  const workspaceRequests = useMemo(() => {
-    const validCollectionIds = new Set();
-    const extract = (cols) => cols.forEach(c => {
-      if (c.workspaceId === activeWorkspaceId) {
-        validCollectionIds.add(c.id);
-        if (c.children) extract(c.children);
+  // 1. Group requests by their collections (handling nested folders)
+  const groupedCollections = useMemo(() => {
+    const colMap = new Map();
+
+    const processCollection = (col, parentName = '') => {
+      if (col.workspaceId === activeWorkspaceId) {
+        // Create a breadcrumb-style name if nested (e.g., "Auth / Login")
+        const fullName = parentName ? `${parentName} / ${col.name}` : col.name;
+        colMap.set(col.id, {
+          id: col.id,
+          name: fullName,
+          requests: []
+        });
+        if (col.children?.length) {
+          col.children.forEach(child => processCollection(child, fullName));
+        }
+      }
+    };
+
+    (collections || []).forEach(c => processCollection(c));
+
+    // Push requests into their respective mapped collections
+    Object.values(requestStates || {}).forEach(req => {
+      if (colMap.has(req.collectionId)) {
+        colMap.get(req.collectionId).requests.push(req);
       }
     });
-    extract(collections || []);
-    return Object.values(requestStates || {}).filter(r => validCollectionIds.has(r.collectionId));
+
+    // Convert map to array, filter out empty collections, and sort alphabetically
+    return Array.from(colMap.values())
+      .filter(col => col.requests.length > 0)
+      .sort((a, b) => a.name.localeCompare(b.name));
   }, [requestStates, collections, activeWorkspaceId]);
+
+  // 2. Filter the grouped data based on the search input
+  const filteredCollections = useMemo(() => {
+    if (!dropdownSearch.trim()) return groupedCollections;
+    
+    const search = dropdownSearch.toLowerCase();
+
+    return groupedCollections.map(col => {
+      const matchesColName = col.name.toLowerCase().includes(search);
+      const matchingReqs = col.requests.filter(r => r.name.toLowerCase().includes(search));
+
+      // Keep collection if the folder name matches OR if it contains matching requests
+      if (matchesColName || matchingReqs.length > 0) {
+        return {
+          ...col,
+          // If folder name matches, show all requests inside it. Otherwise, show only matched requests.
+          requests: matchesColName && matchingReqs.length === 0 ? col.requests : matchingReqs
+        };
+      }
+      return null;
+    }).filter(Boolean);
+  }, [groupedCollections, dropdownSearch]);
 
   if (!selectedNode) return null;
 
@@ -401,45 +446,86 @@ export default function NodeConfigPanel({ selectedNode, nodes, deleteNode, updat
                     />
                   </div>
                   <div className="max-h-64 overflow-y-auto custom-scrollbar py-1">
-                    {workspaceRequests.length === 0 ? (
-                      <p className="p-4 text-center text-xs text-white/25">No requests in workspace</p>
-                    ) : workspaceRequests
-                        .filter(r => r.name.toLowerCase().includes(dropdownSearch.toLowerCase()))
-                        .map(req => (
-                          <div key={req.id} className="border-b border-white/3 last:border-0">
-                            <div className={`flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-white/5 transition-colors ${data.requestId === req.id ? 'bg-white/5 border-l-2 border-blue-400' : 'border-l-2 border-transparent'}`}>
-                              <div
-                                className="flex items-center gap-2 flex-1 overflow-hidden"
-                                onClick={() => {
-                                  set('requestId', req.id);
-                                  set('method', req.config?.method || 'GET');
-                                  set('url', req.config?.url || '');
-                                  setIsDropdownOpen(false);
-                                  setDropdownSearch('');
-                                }}
-                              >
-                                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded border uppercase shrink-0 ${METHOD_COLORS[(req.config?.method || 'GET').toUpperCase()] || ''}`}>
-                                  {req.config?.method || 'GET'}
-                                </span>
-                                <span className="truncate text-xs font-semibold text-white/80">{req.name}</span>
-                              </div>
-                              <button
-                                onClick={e => { e.stopPropagation(); setPreviewReqId(previewReqId === req.id ? null : req.id); }}
-                                className="p-1 rounded text-white/25 hover:text-white/60 transition-colors shrink-0"
-                              >
-                                {previewReqId === req.id ? <EyeOff size={12} /> : <Eye size={12} />}
-                              </button>
+                    {filteredCollections.length === 0 ? (
+                      <p className="p-4 text-center text-xs text-white/25">No matching requests</p>
+                    ) : (
+                      filteredCollections.map(col => {
+                        // Auto-expand if the user is actively searching, otherwise respect the toggle state
+                        const isExpanded = dropdownSearch.trim() ? true : expandedCollections.has(col.id);
+
+                        return (
+                          <div key={col.id} className="border-b border-white/5 last:border-0">
+                            {/* Collection Header */}
+                            <div
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // Only allow manual toggling if not searching
+                                if (!dropdownSearch.trim()) {
+                                  setExpandedCollections(prev => {
+                                    const next = new Set(prev);
+                                    if (next.has(col.id)) next.delete(col.id);
+                                    else next.add(col.id);
+                                    return next;
+                                  });
+                                }
+                              }}
+                              className="flex items-center gap-2 px-3 py-2 cursor-pointer bg-[#0a0a0a] hover:bg-white/5 transition-colors group select-none"
+                            >
+                              <Folder size={12} className={`${isExpanded ? 'text-amber-400' : 'text-white/30'} group-hover:text-amber-400 transition-colors shrink-0`} />
+                              <span className="text-[11px] font-bold text-white/60 group-hover:text-white/80 truncate flex-1">
+                                {col.name}
+                              </span>
+                              <span className="text-[9px] font-mono text-white/20 bg-white/5 px-1.5 py-0.5 rounded">
+                                {col.requests.length}
+                              </span>
+                              <ChevronDown size={12} className={`text-white/20 transition-transform ${isExpanded ? 'rotate-180' : '-rotate-90'}`} />
                             </div>
-                            {previewReqId === req.id && (
-                              <div className="px-3 py-2 bg-black/30 text-[10px] font-mono text-white/30 space-y-1">
-                                <p className="truncate text-blue-400/60">{req.config?.url || 'No URL'}</p>
-                                {req.config?.body?.type !== 'none' && (
-                                  <p><span className="text-white/20">body:</span> {req.config.body?.type}</p>
-                                )}
+
+                            {/* Requests List */}
+                            {isExpanded && (
+                              <div className="bg-black/40 pb-1 pt-0.5">
+                                {col.requests.map(req => (
+                                  <div key={req.id}>
+                                    <div className={`flex items-center justify-between px-3 py-1.5 cursor-pointer hover:bg-white/10 transition-colors ml-2 mr-2 rounded-md mt-0.5 ${data.requestId === req.id ? 'bg-blue-500/10 border border-blue-500/20' : 'border border-transparent'}`}>
+                                      <div
+                                        className="flex items-center gap-2 flex-1 overflow-hidden"
+                                        onClick={() => {
+                                          set('requestId', req.id);
+                                          set('method', req.config?.method || 'GET');
+                                          set('url', req.config?.url || '');
+                                          setIsDropdownOpen(false);
+                                          setDropdownSearch('');
+                                        }}
+                                      >
+                                        <span className={`text-[9px] font-black px-1.5 py-0.5 rounded border uppercase shrink-0 ${METHOD_COLORS[(req.config?.method || 'GET').toUpperCase()] || ''}`}>
+                                          {req.config?.method || 'GET'}
+                                        </span>
+                                        <span className="truncate text-[11px] font-medium text-white/80">{req.name}</span>
+                                      </div>
+                                      <button
+                                        onClick={e => { e.stopPropagation(); setPreviewReqId(previewReqId === req.id ? null : req.id); }}
+                                        className="p-1 rounded text-white/25 hover:text-white/60 hover:bg-white/10 transition-all shrink-0 ml-2"
+                                      >
+                                        {previewReqId === req.id ? <EyeOff size={11} /> : <Eye size={11} />}
+                                      </button>
+                                    </div>
+                                    {/* Request Preview */}
+                                    {previewReqId === req.id && (
+                                      <div className="px-4 py-1.5 ml-2 mr-2 mb-1 bg-black/50 text-[10px] font-mono text-white/30 space-y-1 rounded-b-md border-x border-b border-white/5">
+                                        <p className="truncate text-blue-400/60">{req.config?.url || 'No URL'}</p>
+                                        {req.config?.body?.type !== 'none' && (
+                                          <p><span className="text-white/20">body:</span> {req.config?.body?.type}</p>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
                               </div>
                             )}
                           </div>
-                        ))}
+                        );
+                      })
+                    )}
                   </div>
                 </div>
               )}
