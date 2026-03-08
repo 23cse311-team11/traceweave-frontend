@@ -1,6 +1,6 @@
 'use client';
 
-import { Layout, Clock, Box, Layers, Settings, Activity, LogOut, GitBranch } from 'lucide-react';
+import { Layout, Clock, Box, Layers, Settings, Activity, LogOut, GitBranch, User } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
 import logo from '@/assets/traceWeaveLogo.png';
@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
 
 const SIDEBAR_ITEMS = [
   { id: 'Collections', icon: Layout, view: 'runner' },
@@ -207,9 +208,9 @@ const UserPopup = ({ onHover, onLeave }) => {
               <p className="text-[10px] text-text-muted truncate font-mono">{user?.email}</p>
             </div>
             <div className="p-2 space-y-1">
-              <button className="w-full text-left px-3 py-2.5 text-xs font-bold text-text-secondary hover:text-white hover:bg-white/5 rounded-xl transition-all flex items-center gap-3">
-                <Settings size={14} className="text-brand-primary" /> USER SETTINGS
-              </button>
+              <Link href="/profile" className="w-full text-left px-3 py-2.5 text-xs font-bold text-text-secondary hover:text-white hover:bg-white/5 rounded-xl transition-all flex items-center gap-3">
+                <User size={14} className="text-brand-primary" /> Profile
+              </Link>
               <button onClick={logout} className="w-full text-left px-3 py-2.5 text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all flex items-center gap-3">
                 <LogOut size={14} /> SYSTEM LOGOUT
               </button>

@@ -26,7 +26,7 @@ export default function WorkspaceEditor() {
 
     const currentRoute = tab && tab[0] ? tab[0].toLowerCase() : null;
     const isWorkflowRoute = currentRoute === 'workflows';
-    const isSettingsRoute = currentRoute === 'settings'; // ✨ Detect settings
+    const isSettingsRoute = currentRoute === 'settings';
     const workflowId = isWorkflowRoute && tab.length > 1 ? tab[1] : null;
 
     useEffect(() => {
@@ -41,7 +41,7 @@ export default function WorkspaceEditor() {
             setActiveSidebarItem(mappedTab);
             
             if (isWorkflowRoute) setActiveView('workflow');
-            else if (isSettingsRoute) setActiveView('settings'); // ✨ Set View
+            else if (isSettingsRoute) setActiveView('settings');
             else if (currentRoute === 'dashboard') setActiveView('dashboard');
             else setActiveView('runner');
         } else {
@@ -57,7 +57,6 @@ export default function WorkspaceEditor() {
         return <WorkflowList />;
     }
 
-    // ✨ Render Workspace Settings Pane
     if (activeView === 'settings') {
         return <WorkspaceSettings />;
     }

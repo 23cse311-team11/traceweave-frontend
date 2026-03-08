@@ -1,19 +1,20 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Search, Layers, Eye, Briefcase, UserPlus, Home } from 'lucide-react';
+import { Search, Layers, Eye, Briefcase, UserPlus, Home, Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
 import Dropdown from '../ui/Dropdown';
+import { CreateWorkspaceModal } from '@/components/home/auth_landing/CreateWorkspaceModal';
 import InviteMembersModal from './InviteMembersModal';
 import Link from 'next/link';
-
 import { motion } from 'framer-motion';
 
 export default function Header() {
   const store = useAppStore();
   const router = useRouter();
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [isCreateWorkspaceOpen, setIsCreateWorkspaceOpen] = useState(false);
 
   // Initial load check
   useEffect(() => {
@@ -25,7 +26,17 @@ export default function Header() {
     }
   }, [store.activeWorkspaceId]);
 
-  // --- Logic for Environment Dropdown ---
+  // Handle switching to a newly created workspace
+  const handleWorkspaceCreated = (newWorkspace) => {
+    if (newWorkspace && newWorkspace.id) {
+      const currentTab = store.activeSidebarItem?.toLowerCase() || 'collections';
+      // Navigate to the same tab but in the new workspace
+      router.push(`/workspace/${newWorkspace.id}/${currentTab}`);
+      // Refresh the workspace list in the store
+      store.fetchWorkspaces();
+    }
+  };
+
   const currentEnv = store.getWorkspaceEnvironments()[store.selectedEnvIndex];
 
   const envOptions = [
@@ -59,7 +70,6 @@ export default function Header() {
                 const ws = store.availableWorkspaces.find(w => w.name === name);
                 if (ws) {
                   store.setActiveWorkspace(ws.id);
-                  // ✨ FIX: Grab the current active tab and append it to the URL
                   const currentTab = store.activeSidebarItem?.toLowerCase() || 'collections';
                   router.push(`/workspace/${ws.id}/${currentTab}`);
                 }
@@ -67,6 +77,21 @@ export default function Header() {
               onOpen={() => store.fetchWorkspaces()}
               label="Workspaces"
               className="font-bold text-white tracking-tight"
+              enableSearch={true}
+              searchPlaceholder="Find workspace..."
+              menuWidth="w-64"
+              customFooter={
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsCreateWorkspaceOpen(true);
+                  }}
+                  className="flex w-full items-center gap-2 px-2 py-1.5 rounded text-sm font-semibold text-brand-primary hover:bg-brand-primary/10 transition-colors"
+                >
+                  <Plus size={14} />
+                  <span>New Workspace</span>
+                </button>
+              }
             />
           </div>
 
@@ -90,7 +115,7 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Search - Enhanced */}
+        {/* Search */}
         <div className="flex-1 max-w-2xl mx-12 relative z-10">
           <div className="relative group">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -142,6 +167,11 @@ export default function Header() {
       </header>
 
       <InviteMembersModal isOpen={isInviteOpen} onClose={() => setIsInviteOpen(false)} />
+      <CreateWorkspaceModal
+        isOpen={isCreateWorkspaceOpen}
+        onClose={() => setIsCreateWorkspaceOpen(false)}
+        onSuccess={handleWorkspaceCreated}
+      />
     </>
   );
 }

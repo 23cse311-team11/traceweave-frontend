@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Network, Loader2 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 
-export const CreateWorkspaceModal = ({ isOpen, onClose }) => {
+export const CreateWorkspaceModal = ({ isOpen, onClose, onSuccess }) => {
     const { createWorkspace } = useAppStore();
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
@@ -26,6 +26,9 @@ export const CreateWorkspaceModal = ({ isOpen, onClose }) => {
             setName('');
             setDescription('');
             onClose();
+            if (onSuccess && result.data) {
+                onSuccess(result.data);
+            }
         } else {
             setError(result.error || 'Failed to create workspace');
         }
@@ -132,4 +135,3 @@ export const CreateWorkspaceModal = ({ isOpen, onClose }) => {
         </AnimatePresence>
     );
 };
-
