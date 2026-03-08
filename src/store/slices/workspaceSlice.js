@@ -12,31 +12,65 @@ export const createWorkspaceSlice = (set, get) => ({
 
     fetchWorkspaces: async () => {
         try {
-        set({ isLoadingWorkspaces: true });
-        const response = await workspaceApi.getMyWorkspaces();
-        const workspaces = response.data || [];
-        
-        let activeId = get().activeWorkspaceId;
-        if (!activeId && workspaces.length > 0) {
-            activeId = workspaces[0].id;
-        }
+            set({ isLoadingWorkspaces: true });
+            const response = await workspaceApi.getMyWorkspaces();
+            
+            // The backend now returns workspaces with a flattened 'isFavorite' 
+            // and 'myRole' based on the WorkspaceMember table.
+            const workspaces = response.data || [];
 
+            // --- RESTORED ACTIVE WORKSPACE LOGIC ---
+            let activeId = get().activeWorkspaceId;
+            
+            // If no active ID is set (initial load), default to the first workspace
+            if (!activeId && workspaces.length > 0) {
+                activeId = workspaces[0].id;
+            }
+
+            set({
+                availableWorkspaces: workspaces,
+                activeWorkspaceId: activeId,
+                isLoadingWorkspaces: false,
+                // Update members for the currently active workspace
+                workspaceMembers: workspaces.find(w => w.id === activeId)?.members || []
+            });
+
+            // Trigger data fetching for the active workspace (Collections/Envs)
+            if (activeId) {
+                get().fetchWorkspaceData(activeId);
+            }
+        } catch (error) {
+            console.warn("Failed to fetch workspaces", error);
+            set({ isLoadingWorkspaces: false, availableWorkspaces: [] });
+        }
+    },
+
+    // toggle favorite status in the DB
+    toggleFavorite: async (workspaceId) => {
+        const { availableWorkspaces } = get();
+        const workspace = availableWorkspaces.find(w => w.id === workspaceId);
+        if (!workspace) return;
+
+        const newStatus = !workspace.isFavorite;
+
+        // Optimistic Update: Update UI immediately for a snappy feel
         set({
-            availableWorkspaces: workspaces,
-            activeWorkspaceId: activeId,
-            isLoadingWorkspaces: false,
-            workspaceMembers: workspaces.find(w => w.id === activeId)?.members || []
+            availableWorkspaces: availableWorkspaces.map(ws => 
+                ws.id === workspaceId ? { ...ws, isFavorite: newStatus } : ws
+            )
         });
 
-        if (activeId) {
-            // Accessing actions from other slices via get()
-            get().fetchWorkspaceData(activeId);
-        }
+        try {
+            // Persist to the WorkspaceMember table in the DB
+            await workspaceApi.updateFavoriteStatus(workspaceId, { isFavorite: newStatus });
         } catch (error) {
-            if (process.env.NODE_ENV !== 'test') {
-                console.warn("Failed to fetch global history", error);
-            }
-            set({ isLoadingWorkspaces: false, availableWorkspaces: [] });
+            // Rollback on failure
+            set({
+                availableWorkspaces: availableWorkspaces.map(ws => 
+                    ws.id === workspaceId ? { ...ws, isFavorite: !newStatus } : ws
+                )
+            });
+            console.error("Failed to persist favorite status", error);
         }
     },
 

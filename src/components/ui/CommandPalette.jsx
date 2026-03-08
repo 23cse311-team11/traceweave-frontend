@@ -19,7 +19,7 @@ export default function CommandPalette({ isOpen, onClose }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   
   const inputRef = useRef(null);
-  const itemRefs = useRef({}); // To handle auto-scrolling
+  const itemRefs = useRef({});
 
   // Reset state and focus input on open
   useEffect(() => {
@@ -41,7 +41,6 @@ export default function CommandPalette({ isOpen, onClose }) {
     setCollapsedSections(prev => ({ ...prev, [title]: !prev[title] }));
   };
 
-  // --- CROSS-WORKSPACE ROUTING HELPER ---
   const handleNavigation = (targetWorkspaceId, path, tabId = null) => {
     if (targetWorkspaceId && targetWorkspaceId !== store.activeWorkspaceId) {
       store.setActiveWorkspace(targetWorkspaceId);
@@ -53,7 +52,6 @@ export default function CommandPalette({ isOpen, onClose }) {
     onClose();
   };
 
-  // --- DATA AGGREGATION & FILTERING ---
   const searchData = useMemo(() => {
     const lowerQuery = query.toLowerCase().trim();
 
@@ -67,7 +65,6 @@ export default function CommandPalette({ isOpen, onClose }) {
       return acc;
     }, {});
 
-    // ALL DASHBOARD & APP ROUTES
     const pages = [
       { id: 'p-home', name: 'Dashboard Home', type: 'Navigation', icon: Home, action: () => { router.push('/'); onClose(); } },
       { id: 'p-workspace', name: 'Workspaces Overview', type: 'Navigation', icon: Briefcase, action: () => { router.push('/workspace'); onClose(); } },
@@ -146,7 +143,7 @@ export default function CommandPalette({ isOpen, onClose }) {
 
   // --- KEYBOARD NAVIGATION LOGIC ---
   
-  // 1. Flatten visible items based on what is currently NOT collapsed
+  // 1. Flatten visible items AND group headers so they can be navigated
   const visibleItems = useMemo(() => {
     let items = [];
     const isSearching = query.trim().length > 0;
@@ -156,6 +153,15 @@ export default function CommandPalette({ isOpen, onClose }) {
         ? collapsedSections[group.title] === true 
         : collapsedSections[group.title] !== false;
       
+      // Inject the header itself as a navigable item
+      items.push({
+        id: `header-${group.title}`,
+        isHeader: true,
+        title: group.title,
+        action: () => toggleSection(group.title) // Pressing enter toggles it
+      });
+
+      // If not collapsed, inject the children
       if (!isCollapsed) {
         items.push(...group.items);
       }
@@ -163,46 +169,43 @@ export default function CommandPalette({ isOpen, onClose }) {
     return items;
   }, [searchData, collapsedSections, query]);
 
-  // 2. Keyboard Event Listeners
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (!isOpen) return;
+    if (visibleItems.length > 0 && selectedIndex >= visibleItems.length) {
+      setSelectedIndex(visibleItems.length - 1);
+    }
+  }, [visibleItems, selectedIndex]);
 
-      if (e.key === 'Escape') {
-        onClose();
-        return;
+  // Handle Input Keydown
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      onClose();
+      return;
+    }
+
+    if (visibleItems.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault(); 
+      setSelectedIndex(prev => (prev < visibleItems.length - 1 ? prev + 1 : prev));
+    } 
+    else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev > 0 ? prev - 1 : 0));
+    } 
+    else if (e.key === 'Enter') {
+      e.preventDefault();
+      const activeItem = visibleItems[selectedIndex];
+      if (activeItem) {
+        activeItem.action();
       }
+    }
+  };
 
-      if (visibleItems.length === 0) return;
-
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        setSelectedIndex(prev => (prev < visibleItems.length - 1 ? prev + 1 : prev));
-      } 
-      else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        setSelectedIndex(prev => (prev > 0 ? prev - 1 : 0));
-      } 
-      else if (e.key === 'Enter') {
-        e.preventDefault();
-        const activeItem = visibleItems[selectedIndex];
-        if (activeItem) {
-          activeItem.action();
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, visibleItems, selectedIndex, onClose]);
-
-  // 3. Auto-scroll logic when selectedIndex changes
   useEffect(() => {
     const activeItem = visibleItems[selectedIndex];
     if (activeItem && itemRefs.current[activeItem.id]) {
       itemRefs.current[activeItem.id].scrollIntoView({
-        block: 'nearest', // Prevents the whole page from jumping, just scrolls the container
-        behavior: 'smooth'
+        block: 'nearest'
       });
     }
   }, [selectedIndex, visibleItems]);
@@ -234,6 +237,7 @@ export default function CommandPalette({ isOpen, onClose }) {
               placeholder="Search workspaces, requests, history, environments..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
               className="flex-1 bg-transparent border-none text-white text-lg px-4 py-1 focus:outline-none placeholder:text-text-muted"
             />
             <button onClick={onClose} className="p-1 text-text-muted hover:text-white rounded-md hover:bg-white/10 transition-colors">
@@ -255,12 +259,27 @@ export default function CommandPalette({ isOpen, onClose }) {
                   ? collapsedSections[group.title] === true 
                   : collapsedSections[group.title] !== false;
 
+                // Check if the header itself is selected
+                const headerId = `header-${group.title}`;
+                const isHeaderSelected = visibleItems[selectedIndex]?.id === headerId;
+
                 return (
                   <div key={group.title} className="mb-2">
-                    {/* Group Header */}
+                    {/* Group Header (Now Navigable!) */}
                     <button 
-                      onClick={() => toggleSection(group.title)}
-                      className="flex items-center gap-2 w-full px-3 py-1.5 text-[11px] font-bold text-text-secondary uppercase tracking-wider hover:text-white hover:bg-white/5 rounded-md transition-colors group"
+                      ref={(el) => (itemRefs.current[headerId] = el)}
+                      onClick={() => {
+                        const idx = visibleItems.findIndex(v => v.id === headerId);
+                        if(idx !== -1) setSelectedIndex(idx);
+                        toggleSection(group.title);
+                      }}
+                      onMouseEnter={() => {
+                        const idx = visibleItems.findIndex(v => v.id === headerId);
+                        if(idx !== -1) setSelectedIndex(idx);
+                      }}
+                      className={`flex items-center gap-2 w-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider rounded-md transition-colors group ${
+                        isHeaderSelected ? 'bg-white/10 text-white' : 'text-text-secondary hover:text-white hover:bg-white/5'
+                      }`}
                     >
                       <span>{group.title}</span>
                       <span className="text-[9px] bg-white/10 px-1.5 py-0.5 rounded-full text-text-muted">
@@ -278,26 +297,21 @@ export default function CommandPalette({ isOpen, onClose }) {
                       <div className="flex flex-col gap-0.5 mt-1">
                         {group.items.map((item) => {
                           const Icon = item.icon;
-                          
-                          // Determine if this item is currently selected by the keyboard
                           const isSelected = visibleItems[selectedIndex]?.id === item.id;
                           
                           return (
                             <button
                               key={item.id}
-                              ref={(el) => (itemRefs.current[item.id] = el)} // Attach ref for scrolling
+                              ref={(el) => (itemRefs.current[item.id] = el)} 
                               onClick={() => {
-                                // Also update visual selection on click in case they hover then click
                                 const idx = visibleItems.findIndex(v => v.id === item.id);
                                 if(idx !== -1) setSelectedIndex(idx);
                                 item.action();
                               }}
                               onMouseEnter={() => {
-                                // Mouse hover updates keyboard selection index
                                 const idx = visibleItems.findIndex(v => v.id === item.id);
                                 if(idx !== -1) setSelectedIndex(idx);
                               }}
-                              // Dynamic classes for visual highlighting
                               className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left group ${
                                 isSelected ? 'bg-brand-primary/20 text-brand-primary' : 'hover:bg-white/5'
                               }`}

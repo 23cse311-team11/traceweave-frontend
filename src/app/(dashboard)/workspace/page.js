@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link'; 
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -24,7 +24,8 @@ export default function WorkspacesPage() {
         availableWorkspaces, 
         fetchWorkspaces, 
         duplicateWorkspace, 
-        deleteWorkspace 
+        deleteWorkspace,
+        toggleFavorite // Get this from your store
     } = useAppStore();
     
     const { showConfirm, showAlert } = useModal();
@@ -40,7 +41,7 @@ export default function WorkspacesPage() {
     const [activeFilters, setActiveFilters] = useState({ type: [], access: [] });
     const [pendingFilters, setPendingFilters] = useState({ type: [], access: [] });
     const [searchQuery, setSearchQuery] = useState('');
-    const [starredIds, setStarredIds] = useState([]);
+    // REMOVED: const [starredIds, setStarredIds] = useState([]); <--- No longer needed
     const [showOnlyStarred, setShowOnlyStarred] = useState(false);
     const [activeMenuId, setActiveMenuId] = useState(null);
 
@@ -62,14 +63,13 @@ export default function WorkspacesPage() {
         setIsFilterOpen(false);
     };
 
-    const toggleStar = (e, id) => {
+    // FIXED: Now calls the store to persist the favorite in the DB
+    const handleToggleStar = (e, id) => {
         if (e) {
             e.preventDefault();
             e.stopPropagation();
         }
-        setStarredIds(prev =>
-            prev.includes(id) ? prev.filter(sid => sid !== id) : [...prev, id]
-        );
+        toggleFavorite(id); 
     };
 
     const handleMenuClick = (e, id) => {
@@ -78,7 +78,6 @@ export default function WorkspacesPage() {
             e.stopPropagation();
             e.nativeEvent?.stopImmediatePropagation();
         }
-        // FIX: Using functional state update to prevent stale closures
         setActiveMenuId(prev => prev === id ? null : id);
     };
 
@@ -116,21 +115,36 @@ export default function WorkspacesPage() {
         );
     };
 
-    const filteredWorkspaces = availableWorkspaces.filter(ws => {
-        const matchesSearch = ws.name.toLowerCase().includes(searchQuery.toLowerCase());
-        const memberCount = ws.members?.length || 1;
-        const derivedType = memberCount > 1 ? 'Team' : 'Personal';
-        const derivedAccess = memberCount > 1 ? 'Shared' : 'Private';
-        const matchesType = activeFilters.type.length === 0 || activeFilters.type.includes(derivedType);
-        const matchesAccess = activeFilters.access.length === 0 || activeFilters.access.includes(derivedAccess);
-        const matchesStarred = !showOnlyStarred || starredIds.includes(ws.id);
+    // --- SORTING & FILTERING LOGIC ---
+    const displayedWorkspaces = useMemo(() => {
+        // 1. Filter the workspaces
+        const filtered = availableWorkspaces.filter(ws => {
+            const matchesSearch = ws.name.toLowerCase().includes(searchQuery.toLowerCase());
+            const memberCount = ws.members?.length || 1;
+            const derivedType = memberCount > 1 ? 'Team' : 'Personal';
+            const derivedAccess = memberCount > 1 ? 'Shared' : 'Private';
+            
+            const matchesType = activeFilters.type.length === 0 || activeFilters.type.includes(derivedType);
+            const matchesAccess = activeFilters.access.length === 0 || activeFilters.access.includes(derivedAccess);
+            
+            // FIXED: Check ws.isFavorite instead of local state
+            const matchesStarred = !showOnlyStarred || ws.isFavorite;
 
-        return matchesSearch && matchesType && matchesAccess && matchesStarred;
-    });
+            return matchesSearch && matchesType && matchesAccess && matchesStarred;
+        });
+
+        // 2. Sort: Favorites first, then by updatedAt (Recency)
+        return [...filtered].sort((a, b) => {
+            // FIXED: Use the property from the DB
+            if (a.isFavorite && !b.isFavorite) return -1;
+            if (!a.isFavorite && b.isFavorite) return 1;
+
+            return new Date(b.updatedAt) - new Date(a.updatedAt);
+        });
+    }, [availableWorkspaces, searchQuery, activeFilters, showOnlyStarred]);
 
     return (
         <div className="relative min-h-screen bg-bg-base text-text-primary p-6 md:p-12">
-            {/* Global Processing Overlay */}
             <AnimatePresence>
                 {isProcessing && (
                     <motion.div 
@@ -167,7 +181,7 @@ export default function WorkspacesPage() {
                         <div className="flex items-center gap-4 mb-2">
                             <h1 className="text-4xl font-bold tracking-tight text-text-primary">Workspaces</h1>
                             <span className="px-2.5 py-0.5 rounded-md bg-brand-surface/30 border border-brand-primary/20 text-xs font-mono text-brand-primary">
-                                {filteredWorkspaces.length} Total
+                                {displayedWorkspaces.length} Total
                             </span>
                         </div>
                         <p className="text-text-secondary text-base max-w-lg">
@@ -261,7 +275,7 @@ export default function WorkspacesPage() {
                 </section>
 
                 <main className="relative z-10">
-                    {filteredWorkspaces.length === 0 ? (
+                    {displayedWorkspaces.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-32 border-2 border-dashed border-border-subtle rounded-3xl bg-bg-panel/10">
                             <div className="p-4 rounded-full bg-brand-surface/20 mb-4">
                                 <Search size={40} className="text-brand-primary/40" />
@@ -288,13 +302,13 @@ export default function WorkspacesPage() {
                             ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' 
                             : 'flex flex-col gap-3'
                         }>
-                            {filteredWorkspaces.map((ws) => (
+                            {displayedWorkspaces.map((ws) => (
                                 <WorkspaceItem
                                     key={ws.id}
                                     ws={ws}
                                     viewMode={viewMode}
-                                    isStarred={starredIds.includes(ws.id)}
-                                    onToggleStar={toggleStar}
+                                    isStarred={ws.isFavorite}
+                                    onToggleStar={handleToggleStar}
                                     activeMenuId={activeMenuId}
                                     setActiveMenuId={handleMenuClick}
                                     onEdit={handleEdit}
