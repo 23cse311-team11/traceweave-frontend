@@ -30,6 +30,7 @@ export default function Header() {
   const handleWorkspaceCreated = (newWorkspace) => {
     if (newWorkspace && newWorkspace.id) {
       const currentTab = store.activeSidebarItem?.toLowerCase() || 'collections';
+      store.setActiveWorkspace(newWorkspace.id);
       // Navigate to the same tab but in the new workspace
       router.push(`/workspace/${newWorkspace.id}/${currentTab}`);
       // Refresh the workspace list in the store
@@ -82,10 +83,7 @@ export default function Header() {
               menuWidth="w-64"
               customFooter={
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsCreateWorkspaceOpen(true);
-                  }}
+                  onClick={() => setIsCreateWorkspaceOpen(true)}
                   className="flex w-full items-center gap-2 px-2 py-1.5 rounded text-sm font-semibold text-brand-primary hover:bg-brand-primary/10 transition-colors"
                 >
                   <Plus size={14} />

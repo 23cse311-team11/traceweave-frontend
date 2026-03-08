@@ -254,4 +254,57 @@ export const createWorkspaceSlice = (set, get) => ({
             return { success: false, error: msg };
         }
     },
+
+    updateWorkspace: async (id, data) => {
+        try {
+            const response = await workspaceApi.updateWorkspace(id, data);
+            const updatedWorkspace = response.data;
+            
+            set(state => ({
+                availableWorkspaces: state.availableWorkspaces.map(ws => 
+                    ws.id === id ? { ...ws, ...updatedWorkspace } : ws
+                )
+            }));
+            return { success: true, workspace: updatedWorkspace };
+        } catch (error) {
+            return { success: false, error: error.response?.data?.message || error.message };
+        }
+    },
+
+    deleteWorkspace: async (id) => {
+        try {
+            await workspaceApi.deleteWorkspace(id);
+            const currentActive = get().activeWorkspaceId;
+            
+            set(state => {
+                const filtered = state.availableWorkspaces.filter(ws => ws.id !== id);
+                return {
+                    availableWorkspaces: filtered,
+                    activeWorkspaceId: currentActive === id 
+                        ? (filtered.length > 0 ? filtered[0].id : null) 
+                        : currentActive
+                };
+            });
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.response?.data?.message || error.message };
+        }
+    },
+
+    duplicateWorkspace: async (id) => {
+        try {
+            set({ isLoadingWorkspaces: true });
+            const response = await workspaceApi.duplicateWorkspace(id);
+            const newWorkspace = response.data;
+
+            set(state => ({
+                availableWorkspaces: [...state.availableWorkspaces, newWorkspace],
+                isLoadingWorkspaces: false
+            }));
+            return { success: true, workspace: newWorkspace };
+        } catch (error) {
+            set({ isLoadingWorkspaces: false });
+            return { success: false, error: error.response?.data?.message || error.message };
+        }
+    }
 });

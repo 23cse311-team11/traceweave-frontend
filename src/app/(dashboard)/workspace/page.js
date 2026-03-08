@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link'; 
-import { AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     Search,
     Plus,
@@ -10,18 +10,32 @@ import {
     LayoutGrid,
     List as ListIcon,
     Star,
-    ChevronLeft
+    ChevronLeft,
+    Loader2
 } from 'lucide-react';
 import { FilterPopover } from '@/components/workspace/FilterPopover';
 import { WorkspaceItem } from '@/components/workspace/WorkspaceItem';
 import { CreateWorkspaceModal } from '@/components/home/auth_landing/CreateWorkspaceModal';
 import { useAppStore } from '@/store/useAppStore';
+import { useModal } from '@/components/providers/ModalProvider';
 
 export default function WorkspacesPage() {
-    const { availableWorkspaces, fetchWorkspaces, isLoadingWorkspaces } = useAppStore();
+    const { 
+        availableWorkspaces, 
+        fetchWorkspaces, 
+        duplicateWorkspace, 
+        deleteWorkspace 
+    } = useAppStore();
+    
+    const { showConfirm, showAlert } = useModal();
+
     const [viewMode, setViewMode] = useState('list');
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+    const [editData, setEditData] = useState(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
 
     const [activeFilters, setActiveFilters] = useState({ type: [], access: [] });
     const [pendingFilters, setPendingFilters] = useState({ type: [], access: [] });
@@ -35,7 +49,10 @@ export default function WorkspacesPage() {
     }, [fetchWorkspaces]);
 
     useEffect(() => {
-        const handleClickOutside = () => setActiveMenuId(null);
+        const handleClickOutside = (e) => {
+            if (e.target.closest('.dropdown-container')) return;
+            setActiveMenuId(null);
+        };
         window.addEventListener('click', handleClickOutside);
         return () => window.removeEventListener('click', handleClickOutside);
     }, []);
@@ -46,17 +63,57 @@ export default function WorkspacesPage() {
     };
 
     const toggleStar = (e, id) => {
-        e.preventDefault();
-        e.stopPropagation();
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         setStarredIds(prev =>
             prev.includes(id) ? prev.filter(sid => sid !== id) : [...prev, id]
         );
     };
 
     const handleMenuClick = (e, id) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setActiveMenuId(activeMenuId === id ? null : id);
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.nativeEvent?.stopImmediatePropagation();
+        }
+        // FIX: Using functional state update to prevent stale closures
+        setActiveMenuId(prev => prev === id ? null : id);
+    };
+
+    const handleEdit = (ws) => {
+        setEditData(ws);
+        setIsEditModalOpen(true);
+    };
+
+    const handleDuplicate = async (ws) => {
+        setIsProcessing(true);
+        try {
+            const result = await duplicateWorkspace(ws.id);
+            if (result.success) {
+                showAlert(`"${ws.name}" has been cloned successfully. Only you have access to the new copy.`, "Success");
+            } else {
+                showAlert(result.error, "Duplicate Failed");
+            }
+        } catch (err) {
+            showAlert("An unexpected error occurred during duplication.", "Error");
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    const handleDelete = (ws) => {
+        showConfirm(
+            `Are you sure you want to terminate "${ws.name}"? This action is permanent and all data (collections, workflows, and environments) within this workspace will be lost.`,
+            async () => {
+                const result = await deleteWorkspace(ws.id);
+                if (!result.success) {
+                    showAlert(result.error, "Error");
+                }
+            },
+            "Terminate Workspace"
+        );
     };
 
     const filteredWorkspaces = availableWorkspaces.filter(ws => {
@@ -72,11 +129,29 @@ export default function WorkspacesPage() {
     });
 
     return (
-        /* Removed flex-col from main wrapper to prevent height trapping */
         <div className="relative min-h-screen bg-bg-base text-text-primary p-6 md:p-12">
+            {/* Global Processing Overlay */}
+            <AnimatePresence>
+                {isProcessing && (
+                    <motion.div 
+                        initial={{ opacity: 0 }} 
+                        animate={{ opacity: 1 }} 
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[1000] bg-black/60 backdrop-blur-md flex flex-col items-center justify-center gap-4"
+                    >
+                        <div className="relative">
+                            <div className="w-16 h-16 border-4 border-brand-primary/20 border-t-brand-primary rounded-full animate-spin" />
+                            <Loader2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-brand-primary animate-pulse" size={24} />
+                        </div>
+                        <div className="text-center">
+                            <h2 className="text-xl font-bold text-white tracking-tight">Cloning Workspace</h2>
+                            <p className="text-text-muted text-sm mt-1">Deep-copying assets and creating independent records...</p>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             <div className="max-w-7xl mx-auto">
-                
-                {/* Navigation */}
                 <nav className="mb-8">
                     <Link 
                         href="/" 
@@ -87,7 +162,6 @@ export default function WorkspacesPage() {
                     </Link>
                 </nav>
 
-                {/* 1. Header Section */}
                 <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
                     <div>
                         <div className="flex items-center gap-4 mb-2">
@@ -110,7 +184,6 @@ export default function WorkspacesPage() {
                     </button>
                 </header>
 
-                {/* 2. Toolbar - Increased Z-index and refined blur */}
                 <section className="sticky top-4 z-40 mb-8">
                     <div className="glass-strong p-2 rounded-2xl flex flex-col lg:flex-row items-center justify-between gap-4 shadow-2xl border border-white/5">
                         <div className="relative flex-1 w-full group">
@@ -137,9 +210,10 @@ export default function WorkspacesPage() {
                                 <span className="hidden sm:inline">Favorites</span>
                             </button>
 
-                            <div className="relative">
+                            <div className="relative dropdown-container">
                                 <button
-                                    onClick={() => {
+                                    onClick={(e) => {
+                                        e.preventDefault();
                                         setIsFilterOpen(!isFilterOpen);
                                         if (!isFilterOpen) setPendingFilters(activeFilters);
                                     }}
@@ -186,7 +260,6 @@ export default function WorkspacesPage() {
                     </div>
                 </section>
 
-                {/* 3. Content Area - Ensuring relative positioning for z-index containment */}
                 <main className="relative z-10">
                     {filteredWorkspaces.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-32 border-2 border-dashed border-border-subtle rounded-3xl bg-bg-panel/10">
@@ -211,7 +284,6 @@ export default function WorkspacesPage() {
                             )}
                         </div>
                     ) : (
-                        /* WorkspaceItems should have relative positioning inside them */
                         <div className={viewMode === 'grid' 
                             ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' 
                             : 'flex flex-col gap-3'
@@ -225,6 +297,9 @@ export default function WorkspacesPage() {
                                     onToggleStar={toggleStar}
                                     activeMenuId={activeMenuId}
                                     setActiveMenuId={handleMenuClick}
+                                    onEdit={handleEdit}
+                                    onDuplicate={handleDuplicate}
+                                    onDelete={handleDelete}
                                 />
                             ))}
                         </div>
@@ -234,6 +309,15 @@ export default function WorkspacesPage() {
                 <CreateWorkspaceModal
                     isOpen={isCreateModalOpen}
                     onClose={() => setIsCreateModalOpen(false)}
+                />
+
+                <CreateWorkspaceModal
+                    isOpen={isEditModalOpen}
+                    onClose={() => {
+                        setIsEditModalOpen(false);
+                        setEditData(null);
+                    }}
+                    editData={editData}
                 />
             </div>
         </div>

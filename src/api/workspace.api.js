@@ -21,6 +21,11 @@ export const workspaceApi = {
         return response.data;
     },
 
+    duplicateWorkspace: async (id) => {
+        const response = await api.post(`/workspaces/${id}/duplicate`);
+        return response.data;
+    },
+
     deleteWorkspace: async (id) => {
         const response = await api.delete(`/workspaces/${id}`);
         return response.data;
