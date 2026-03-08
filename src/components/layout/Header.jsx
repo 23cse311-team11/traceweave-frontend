@@ -7,6 +7,7 @@ import { useAppStore } from '@/store/useAppStore';
 import Dropdown from '../ui/Dropdown';
 import { CreateWorkspaceModal } from '@/components/home/auth_landing/CreateWorkspaceModal';
 import InviteMembersModal from './InviteMembersModal';
+import CommandPalette from '../ui/CommandPalette'; 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
@@ -15,6 +16,7 @@ export default function Header() {
   const router = useRouter();
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isCreateWorkspaceOpen, setIsCreateWorkspaceOpen] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 
   // Initial load check
   useEffect(() => {
@@ -26,33 +28,35 @@ export default function Header() {
     }
   }, [store.activeWorkspaceId]);
 
-  // Handle switching to a newly created workspace
+  // Keyboard Shortcut Listener
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Check for Cmd+K (Mac) or Ctrl+K (Windows)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault(); // Stop browser's native search
+        setIsCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const handleWorkspaceCreated = (newWorkspace) => {
     if (newWorkspace && newWorkspace.id) {
       const currentTab = store.activeSidebarItem?.toLowerCase() || 'collections';
       store.setActiveWorkspace(newWorkspace.id);
-      // Navigate to the same tab but in the new workspace
       router.push(`/workspace/${newWorkspace.id}/${currentTab}`);
-      // Refresh the workspace list in the store
       store.fetchWorkspaces();
     }
   };
 
   const currentEnv = store.getWorkspaceEnvironments()[store.selectedEnvIndex];
-
   const envOptions = [
-    {
-      label: 'No Environment',
-      value: -1,
-      className: 'text-text-muted italic'
-    },
+    { label: 'No Environment', value: -1, className: 'text-text-muted italic' },
     ...store.getWorkspaceEnvironments().map((e, idx) => ({
-      label: e.name,
-      value: idx,
-      className: 'text-white'
+      label: e.name, value: idx, className: 'text-white'
     }))
   ];
-
   const selectedOption = envOptions.find(opt => opt.value === store.selectedEnvIndex) || envOptions[0];
 
   return (
@@ -113,16 +117,21 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Search */}
+        {/* Search Trigger to open Command Palette */}
         <div className="flex-1 max-w-2xl mx-12 relative z-10">
-          <div className="relative group">
+          <div 
+            className="relative group cursor-pointer"
+            onClick={() => setIsCommandPaletteOpen(true)} // Open on click
+          >
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <Search size={14} className="text-text-muted group-focus-within:text-brand-primary transition-colors" />
             </div>
+            {/* Made ReadOnly to act as a button trigger rather than an actual input */}
             <input
               type="text"
+              readOnly
               placeholder="Search traces, collections, or requests..."
-              className="w-full bg-white/5 text-sm text-white rounded-xl py-2 pl-10 pr-16 border border-white/5 focus:border-brand-primary/50 focus:bg-white/10 focus:outline-none transition-all placeholder:text-text-muted/50 font-medium"
+              className="w-full bg-white/5 text-sm text-white rounded-xl py-2 pl-10 pr-16 border border-white/5 hover:border-brand-primary/50 hover:bg-white/10 focus:outline-none transition-all placeholder:text-text-muted/50 font-medium cursor-pointer"
             />
             <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
               <kbd className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] text-text-muted font-mono tracking-tighter">⌘</kbd>
@@ -164,11 +173,17 @@ export default function Header() {
         </div>
       </header>
 
+      {/* Mount Modals */}
       <InviteMembersModal isOpen={isInviteOpen} onClose={() => setIsInviteOpen(false)} />
       <CreateWorkspaceModal
         isOpen={isCreateWorkspaceOpen}
         onClose={() => setIsCreateWorkspaceOpen(false)}
         onSuccess={handleWorkspaceCreated}
+      />
+      
+      <CommandPalette 
+        isOpen={isCommandPaletteOpen} 
+        onClose={() => setIsCommandPaletteOpen(false)} 
       />
     </>
   );
