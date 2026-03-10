@@ -130,7 +130,7 @@ test.describe('Workspace Management - E2E & Regression', () => {
         await expect(modal.first()).toBeVisible({ timeout: 5000 });
     });
 
-    test('[E2E] Should navigate into a workspace when accessing its URL directly', async ({ page }) => {
+    test('[E2E] Should navigate into a workspace when accessing its URL directly', async ({ page }, testInfo) => {
         // Navigate directly to the workspace detail page (mocked route)
         await page.route('**/api/v1/workspaces/ws-alpha', route => {
             route.fulfill({
@@ -139,6 +139,10 @@ test.describe('Workspace Management - E2E & Regression', () => {
                 body: JSON.stringify({ id: 'ws-alpha', name: 'Alpha Project', members: [] })
             });
         });
+
+        if (testInfo.project.name === 'webkit') {
+            await page.waitForTimeout(1000); // Give beforeEach navigation time to settle
+        }
 
         await page.goto('/workspace/ws-alpha');
 
