@@ -9,6 +9,7 @@ const createJestConfig = nextJest({
 const customJestConfig = {
     setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
     testEnvironment: 'jest-environment-jsdom',
+    testPathIgnorePatterns: ['<rootDir>/e2e/', '<rootDir>/.next/', '<rootDir>/node_modules/'],
     transformIgnorePatterns: [
         '/node_modules/(?!(lucide-react|recharts|d3-.*|uuid)/)',
     ],
