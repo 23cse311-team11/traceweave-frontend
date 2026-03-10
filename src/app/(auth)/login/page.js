@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Mail, Lock, Zap, Github } from 'lucide-react';
 import { FcGoogle } from "react-icons/fc";
 import { useAuthStore } from '@/store/useAuthStore';
+import { motion } from 'framer-motion';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -41,7 +42,7 @@ export default function LoginPage() {
 
     return (
         <div className="glass-strong rounded-3xl overflow-hidden shadow-[0_0_50px_-12px_rgba(157,90,229,0.3)] border border-white/10 relative grain-texture">
-            
+
             {/* Header / Brand Reveal */}
             <div className="p-10 pb-4 text-center">
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-surface/50 border border-brand-primary/20 mb-6 group relative">
@@ -72,7 +73,7 @@ export default function LoginPage() {
 
                 {/* Error Message */}
                 {error && (
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         className="p-4 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl text-center font-medium"
