@@ -8,7 +8,7 @@ export const workspaceApi = {
 
     getMyWorkspaces: async () => {
         const response = await api.get('/workspaces');
-        return response.data; // Expected: { workspaces: [...] }
+        return response.data;   
     },
 
     getWorkspaceById: async (id) => {

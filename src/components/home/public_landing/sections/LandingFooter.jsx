@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Github, Code2 } from 'lucide-react';
+import traceWeaveLogo from '@/assets/traceWeaveLogo.png';
 
 export const LandingFooter = () => {
   return (
@@ -14,7 +15,7 @@ export const LandingFooter = () => {
           {/* Brand */}
           <div className="md:col-span-4">
             <div className="flex items-center gap-3 mb-6">
-              <Image src="/logo.png" alt="Trace-weave" width={32} height={32} className="brightness-110" />
+              <Image src={traceWeaveLogo} alt="Trace-weave" width={32} height={32} className="brightness-110 rounded-xl" />
               <span className="font-bold text-xl text-white font-mono">TRACE–WEAVE</span>
             </div>
             <p className="text-white/50 leading-relaxed max-w-sm mb-6">

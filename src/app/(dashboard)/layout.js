@@ -11,6 +11,9 @@ import { ResizableSidebar } from '@/components/home/auth_landing/ResizableSideba
 import { Sidebar } from '@/components/home/auth_landing/Sidebar';
 import { DashboardHeader } from '@/components/home/auth_landing/DashboardHeader';
 import NotificationProvider from '@/components/providers/NotificationProvider';
+import Link from 'next/link';
+import Image from 'next/image';
+import traceWeaveLogo from '@/assets/traceWeaveLogo.png';
 
 export default function DashboardLayout({ children }) {
   const router = useRouter();
@@ -72,15 +75,21 @@ export default function DashboardLayout({ children }) {
       
       <ResizableSidebar>
         {/* Sidebar Brand Header */}
-        <div className="h-14 flex items-center px-5 border-b border-border-subtle shrink-0 bg-white/[0.02] relative z-10">
-          <div className="flex items-center gap-2.5 group cursor-pointer" onClick={() => router.push('/')}>
-            <div className="p-1.5 rounded-lg bg-brand-primary/10 border border-brand-primary/20 group-hover:border-brand-primary/40 transition-all">
-                <Zap size={18} className="text-brand-primary fill-brand-primary/20" />
+        <div className="h-14 flex items-center px-5 border-b border-border-subtle shrink-0 bg-white/[0.02]">
+          <Link href="/" className="flex items-center gap-2.5 group cursor-pointer no-underline">
+            <div className="relative w-8 h-8 shrink-0">
+              <Image 
+                src={traceWeaveLogo} 
+                alt="Trace-weave" 
+                fill // This ensures it fills the container div
+                className="object-contain brightness-125 transition-all group-hover:scale-110" 
+                priority // Ensures the logo loads immediately
+              />
             </div>
             <span className="font-black text-sm uppercase tracking-widest text-white/90 group-hover:text-white transition-colors">
                 Trace-weave
             </span>
-          </div>
+          </Link>
         </div>
 
         {/* Navigation Content */}

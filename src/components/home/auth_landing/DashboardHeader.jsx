@@ -1,12 +1,10 @@
-
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, LogOut, User, Building2, Settings } from 'lucide-react';
+import { Search, LogOut, User, Building2, Settings, Monitor } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CommandPalette from '@/components/ui/CommandPalette';
-// 1. Import the new Notification Bell
 import NotificationBell from '@/components/layout/NotificationBell';
 
 export const DashboardHeader = ({ user, logout }) => {
@@ -58,7 +56,31 @@ export const DashboardHeader = ({ user, logout }) => {
         {/* Right Actions */}
         <div className="flex items-center gap-4">
           
-          {/* 2. Replace the Bell Link with the Component */}
+          {/* DESKTOP DOWNLOAD BUTTON */}
+          <Link href="/download" className="hidden md:block">
+            <motion.div 
+              whileHover={{ y: -1 }} 
+              whileTap={{ scale: 0.98 }}
+              className="relative group flex items-center gap-2 bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 hover:border-brand-primary/40 px-3 py-1.5 rounded-full transition-all duration-300"
+            >
+              <div className="flex items-center justify-center w-6 h-6 rounded-full bg-brand-primary/10 group-hover:bg-brand-primary/20 transition-colors">
+                <Monitor size={12} className="text-brand-primary group-hover:scale-110 transition-transform" />
+              </div>
+              
+              <div className="flex flex-col items-start leading-none pr-1">
+                <span className="text-[10px] font-black uppercase tracking-wider text-white">Desktop App</span>
+                <span className="text-[8px] text-text-muted font-medium group-hover:text-brand-primary transition-colors">Native Performance</span>
+              </div>
+
+              <div className="absolute -top-1 -right-1 flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-primary opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-primary"></span>
+              </div>
+            </motion.div>
+          </Link>
+
+          <div className="h-6 w-px bg-white/10 mx-1 hidden lg:block"></div>
+
           <NotificationBell />
 
           {/* User Profile Dropdown */}

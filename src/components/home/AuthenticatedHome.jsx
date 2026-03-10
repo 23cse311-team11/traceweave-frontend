@@ -16,6 +16,8 @@ import { QuickActions } from './auth_landing/QuickActions';
 import { RecentActivity } from './auth_landing/RecentActivity';
 import { CreateWorkspaceModal } from '@/components/home/auth_landing/CreateWorkspaceModal';
 import { Zap, Loader2 } from 'lucide-react';
+import traceWeaveLogo from '@/assets/traceWeaveLogo.png';
+import Link from 'next/link';
 
 export default function AuthenticatedHome() {
   const { user, logout } = useAuthStore();
@@ -106,14 +108,20 @@ export default function AuthenticatedHome() {
       <ResizableSidebar>
         {/* Sidebar Brand Header */}
         <div className="h-14 flex items-center px-5 border-b border-border-subtle shrink-0 bg-white/[0.02]">
-          <div className="flex items-center gap-2.5 group cursor-pointer">
-            <div className="p-1.5 rounded-lg bg-brand-primary/10 border border-brand-primary/20 group-hover:border-brand-primary/40 transition-all">
-                <Zap size={18} className="text-brand-primary fill-brand-primary/20" />
+          <Link href="/" className="flex items-center gap-2.5 group cursor-pointer no-underline">
+            <div className="relative w-8 h-8 shrink-0">
+              <Image 
+                src={traceWeaveLogo} 
+                alt="Trace-weave" 
+                fill // This ensures it fills the container div
+                className="object-contain brightness-125 transition-all group-hover:scale-110" 
+                priority // Ensures the logo loads immediately
+              />
             </div>
             <span className="font-black text-sm uppercase tracking-widest text-white/90 group-hover:text-white transition-colors">
                 Trace-weave
             </span>
-          </div>
+          </Link>
         </div>
 
         {/* Navigation Content */}

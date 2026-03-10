@@ -31,7 +31,6 @@ export default function TeamPage() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('VIEWER');
   
-  // Modal states for the magic link
   const [isLoading, setIsLoading] = useState(false);
   const [generatedLink, setGeneratedLink] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -41,7 +40,6 @@ export default function TeamPage() {
     if (availableWorkspaces.length === 0) fetchWorkspaces();
   }, []);
 
-  // Fetch pending invites when workspace changes
   useEffect(() => {
     if (activeWorkspaceId) fetchPendingInvites(activeWorkspaceId);
   }, [activeWorkspaceId]);
@@ -70,7 +68,7 @@ export default function TeamPage() {
       async () => {
         const res = await leaveWorkspace(activeWorkspaceId);
         if (res.success) {
-          // Optional: Add an alert or toast here
+          // Success logic here
         }
       },
       "Leave Workspace"
@@ -92,12 +90,6 @@ export default function TeamPage() {
       setErrorMsg(res.error);
     }
     setIsLoading(false);
-  };
-
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(generatedLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   const resetModal = () => {
@@ -151,7 +143,6 @@ export default function TeamPage() {
                   <ArrowLeft size={16} />
                   Back to Home
                 </Link>
-
                 <h1 className="text-3xl font-bold tracking-tight">
                   {activeWorkspace.name} Team
                 </h1>
@@ -161,7 +152,6 @@ export default function TeamPage() {
               </div>
               
               <div className="flex items-center gap-3">
-                {/* Only show Leave button if user is NOT the owner */}
                 {myRole !== 'OWNER' && (
                   <button
                     onClick={handleLeave}
@@ -193,9 +183,9 @@ export default function TeamPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-subtle">
-                  {/* {console.log(workspaceMembers)} */}
-                  {workspaceMembers.map((member) => (
-                    <tr key={member.id} className={`${member.userId === user?.id ? 'bg-brand-primary/10' : ''} hover:bg-white/5 transition-colors`}>
+                  {workspaceMembers.map((member, index) => (
+                    /* FIX: Added index fallback and checked for stable IDs */
+                    <tr key={member.id || `member-${member.userId}-${index}`} className={`${member.userId === user?.id ? 'bg-brand-primary/10' : ''} hover:bg-white/5 transition-colors`}>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-blue to-brand-primary flex items-center justify-center text-white font-bold text-xs">
@@ -265,8 +255,9 @@ export default function TeamPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border-subtle">
-                      {pendingInvites.map((invite) => (
-                        <tr key={invite.id} className="hover:bg-white/5 transition-colors">
+                      {pendingInvites.map((invite, idx) => (
+                        /* FIX: Added index fallback for pending invites as well */
+                        <tr key={invite.id || `invite-${idx}`} className="hover:bg-white/5 transition-colors">
                           <td className="px-6 py-3 font-medium text-text-primary">{invite.email}</td>
                           <td className="px-6 py-3 text-xs text-text-secondary">{invite.role}</td>
                           <td className="px-6 py-3 text-xs text-text-muted">{invite.inviter?.fullName || 'Unknown'}</td>
@@ -289,12 +280,10 @@ export default function TeamPage() {
         )}
       </div>
 
-
       {isInviteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
             <div className="bg-bg-panel border border-border-strong rounded-xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col">
             
-            {/* Modal Header & Tabs */}
             <div className="px-6 pt-6 pb-4 border-b border-border-subtle bg-bg-base/50">
                 <h3 className="text-lg font-bold mb-4">Share {activeWorkspace?.name}</h3>
                 <div className="flex gap-4 text-sm font-medium">
@@ -314,7 +303,6 @@ export default function TeamPage() {
             </div>
 
             <div className="p-6">
-                {/* --- TAB 1: EMAIL --- */}
                 {inviteTab === 'email' && (
                 <form onSubmit={handleSendInvite} className="space-y-4">
                     <p className="text-sm text-text-secondary mb-4">Send a direct email invitation with specific role access.</p>
@@ -322,23 +310,23 @@ export default function TeamPage() {
                     {generatedLink === 'sent' && <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-xs rounded-md">Invitation sent successfully!</div>}
                     
                     <div>
-                    <label className="block text-xs font-semibold text-text-secondary mb-1">Email Address</label>
-                    <input 
-                        type="email" required value={inviteEmail} onChange={e => setInviteEmail(e.target.value)}
-                        className="w-full bg-bg-input border border-border-subtle rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-primary" 
-                        placeholder="colleague@example.com"
-                    />
+                      <label className="block text-xs font-semibold text-text-secondary mb-1">Email Address</label>
+                      <input 
+                          type="email" required value={inviteEmail} onChange={e => setInviteEmail(e.target.value)}
+                          className="w-full bg-bg-input border border-border-subtle rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-primary" 
+                          placeholder="colleague@example.com"
+                      />
                     </div>
                     <div>
-                    <label className="block text-xs font-semibold text-text-secondary mb-1">Role</label>
-                    <select 
-                        value={inviteRole} onChange={e => setInviteRole(e.target.value)}
-                        className="w-full bg-bg-input border border-border-subtle rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-primary"
-                    >
-                        <option value="VIEWER">Viewer</option>
-                        <option value="EDITOR">Editor</option>
-                        {myRole === 'OWNER' && <option value="OWNER">Owner</option>}
-                    </select>
+                      <label className="block text-xs font-semibold text-text-secondary mb-1">Role</label>
+                      <select 
+                          value={inviteRole} onChange={e => setInviteRole(e.target.value)}
+                          className="w-full bg-bg-input border border-border-subtle rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-primary"
+                      >
+                          <option value="VIEWER">Viewer</option>
+                          <option value="EDITOR">Editor</option>
+                          {myRole === 'OWNER' && <option value="OWNER">Owner</option>}
+                      </select>
                     </div>
                     <div className="flex gap-3 justify-end mt-6 pt-4 border-t border-border-subtle">
                     <button type="button" onClick={resetModal} className="px-4 py-2 text-sm font-medium hover:bg-bg-input rounded-lg">Done</button>
@@ -349,7 +337,6 @@ export default function TeamPage() {
                 </form>
                 )}
 
-                {/* --- TAB 2: COMMON LINK --- */}
                 {inviteTab === 'link' && (
                 <div className="space-y-4">
                     <p className="text-sm text-text-secondary mb-4">Anyone with this link can join the workspace as a Viewer.</p>
@@ -360,9 +347,7 @@ export default function TeamPage() {
                         <p className="text-xs text-text-muted">Turn off to invalidate existing links.</p>
                     </div>
                     <button 
-                        onClick={() => useAppStore
-                        .getState()
-                        .toggleCommonLink(!activeWorkspace.isInviteLinkActive)}
+                        onClick={() => useAppStore.getState().toggleCommonLink(!activeWorkspace.isInviteLinkActive)}
                         className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${activeWorkspace?.isInviteLinkActive ? 'bg-emerald-500' : 'bg-gray-600'}`}
                     >
                         <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${activeWorkspace?.isInviteLinkActive ? 'translate-x-5' : 'translate-x-1'}`} />
