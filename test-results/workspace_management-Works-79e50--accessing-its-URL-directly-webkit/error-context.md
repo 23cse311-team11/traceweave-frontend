@@ -1,0 +1,43 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - img [ref=e5]
+  - generic [ref=e7]:
+    - main [ref=e8]:
+      - generic [ref=e9]:
+        - generic [ref=e10]:
+          - img [ref=e12]
+          - heading "WELCOME BACK" [level=1] [ref=e14]
+          - paragraph [ref=e15]: The next era of distributed tracing.
+        - generic [ref=e16]:
+          - generic [ref=e17]:
+            - button "GOOGLE" [ref=e18]:
+              - img [ref=e19]
+              - text: GOOGLE
+            - button "GITHUB" [ref=e24]:
+              - img [ref=e25]
+              - text: GITHUB
+          - generic [ref=e29]: Or access via email
+          - generic [ref=e30]:
+            - generic [ref=e31]:
+              - text: Identity
+              - generic [ref=e32]:
+                - img [ref=e33]
+                - textbox "name@company.com" [ref=e36]
+            - generic [ref=e37]:
+              - generic [ref=e38]:
+                - text: Security Key
+                - link "Forgot Access?" [ref=e39]:
+                  - /url: "#"
+              - generic [ref=e40]:
+                - img [ref=e41]
+                - textbox "••••••••" [ref=e44]
+            - button "ENTER CONSOLE" [ref=e45]
+        - paragraph [ref=e47]:
+          - text: Need an account?
+          - link "Create One Free" [ref=e48]:
+            - /url: /register
+    - contentinfo [ref=e50]:
+      - paragraph [ref=e51]: © 2026 TraceWeave Inc. All rights reserved.
+```
