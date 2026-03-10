@@ -1,10 +1,13 @@
+
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, Bell, LogOut, User, Building2, Settings } from 'lucide-react';
+import { Search, LogOut, User, Building2, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CommandPalette from '@/components/ui/CommandPalette';
+// 1. Import the new Notification Bell
+import NotificationBell from '@/components/layout/NotificationBell';
 
 export const DashboardHeader = ({ user, logout }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -22,7 +25,7 @@ export const DashboardHeader = ({ user, logout }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // 3. Add Cmd+K / Ctrl+K Listener
+  // Cmd+K / Ctrl+K Listener
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -38,7 +41,7 @@ export const DashboardHeader = ({ user, logout }) => {
     <>
       <header className="h-14 border-b border-border-subtle bg-bg-base/80 backdrop-blur-md flex items-center justify-between px-6 z-20 sticky top-0">
         
-        {/* Search Bar - 4. Attach onClick trigger */}
+        {/* Search Bar */}
         <div className="w-full max-w-md">
           <button 
             onClick={() => setIsCommandPaletteOpen(true)}
@@ -54,10 +57,9 @@ export const DashboardHeader = ({ user, logout }) => {
 
         {/* Right Actions */}
         <div className="flex items-center gap-4">
-          <button className="text-text-muted hover:text-text-primary transition-colors relative">
-            <Bell size={18} />
-            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-brand-primary rounded-full border-2 border-bg-base"></span>
-          </button>
+          
+          {/* 2. Replace the Bell Link with the Component */}
+          <NotificationBell />
 
           {/* User Profile Dropdown */}
           <div className="relative" ref={profileRef}>
@@ -107,7 +109,7 @@ export const DashboardHeader = ({ user, logout }) => {
         </div>
       </header>
 
-      {/* 5. Mount the Command Palette */}
+      {/* Mount the Command Palette */}
       <CommandPalette 
         isOpen={isCommandPaletteOpen} 
         onClose={() => setIsCommandPaletteOpen(false)} 

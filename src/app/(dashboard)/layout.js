@@ -10,6 +10,7 @@ import { Zap } from 'lucide-react';
 import { ResizableSidebar } from '@/components/home/auth_landing/ResizableSidebar';
 import { Sidebar } from '@/components/home/auth_landing/Sidebar';
 import { DashboardHeader } from '@/components/home/auth_landing/DashboardHeader';
+import NotificationProvider from '@/components/providers/NotificationProvider';
 
 export default function DashboardLayout({ children }) {
   const router = useRouter();
@@ -53,7 +54,9 @@ export default function DashboardLayout({ children }) {
           <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120vh] h-[120vh] bg-brand-surface/5 blur-[200px] rounded-full pointer-events-none z-0" />
           
           <div className="relative z-10 flex-1 flex flex-col w-full h-full min-h-screen">
+            <NotificationProvider >
               {children}
+            </NotificationProvider>
           </div>
       </div>
     );
@@ -91,7 +94,9 @@ export default function DashboardLayout({ children }) {
         <DashboardHeader user={user} logout={logout} />
         
         <main className="flex-1 overflow-y-auto custom-scrollbar">
-          {children}
+          <NotificationProvider >
+            {children}
+          </NotificationProvider>
         </main>
       </div>
     </div>
