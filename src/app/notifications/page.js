@@ -13,6 +13,7 @@ export default function NotificationsPage() {
   }, []);
 
   const getIcon = (type) => {
+    if (!type) return <Bell size={16} className="text-text-muted" />;
     if (type.includes('WORKFLOW')) return <Workflow size={16} className="text-brand-primary" />;
     if (type.includes('MEMBER') || type.includes('INVITE')) return <Users size={16} className="text-emerald-500" />;
     return <ShieldAlert size={16} className="text-amber-500" />;

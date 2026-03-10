@@ -15,19 +15,35 @@ import { motion } from 'framer-motion';
 
 export default function Header() {
   const store = useAppStore();
+  const {
+    availableWorkspaces,
+    isLoadingWorkspaces,
+    activeWorkspaceId,
+    availableEnvironments,
+    fetchWorkspaces,
+    fetchEnvironments,
+  } = store;
   const router = useRouter();
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isCreateWorkspaceOpen, setIsCreateWorkspaceOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 
+  const handleWorkspaceCreated = (workspace) => {
+    setIsCreateWorkspaceOpen(false);
+    store.fetchWorkspaces();
+    if (workspace?.id) {
+      router.push(`/workspace/${workspace.id}/collections`);
+    }
+  };
+
   useEffect(() => {
-    if ((!store.availableWorkspaces || store.availableWorkspaces?.length === 0) && !store.isLoadingWorkspaces) {
-      store.fetchWorkspaces();
+    if ((!availableWorkspaces || availableWorkspaces?.length === 0) && !isLoadingWorkspaces) {
+      fetchWorkspaces();
     }
-    if (store.activeWorkspaceId && (!store.availableEnvironments || store.availableEnvironments?.length === 0)) {
-      store.fetchEnvironments(store.activeWorkspaceId);
+    if (activeWorkspaceId && (!availableEnvironments || availableEnvironments?.length === 0)) {
+      fetchEnvironments(activeWorkspaceId);
     }
-  }, [store.activeWorkspaceId]);
+  }, [activeWorkspaceId, availableWorkspaces, availableEnvironments, isLoadingWorkspaces, fetchWorkspaces, fetchEnvironments]);
 
   const currentEnv = store.getWorkspaceEnvironments()[store.selectedEnvIndex];
   const envOptions = [
@@ -48,17 +64,17 @@ export default function Header() {
           <div className="flex items-center gap-1">
             <Dropdown
               icon={Briefcase}
-              value={store.availableWorkspaces.find(ws => ws.id === store.activeWorkspaceId)?.name}
-              options={store.availableWorkspaces.map(ws => ws.name)}
+              value={availableWorkspaces.find(ws => ws.id === activeWorkspaceId)?.name}
+              options={availableWorkspaces.map(ws => ws.name)}
               onSelect={(name) => {
-                const ws = store.availableWorkspaces.find(w => w.name === name);
+                const ws = availableWorkspaces.find(w => w.name === name);
                 if (ws) {
                   store.setActiveWorkspace(ws.id);
                   const currentTab = store.activeSidebarItem?.toLowerCase() || 'collections';
                   router.push(`/workspace/${ws.id}/${currentTab}`);
                 }
               }}
-              onOpen={() => store.fetchWorkspaces()}
+              onOpen={() => fetchWorkspaces()}
               label="Workspaces"
               className="font-bold text-white tracking-tight"
               enableSearch={true}
@@ -134,7 +150,7 @@ export default function Header() {
               }
             }}
             onOpen={() => {
-              if (store.activeWorkspaceId) store.fetchEnvironments(store.activeWorkspaceId)
+              if (activeWorkspaceId) fetchEnvironments(activeWorkspaceId)
             }}
             label="Environments"
             className="font-bold text-text-muted hover:text-white"
