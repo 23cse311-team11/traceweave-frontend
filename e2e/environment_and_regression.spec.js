@@ -140,3 +140,5 @@ test.describe('Protected Route Regression', () => {
 });
 
 // regression testing sweep
+
+// e2e true journey check
