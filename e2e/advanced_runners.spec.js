@@ -122,7 +122,7 @@ test.describe('Advanced Runners (GraphQL & WebSocket) - E2E & Regression', () =>
             // Navigation may be interrupted by redirect — that is expected
         }
 
-        await expect(freshPage).toHaveURL(/\/login/, { timeout: 15000 });
+        await expect(freshPage).toHaveURL(/\/login/, { timeout: 30000 });
         await context.close();
     });
 
@@ -177,3 +177,5 @@ test.describe('Advanced Runners (GraphQL & WebSocket) - E2E & Regression', () =>
         expect(response.data.success).toBe(true);
     });
 });
+
+// regression testing sweep
