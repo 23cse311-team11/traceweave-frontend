@@ -33,3 +33,5 @@ test.describe('Public Landing Page', () => {
 });
 
 // regression testing sweep
+
+// e2e true journey check
