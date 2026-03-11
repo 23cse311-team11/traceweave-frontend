@@ -118,3 +118,5 @@ test.describe('Collection Operations - E2E & Regression', () => {
 });
 
 // regression testing sweep
+
+// e2e true journey check
