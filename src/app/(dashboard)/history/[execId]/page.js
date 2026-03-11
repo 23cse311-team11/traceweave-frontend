@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
 import { 
@@ -21,6 +21,113 @@ const formatJson = (data) => {
   }
   return JSON.stringify(data, null, 2);
 };
+
+const hasValue = (value) => {
+  if (value === undefined || value === null) return false;
+  if (typeof value === 'string') return value.trim().length > 0;
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof value === 'object') return Object.keys(value).length > 0;
+  return true;
+};
+
+const normalizeHeaders = (headers) => {
+  if (!headers) return {};
+
+  if (Array.isArray(headers)) {
+    return headers.reduce((acc, item) => {
+      if (item?.key) acc[item.key] = item.value;
+      return acc;
+    }, {});
+  }
+
+  if (typeof headers === 'string') {
+    try {
+      const parsed = JSON.parse(headers);
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  return typeof headers === 'object' ? headers : {};
+};
+
+const getSerializedSize = (value) => {
+  if (!hasValue(value)) return 0;
+
+  const rawValue = typeof value === 'string' ? value : JSON.stringify(value);
+  return new TextEncoder().encode(rawValue).length;
+};
+
+const getTimingMetrics = (timings) => {
+  const total = Number(timings?.total) || 0;
+  if (!total) {
+    return {
+      dnsLookup: 0,
+      tcpConnection: 0,
+      tlsHandshake: 0,
+      firstByte: 0,
+      download: 0,
+      total: 0,
+      source: 'missing',
+    };
+  }
+
+  const measured = {
+    dnsLookup: Number(timings?.dnsLookup) || 0,
+    tcpConnection: Number(timings?.tcpConnection) || 0,
+    tlsHandshake: Number(timings?.tlsHandshake) || 0,
+    firstByte: Number(timings?.firstByte) || 0,
+    download: Number(timings?.download) || 0,
+  };
+
+  const hasMeasuredBreakdown = Object.values(measured).some(value => value > 0);
+  if (hasMeasuredBreakdown) {
+    return { ...measured, total, source: 'live' };
+  }
+
+  return {
+    dnsLookup: Math.ceil(total * 0.10),
+    tcpConnection: Math.ceil(total * 0.05),
+    tlsHandshake: 0,
+    firstByte: Math.ceil(total * 0.60),
+    download: Math.max(total - Math.ceil(total * 0.10) - Math.ceil(total * 0.05) - Math.ceil(total * 0.60), 0),
+    total,
+    source: 'estimated',
+  };
+};
+
+const normalizeExecutionLog = (log) => {
+  if (!log) return null;
+
+  const requestHeaders = normalizeHeaders(log.requestHeaders);
+  const responseHeaders = normalizeHeaders(log.responseHeaders);
+  const timings = getTimingMetrics(log.timings);
+  const responseSize = Number(log.responseSize) || getSerializedSize(log.responseBody);
+  const isWs = log.protocol === 'ws';
+
+  const hasRequestHeaders = Object.keys(requestHeaders).length > 0;
+  const hasResponseHeaders = Object.keys(responseHeaders).length > 0;
+  const hasRequestBody = hasValue(log.requestBody);
+  const hasResponseBody = isWs ? Array.isArray(log.responseBody) && log.responseBody.length > 0 : hasValue(log.responseBody);
+
+  return {
+    ...log,
+    requestHeaders,
+    responseHeaders,
+    timings,
+    responseSize,
+    hasRequestHeaders,
+    hasResponseHeaders,
+    hasRequestBody,
+    hasResponseBody,
+    isSummaryOnly: !isWs && !hasRequestHeaders && !hasResponseHeaders && !hasRequestBody && !hasResponseBody,
+  };
+};
+
+const EmptyState = ({ message }) => (
+  <div className="p-8 text-center text-sm text-text-muted font-mono italic">{message}</div>
+);
 
 const getStatusColor = (code) => {
   if (!code) return 'text-text-muted';
@@ -62,9 +169,9 @@ const CopyButton = ({ textValue }) => {
   );
 };
 
-const HeadersDisplay = ({ headers }) => {
+const HeadersDisplay = ({ headers, emptyMessage = 'No headers available' }) => {
   if (!headers || Object.keys(headers).length === 0) {
-    return <div className="p-8 text-center text-sm text-text-muted font-mono italic">No headers available</div>;
+    return <EmptyState message={emptyMessage} />;
   }
   return (
     <div className="flex flex-col text-[12px] font-mono divide-y divide-border-subtle">
@@ -79,8 +186,8 @@ const HeadersDisplay = ({ headers }) => {
 };
 
 // ✨ NEW: Smart Request Body Renderer (Handles Form-Data & Files without crashing)
-const RequestBodyDisplay = ({ body }) => {
-  if (!body) return <div className="p-8 text-center text-sm text-text-muted font-mono italic">No request body</div>;
+const RequestBodyDisplay = ({ body, emptyMessage = 'No request body' }) => {
+  if (!body || body.type === 'none') return <EmptyState message={emptyMessage} />;
 
   // Render FormData (Files + Text)
   if (body.type === 'formdata') {
@@ -144,9 +251,41 @@ const RequestBodyDisplay = ({ body }) => {
   );
 };
 
+const TimingBar = ({ label, value, startPercent, widthPercent, colorClass }) => {
+  if (widthPercent <= 0 && value <= 0) return null; // Hide segments with 0ms
+
+  return (
+    <div className="group flex items-center h-8 hover:bg-white/5 px-2 transition-colors">
+      {/* Label and Value */}
+      <div className="w-40 shrink-0 flex flex-col justify-center">
+        <span className="text-[11px] text-text-muted group-hover:text-text-secondary truncate uppercase tracking-tighter">
+          {label}
+        </span>
+      </div>
+
+      {/* The Track */}
+      <div className="flex-1 h-full relative border-l border-border-subtle/30 flex items-center">
+        {/* The Actual Bar */}
+        <div 
+          className={`h-2.5 rounded-sm shadow-sm transition-all duration-700 ease-out ${colorClass}`}
+          style={{ 
+            marginLeft: `${startPercent}%`, 
+            width: `${Math.max(widthPercent, 0.5)}%`, // Ensure it's at least visible
+          }}
+          title={`${label}: ${value}ms`}
+        />
+        {/* Value Label (only shows on hover or if there's space) */}
+        <span className="ml-2 text-[10px] font-mono text-text-muted opacity-0 group-hover:opacity-100 transition-opacity">
+          {value}ms
+        </span>
+      </div>
+    </div>
+  );
+};
+
 const WsMessageTimeline = ({ messages }) => {
   if (!Array.isArray(messages) || messages.length === 0) {
-    return <div className="p-8 text-center text-sm text-text-muted font-mono italic">No messages recorded in this session.</div>;
+    return <EmptyState message="No messages recorded in this session." />;
   }
   return (
     <div className="flex flex-col gap-4 p-6 overflow-y-auto custom-scrollbar h-full">
@@ -184,20 +323,14 @@ export default function ExecutionDetailPage() {
   
   const { activeExecution: log, isHistoryLoading, fetchExecutionDetails, clearActiveExecution } = useAppStore();
   const [activeTab, setActiveTab] = useState('');
+  const execution = useMemo(() => normalizeExecutionLog(log), [log]);
 
   useEffect(() => {
     if (execId) fetchExecutionDetails(execId);
     return () => clearActiveExecution();
   }, [execId, fetchExecutionDetails, clearActiveExecution]);
 
-  useEffect(() => {
-    if (log) {
-      if (log.protocol === 'ws') setActiveTab('ws-messages');
-      else setActiveTab('res-body');
-    }
-  }, [log]);
-
-  if (isHistoryLoading || !log) {
+  if (isHistoryLoading) {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center bg-bg-base text-text-secondary">
         <PacmanLoader color="#EAC2FF" size={20} />
@@ -205,8 +338,28 @@ export default function ExecutionDetailPage() {
     );
   }
 
-  const isWs = log.protocol === 'ws';
-  const formattedResBody = !isWs ? formatJson(log.responseBody) : '';
+  if (!execution) {
+    return (
+      <div className="h-screen w-full flex flex-col items-center justify-center gap-4 bg-bg-base text-text-secondary px-6">
+        <div className="text-lg font-semibold text-text-primary">Execution details unavailable</div>
+        <p className="text-sm text-text-muted text-center max-w-md">
+          This record could not be loaded. It may have been deleted or you may no longer have access to it.
+        </p>
+        <button
+          onClick={() => router.push('/history')}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-border-subtle hover:bg-bg-input transition-colors"
+        >
+          <ArrowLeft size={16} /> Back to History
+        </button>
+      </div>
+    );
+  }
+
+  const isWs = execution.protocol === 'ws';
+  const formattedResBody = !isWs ? formatJson(execution.responseBody) : '';
+  const emptyDetailMessage = execution.isSummaryOnly
+    ? 'This history entry only stored summary metadata. Re-run the request to capture full headers, body, and timing details.'
+    : 'No data available for this section.';
 
   const tabs = isWs ? [
     { id: 'ws-messages', label: 'Message History', icon: MessageSquare },
@@ -218,6 +371,9 @@ export default function ExecutionDetailPage() {
     { id: 'res-body', label: 'Res Body', icon: ArrowDownToLine },
     { id: 'waterfall', label: 'Waterfall', icon: Activity },
   ];
+  const currentTab = tabs.some(tab => tab.id === activeTab)
+    ? activeTab
+    : (isWs ? 'ws-messages' : 'res-body');
 
   return (
     // ✨ Full bleed, IDE-like layout
@@ -234,35 +390,35 @@ export default function ExecutionDetailPage() {
             <ArrowLeft size={16} /> History
           </button>
           <div className="ml-auto text-xs text-text-muted font-mono flex items-center gap-2">
-            <Clock size={12} /> {new Date(log.createdAt).toLocaleString()}
+            <Clock size={12} /> {new Date(execution.createdAt).toLocaleString()}
           </div>
         </div>
 
         {/* Overview Bar */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-6 py-5 border-b border-border-subtle bg-bg-base">
           <div className="flex items-center gap-4">
-            <span className={`font-bold text-lg w-14 text-center ${getMethodColor(log.method, log.protocol)}`}>
-              {isWs ? 'WS' : log.method}
+            <span className={`font-bold text-lg w-14 text-center ${getMethodColor(execution.method, execution.protocol)}`}>
+              {isWs ? 'WS' : execution.method}
             </span>
             <div className="h-8 w-px bg-border-subtle hidden md:block"></div>
-            <span className="text-text-primary font-mono text-base break-all flex-1">{log.url}</span>
+            <span className="text-text-primary font-mono text-base break-all flex-1">{execution.url}</span>
           </div>
           
           <div className="flex items-center gap-6 shrink-0 md:pl-6 md:border-l border-border-subtle">
             <div className="flex flex-col items-end">
               <span className="text-[10px] text-text-muted uppercase tracking-wider font-semibold">Status</span>
-              <span className={`font-mono font-bold text-sm ${getStatusColor(log.status)}`}>
-                {log.status || 'ERR'} {log.statusText}
+              <span className={`font-mono font-bold text-sm ${getStatusColor(execution.status)}`}>
+                {execution.status || 'ERR'} {execution.statusText}
               </span>
             </div>
             <div className="flex flex-col items-end">
               <span className="text-[10px] text-text-muted uppercase tracking-wider font-semibold">Time</span>
-              <span className="font-mono font-bold text-sm text-emerald-500">{log.timings?.total || 0} ms</span>
+              <span className="font-mono font-bold text-sm text-emerald-500">{execution.timings.total || 0} ms</span>
             </div>
             <div className="flex flex-col items-end">
               <span className="text-[10px] text-text-muted uppercase tracking-wider font-semibold">Size</span>
               <span className="font-mono font-bold text-sm text-text-primary">
-                {log.responseSize ? (log.responseSize / 1024).toFixed(2) : 0} KB
+                {execution.responseSize ? (execution.responseSize / 1024).toFixed(2) : 0} KB
               </span>
             </div>
           </div>
@@ -276,7 +432,7 @@ export default function ExecutionDetailPage() {
         <div className="flex items-center px-4 border-b border-border-subtle bg-bg-panel/20 shrink-0">
           {tabs.map(tab => {
             const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
+            const isActive = currentTab === tab.id;
             return (
               <button
                 key={tab.id}
@@ -295,46 +451,107 @@ export default function ExecutionDetailPage() {
           
           {/* Action Buttons */}
           <div className="ml-auto flex items-center">
-            {activeTab === 'res-body' && !isWs && <CopyButton textValue={formattedResBody} />}
-            {activeTab === 'req-headers' && <CopyButton textValue={JSON.stringify(log.requestHeaders, null, 2)} />}
+            {currentTab === 'res-body' && !isWs && <CopyButton textValue={formattedResBody} />}
+            {currentTab === 'req-headers' && <CopyButton textValue={JSON.stringify(execution.requestHeaders, null, 2)} />}
           </div>
         </div>
 
         {/* Scrollable Tab Content */}
         <div className="flex-1 overflow-y-auto custom-scrollbar">
-          {activeTab === 'req-headers' && <HeadersDisplay headers={log.requestHeaders} />}
-          {activeTab === 'res-headers' && !isWs && <HeadersDisplay headers={log.responseHeaders} />}
+          {currentTab === 'req-headers' && <HeadersDisplay headers={execution.requestHeaders} emptyMessage={emptyDetailMessage} />}
+          {currentTab === 'res-headers' && !isWs && <HeadersDisplay headers={execution.responseHeaders} emptyMessage={emptyDetailMessage} />}
           
           {/* Form-Data / JSON Smart Renderer */}
-          {activeTab === 'req-body' && !isWs && <RequestBodyDisplay body={log.requestBody} />}
+          {currentTab === 'req-body' && !isWs && <RequestBodyDisplay body={execution.requestBody} emptyMessage={emptyDetailMessage} />}
 
-          {activeTab === 'res-body' && !isWs && (
+          {currentTab === 'res-body' && !isWs && (
             formattedResBody ? (
               <SyntaxHighlighter language="json" style={vscDarkPlus} customStyle={{ margin: 0, padding: '1.5rem', background: 'transparent', fontSize: '13px' }}>
                 {formattedResBody}
               </SyntaxHighlighter>
-            ) : <div className="p-8 text-center text-sm text-text-muted font-mono italic">No response body</div>
+            ) : <EmptyState message={emptyDetailMessage} />
           )}
 
-          {activeTab === 'ws-messages' && isWs && <WsMessageTimeline messages={log.responseBody} />}
+          {currentTab === 'ws-messages' && isWs && <WsMessageTimeline messages={execution.responseBody} />}
 
-          {activeTab === 'waterfall' && !isWs && (
-            <div className="p-8 max-w-2xl">
-              {log.timings?.total !== undefined ? (
-                <>
-                  <div className="mb-8 border-b border-border-subtle pb-4">
-                    <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-1">Network Timing</h3>
-                    <p className="text-xs text-text-muted">A breakdown of the request lifecycle.</p>
+          {currentTab === 'waterfall' && !isWs && (
+            <div className="p-6 max-w-4xl animate-in fade-in slide-in-from-bottom-2">
+              <div className="mb-6 flex items-center justify-between gap-4">
+                <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-widest flex items-center gap-2">
+                  <Activity size={14} className="text-brand-purple" />
+                  Timing Waterfall
+                </h3>
+                <span className="text-[10px] uppercase tracking-widest text-text-muted font-mono">
+                  {execution.timings.source === 'live' ? 'Measured breakdown' : execution.timings.source === 'estimated' ? 'Estimated from total time' : 'No timing data'}
+                </span>
+              </div>
+
+              <div className="bg-bg-panel/20 border border-border-subtle rounded-lg overflow-hidden">
+                {/* Timeline Header (Markers) */}
+                <div className="flex border-b border-border-subtle bg-bg-panel/40 h-8 items-center text-[10px] text-text-muted font-mono">
+                  <div className="w-40 shrink-0 px-4">PHASE</div>
+                  <div className="flex-1 relative h-full">
+                    <div className="absolute left-0 top-0 bottom-0 border-l border-border-subtle/50" />
+                    <div className="absolute left-1/4 top-2 bottom-0 border-l border-border-subtle/20" />
+                    <div className="absolute left-2/4 top-2 bottom-0 border-l border-border-subtle/20" />
+                    <div className="absolute left-3/4 top-2 bottom-0 border-l border-border-subtle/20" />
+                    <div className="flex justify-between px-2 pt-2 w-full">
+                      <span>0ms</span>
+                      <span>{Math.round(execution.timings.total * 0.5)}ms</span>
+                      <span>{execution.timings.total}ms</span>
+                    </div>
                   </div>
-                  <TimingBar label="DNS Lookup" value={log.timings.dnsLookup} startPercent={0} widthPercent={((log.timings.dnsLookup || 0) / log.timings.total) * 100} colorClass="bg-teal-500" />
-                  <TimingBar label="TCP Connection" value={log.timings.tcpConnection} startPercent={((log.timings.dnsLookup || 0) / log.timings.total) * 100} widthPercent={((log.timings.tcpConnection || 0) / log.timings.total) * 100} colorClass="bg-amber-500" />
-                  <TimingBar label="TLS Handshake" value={log.timings.tlsHandshake} startPercent={((log.timings.dnsLookup || 0 + log.timings.tcpConnection || 0) / log.timings.total) * 100} widthPercent={((log.timings.tlsHandshake || 0) / log.timings.total) * 100} colorClass="bg-purple-500" />
-                  <TimingBar label="First Byte (TTFB)" value={log.timings.firstByte} startPercent={((log.timings.dnsLookup || 0 + log.timings.tcpConnection || 0 + log.timings.tlsHandshake || 0) / log.timings.total) * 100} widthPercent={((log.timings.firstByte || 0) / log.timings.total) * 100} colorClass="bg-blue-500" />
-                  <TimingBar label="Download" value={log.timings.download} startPercent={((log.timings.dnsLookup || 0 + log.timings.tcpConnection || 0 + log.timings.tlsHandshake || 0 + log.timings.firstByte || 0) / log.timings.total) * 100} widthPercent={((log.timings.download || 0) / log.timings.total) * 100} colorClass="bg-emerald-500" />
-                </>
-              ) : (
-                <div className="text-center text-sm text-text-muted font-mono italic">No timing data available</div>
-              )}
+                </div>
+
+                {/* The Bars */}
+                <div className="py-2 divide-y divide-border-subtle/10">
+                  <TimingBar 
+                    label="DNS Lookup" 
+                    value={execution.timings.dnsLookup} 
+                    startPercent={0} 
+                    widthPercent={(execution.timings.dnsLookup / execution.timings.total) * 100} 
+                    colorClass="bg-teal-500/80" 
+                  />
+                  
+                  <TimingBar 
+                    label="TCP Connection" 
+                    value={execution.timings.tcpConnection} 
+                    startPercent={(execution.timings.dnsLookup / execution.timings.total) * 100} 
+                    widthPercent={(execution.timings.tcpConnection / execution.timings.total) * 100} 
+                    colorClass="bg-amber-500/80" 
+                  />
+                  
+                  <TimingBar 
+                    label="TLS Handshake" 
+                    value={execution.timings.tlsHandshake} 
+                    startPercent={((execution.timings.dnsLookup || 0) + (execution.timings.tcpConnection || 0)) / execution.timings.total * 100} 
+                    widthPercent={(execution.timings.tlsHandshake / execution.timings.total) * 100} 
+                    colorClass="bg-purple-500/80" 
+                  />
+                  
+                  <TimingBar 
+                    label="Waiting (TTFB)" 
+                    value={execution.timings.firstByte} 
+                    startPercent={((execution.timings.dnsLookup || 0) + (execution.timings.tcpConnection || 0) + (execution.timings.tlsHandshake || 0)) / execution.timings.total * 100} 
+                    widthPercent={(execution.timings.firstByte / execution.timings.total) * 100} 
+                    colorClass="bg-blue-500/80" 
+                  />
+                  
+                  <TimingBar 
+                    label="Content Download" 
+                    value={execution.timings.download} 
+                    startPercent={((execution.timings.dnsLookup || 0) + (execution.timings.tcpConnection || 0) + (execution.timings.tlsHandshake || 0) + (execution.timings.firstByte || 0)) / execution.timings.total * 100} 
+                    widthPercent={(execution.timings.download / execution.timings.total) * 100} 
+                    colorClass="bg-emerald-500/80" 
+                  />
+                </div>
+
+                {/* Total Footer */}
+                <div className="bg-bg-panel/40 border-t border-border-subtle px-4 py-2 flex justify-between items-center text-[11px]">
+                  <span className="text-text-muted">Total Request Time</span>
+                  <span className="font-mono font-bold text-emerald-400">{execution.timings.total} ms</span>
+                </div>
+              </div>
             </div>
           )}
         </div>

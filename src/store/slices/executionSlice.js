@@ -45,11 +45,93 @@ const isLocalhostUrl = (urlString) => {
     }
 };
 
+const getFileNameFromPath = (pathValue) => {
+    if (!pathValue || typeof pathValue !== 'string') return null;
+    const segments = pathValue.split(/[/\\]/);
+    return segments[segments.length - 1] || null;
+};
+
+const sanitizeFileForHistory = (fileLike, pathValue = null) => {
+    if (!fileLike && !pathValue) return null;
+
+    return {
+        name: fileLike?.name || getFileNameFromPath(pathValue) || 'Attached file',
+        type: fileLike?.type || 'application/octet-stream',
+    };
+};
+
+const sanitizeBodyForHistory = (body) => {
+    if (!body || body.type === 'none') return null;
+
+    switch (body.type) {
+        case 'raw':
+            return {
+                type: 'raw',
+                raw: body.raw || '',
+                language: body.language || 'text',
+            };
+
+        case 'urlencoded':
+            return {
+                type: 'urlencoded',
+                urlencoded: (body.urlencoded || [])
+                    .filter(item => item?.active !== false && item.key)
+                    .map(item => ({ key: item.key, value: item.value })),
+            };
+
+        case 'formdata':
+            return {
+                type: 'formdata',
+                formdata: (body.formdata || [])
+                    .filter(item => item?.active !== false && item.key)
+                    .map(item => {
+                        const isFile = item.isFile || item.valueType === 'file' || Boolean(item.path) || Boolean(item.value?.path);
+
+                        if (isFile) {
+                            return {
+                                key: item.key,
+                                isFile: true,
+                                value: sanitizeFileForHistory(item.value, item.path || item.value?.path),
+                            };
+                        }
+
+                        return {
+                            key: item.key,
+                            isFile: false,
+                            value: item.value,
+                        };
+                    }),
+            };
+
+        case 'binary':
+            return {
+                type: 'binary',
+                binaryFile: sanitizeFileForHistory(body.binaryFile, body.binaryFilePath || body.binaryFile?.path),
+            };
+
+        case 'graphql':
+            return {
+                type: 'graphql',
+                graphql: {
+                    query: body.graphql?.query || '',
+                    variables: body.graphql?.variables || {},
+                },
+            };
+
+        default:
+            return body;
+    }
+};
+
 export const createExecutionSlice = (set, get) => ({
     isLoading: false,
     response: null,
     error: null,
     history: [],
+
+    // State to control the localhost warning modal
+    showLocalhostModal: false,
+    setShowLocalhostModal: (show) => set({ showLocalhostModal: show }),
 
     executeRequest: async () => {
         const state = get();
@@ -225,7 +307,7 @@ export const createExecutionSlice = (set, get) => ({
                 if (isLocalhostUrl(resolvedUrl)) {
                     set({ 
                         isLoading: false, 
-                        error: "⚠️ Local API Blocked\n\nWeb browsers restrict requests to local servers (localhost, 127.0.0.1) due to strict security policies.\n\nTo test local APIs, please use the Desktop Application." 
+                        showLocalhostModal: true
                     });
                     return;
                 }
@@ -278,11 +360,16 @@ export const createExecutionSlice = (set, get) => ({
                         protocol: req.protocol,
                         url: result.url || finalConfig.url, // Ensure we have the URL
                         method: finalConfig.method || 'GET',
+                        requestHeaders: finalConfig.headers || null,
+                        requestBody: sanitizeBodyForHistory(finalConfig.body),
+                        responseHeaders: result.headers || null,
+                        responseBody: result.data ?? null,
                         responseMeta: {
                             status: result.status,
                             statusText: result.statusText,
-                            time: result.duration,
+                            time: result.duration ?? result.timings?.total ?? 0,
                             size: result.size || 0,
+                            timings: result.timings || null,
                         }
                     }).then(() => {
                         // Re-fetch history to update the sidebar silently after sync

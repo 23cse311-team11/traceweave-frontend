@@ -46,9 +46,7 @@ export const QuickActions = () => {
             type="button"
             className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-white/5 text-left text-sm text-text-secondary hover:text-text-primary transition-colors border border-transparent hover:border-border-subtle group"
           >
-            <div className="w-8 h-8 rounded bg-brand-orange/10 flex items-center justify-center text-brand-orange group-hover:scale-105 transition-transform">
-              <Plus size={16} />
-            </div>
+            <div className="w-8 h-8 rounded bg-blue-500/10 flex items-center justify-center text-blue-500"><Plus size={16} /></div>
             <div>
               <p className="font-medium text-text-primary">New HTTP Request</p>
               <p className="text-xs text-text-muted mt-0.5">Test an endpoint instantly</p>

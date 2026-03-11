@@ -34,8 +34,8 @@ export default function MainSidebar() {
   };
 
   return (
-    <aside className="w-24 h-dvh glass-strong flex flex-col border-r border-white/10 z-30 shrink-0 select-none glass-morphism relative">
-      <div className="absolute inset-0 bg-gradient-to-b from-brand-primary/5 to-transparent pointer-events-none" />
+    <aside className="w-24 h-dvh glass-strong flex flex-col border-r border-white/10 z-30 shrink-0 select-none glass-morphism relative no-scrollbar">
+      <div className="absolute inset-0 bg-gradient-to-b from-brand-primary/5 to-transparent pointer-events-none no-scrollbar" />
 
       {/* 1. TOP SECTION */}
       <div className="flex flex-col items-center pt-8 pb-2 relative z-10 shrink-0">

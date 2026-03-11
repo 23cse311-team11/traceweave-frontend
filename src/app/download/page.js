@@ -334,7 +334,7 @@ export default function DownloadPage() {
   });
 
   return (
-    <div className="min-h-screen text-[--text-primary] font-sans overflow-x-hidden" style={{ background: '#050408' }}>
+    <div className="min-h-screen text-[--text-primary] font-sans overflow-x-hidden no-scrollbar" style={{ background: '#050408' }}>
 
       {/* Dot-grid bg */}
       <div

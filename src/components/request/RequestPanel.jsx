@@ -13,6 +13,8 @@ import GraphqlRequestPanel from './request_panel/GraphqlRequestPanel';
 import GrpcRequestPanel from './request_panel/GrpcRequestPanel';
 import WebSocketRequestPanel from './request_panel/WebSocketRequestPanel';
 
+import LocalhostWarningModal from '@/components/ui/LocalhostWarningModal';
+
 export default function RequestPanel() {
   const store = useAppStore();
   const activeId = store.activeTabId;
@@ -292,6 +294,11 @@ export default function RequestPanel() {
         onClose={() => setCloseCandidateId(null)}
         onDiscard={handleDiscard}
         onSave={handleSaveAndClose}
+      />
+
+      <LocalhostWarningModal 
+        isOpen={store.showLocalhostModal}
+        onClose={() => store.setShowLocalhostModal(false)}
       />
 
     </main>

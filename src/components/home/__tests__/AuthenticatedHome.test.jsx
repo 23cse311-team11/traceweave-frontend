@@ -2,6 +2,16 @@ import React from 'react';
 import { render } from '@testing-library/react';
 import AuthenticatedHome from '../AuthenticatedHome';
 
+jest.mock('next/navigation', () => ({
+  usePathname: () => '/',
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    prefetch: jest.fn(),
+    back: jest.fn(),
+  }),
+}));
+
 /* ===== MOCK LAYOUT COMPONENTS (REAL FILES ONLY) ===== */
 jest.mock('../../layout/Header', () => ({
   __esModule: true,

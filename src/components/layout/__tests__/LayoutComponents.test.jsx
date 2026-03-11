@@ -22,6 +22,7 @@ jest.mock('next/navigation', () => ({
     prefetch: jest.fn(),
     back: jest.fn(),
   }),
+  usePathname: () => '/',
   useParams: () => ({
     workspaceId: 'test-workspace-id',
   }),
@@ -128,10 +129,14 @@ jest.mock('@/store/useAuthStore', () => ({
 // Mock lucide-react icons
 jest.mock('lucide-react', () => ({
   Search: () => <span data-testid="icon-search" />,
+  Bell: () => <span data-testid="icon-bell" />,
   Layers: () => <span data-testid="icon-layers" />,
+  Workflow: () => <span data-testid="icon-workflow" />,
   Layout: () => <span data-testid="icon-layout" />,
   Eye: () => <span data-testid="icon-eye" />,
   Briefcase: () => <span data-testid="icon-briefcase" />,
+  ShieldAlert: () => <span data-testid="icon-shield-alert" />,
+  CheckCheck: () => <span data-testid="icon-check-check" />,
   UserPlus: () => <span data-testid="icon-user-plus" />,
   Home: () => <span data-testid="icon-home" />,
   LogOut: () => <span data-testid="icon-logout" />,
@@ -149,6 +154,7 @@ jest.mock('lucide-react', () => ({
   Upload: () => <span data-testid="icon-upload" />,
   FolderPlus: () => <span data-testid="icon-folder-plus" />,
   Activity: () => <span data-testid="icon-activity" />,
+  Monitor: () => <span data-testid="icon-monitor" />,
   Sparkles: () => <span data-testid="icon-sparkles" />,
   Globe: () => <span data-testid="icon-globe" />,
   ChevronsRight: () => <span data-testid="icon-chevrons-right" />,
