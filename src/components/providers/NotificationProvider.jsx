@@ -17,7 +17,7 @@ export default function NotificationProvider({ children }) {
       ? new URL(process.env.NEXT_PUBLIC_API_URL).host 
       : 'localhost:5000';
     
-    const wsUrl = `${protocol}//${host}/ws/notifications`;
+    const wsUrl = `${protocol}//${host}/api/v1/notifications`;
 
     const connectWs = () => {
       wsRef.current = new WebSocket(wsUrl);
