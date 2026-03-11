@@ -767,10 +767,44 @@ function CanvasEditor({ initialData, onSave }) {
   );
 }
 
-export default function WorkflowCanvasWrapper({ initialData, onSave }) {
+export default function WorkflowCanvasWrapper({ workflowId, initialData: propInitialData, onSave: propOnSave }) {
+  const { activeWorkflow, fetchWorkflow, saveWorkflowGraph } = useAppStore();
+
+  useEffect(() => {
+    if (workflowId) {
+      fetchWorkflow(workflowId);
+    }
+  }, [workflowId, fetchWorkflow]);
+
+  const handleSave = useCallback((flowData) => {
+    if (workflowId) {
+      saveWorkflowGraph(workflowId, flowData);
+    }
+    if (propOnSave) propOnSave(flowData);
+  }, [workflowId, saveWorkflowGraph, propOnSave]);
+
+  const initialData = useMemo(() => {
+    if (propInitialData) return propInitialData;
+    if (activeWorkflow && activeWorkflow.id === workflowId) {
+      return activeWorkflow.flowData;
+    }
+    return null;
+  }, [propInitialData, activeWorkflow, workflowId]);
+
+  if (workflowId && (!activeWorkflow || activeWorkflow.id !== workflowId)) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-[#080808] text-white/20 font-mono text-xs italic">
+        <div className="flex flex-col items-center gap-4">
+          <Activity size={24} className="text-emerald-500 animate-pulse" />
+          <span>Synchronizing workflow {workflowId.substring(0, 8)}...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <ReactFlowProvider>
-      <CanvasEditor initialData={initialData} onSave={onSave} />
+      <CanvasEditor key={workflowId} initialData={initialData} onSave={handleSave} />
     </ReactFlowProvider>
   );
-}
+}
