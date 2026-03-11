@@ -73,3 +73,5 @@ test.describe('Dashboard and Workspace Navigation', () => {
 });
 
 // regression testing sweep
+
+// e2e true journey check
