@@ -108,3 +108,5 @@ test.describe('Registration Flow - Validation and Error Handling', () => {
         await expect(page).toHaveURL(/\/login/);
     });
 });
+
+// regression testing sweep
