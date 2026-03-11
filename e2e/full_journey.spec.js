@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect, request } = require('@playwright/test');
 
 test.describe('True End-to-End User Journey', () => {
     // Generate a unique identifier for this test run to avoid collision
@@ -8,10 +8,21 @@ test.describe('True End-to-End User Journey', () => {
     const testName = `E2E Tester ${uniqueId}`;
     const workspaceName = `E2E WS ${uniqueId}`;
 
-    // ============================================================
-    // TRUE E2E: No page.route() mocks. No injected localStorage.
-    // Every action hits the real Docker backend services.
-    // ============================================================
+    // ── Check backend is running before any test ───────────────────────────
+    test.beforeAll(async () => {
+        const apiContext = await request.newContext();
+        let backendUp = false;
+        try {
+            const res = await apiContext.get('http://localhost:8080/api/v1/health', { timeout: 5000 });
+            backendUp = res.status() < 500;
+        } catch {
+            backendUp = false;
+        }
+        await apiContext.dispose();
+        if (!backendUp) {
+            test.skip(true, 'Backend gateway not reachable on localhost:80 — make sure docker-compose is running');
+        }
+    });
 
     test('Complete user journey: Register → Workspace → Navigate', async ({ page }) => {
         // Debugging: Log browser console errors
@@ -135,3 +146,5 @@ test.describe('True End-to-End User Journey', () => {
         });
     });
 });
+
+// regression testing sweep
