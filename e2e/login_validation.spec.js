@@ -110,3 +110,5 @@ test.describe('Registration Flow - Validation and Error Handling', () => {
 });
 
 // regression testing sweep
+
+// e2e true journey check
