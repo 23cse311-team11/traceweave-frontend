@@ -18,6 +18,8 @@ jest.mock('lucide-react', () => ({
     Star: ({ onClick, className }) => <span data-testid="icon-star" onClick={onClick} className={className} />,
     Users: () => <span data-testid="icon-users" />,
     Folder: () => <span data-testid="icon-folder" />,
+    Edit3: () => <span data-testid="icon-edit" />,
+    Copy: () => <span data-testid="icon-copy" />,
     Trash2: () => <span data-testid="icon-trash" />,
     Calendar: () => <span data-testid="icon-calendar" />,
 }));
@@ -79,7 +81,7 @@ describe('WorkspaceItem', () => {
 
     it('renders menu when activeMenuId matches', () => {
         render(<WorkspaceItem {...mockProps} activeMenuId="ws1" />);
-        expect(screen.getByText('EDIT SETTINGS')).toBeInTheDocument();
-        expect(screen.getByText('TERMINATE')).toBeInTheDocument();
+        expect(screen.getByText('Edit Details')).toBeInTheDocument();
+        expect(screen.getByText('Delete Workspace')).toBeInTheDocument();
     });
 });

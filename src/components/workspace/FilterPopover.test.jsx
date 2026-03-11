@@ -5,6 +5,7 @@ import { FilterPopover } from './FilterPopover';
 // Mock lucide-react icons
 jest.mock('lucide-react', () => ({
     CheckCircle2: () => <span data-testid="icon-check" />,
+    X: () => <span data-testid="icon-close" />,
 }));
 
 describe('FilterPopover', () => {
@@ -25,7 +26,7 @@ describe('FilterPopover', () => {
 
     it('renders correctly when open', () => {
         render(<FilterPopover {...mockProps} />);
-        expect(screen.getByText('Filter View')).toBeInTheDocument();
+        expect(screen.getByText('Filter Workspaces')).toBeInTheDocument();
         expect(screen.getByText('Workspace Type')).toBeInTheDocument();
         expect(screen.getByText('Access Level')).toBeInTheDocument();
     });

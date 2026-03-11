@@ -20,7 +20,7 @@ export const createHistorySlice = (set, get) => ({
             }
             
             const fetchedLogs = data.data || [];
-            const newLogs = page === 1 ? fetchedLogs : [...state.historyLogs, ...fetchedLogs];
+            const newLogs = fetchedLogs;
             
             set({ 
                 historyLogs: newLogs, 
@@ -37,8 +37,9 @@ export const createHistorySlice = (set, get) => ({
     fetchExecutionDetails: async (execId) => {
         set({ isHistoryLoading: true, activeExecution: null });
         try {
-            const data = await historyApi.getExecutionDetails(execId);
-            set({ activeExecution: data.data, isHistoryLoading: false });
+            const response = await historyApi.getExecutionDetails(execId);
+            const logData = response.data; 
+            set({ activeExecution: logData, isHistoryLoading: false });
         } catch (error) {
             console.error("Failed to fetch execution details:", error);
             set({ isHistoryLoading: false });

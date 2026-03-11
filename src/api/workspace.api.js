@@ -8,7 +8,7 @@ export const workspaceApi = {
 
     getMyWorkspaces: async () => {
         const response = await api.get('/workspaces');
-        return response.data; // Expected: { workspaces: [...] }
+        return response.data;   
     },
 
     getWorkspaceById: async (id) => {
@@ -18,6 +18,16 @@ export const workspaceApi = {
 
     updateWorkspace: async (id, data) => {
         const response = await api.patch(`/workspaces/${id}`, data);
+        return response.data;
+    },
+
+    updateFavoriteStatus: async (workspaceId, { isFavorite }) => {
+        const response = await api.patch(`/workspaces/${workspaceId}/favorite`, { isFavorite });
+        return response.data;
+    },
+
+    duplicateWorkspace: async (id) => {
+        const response = await api.post(`/workspaces/${id}/duplicate`);
         return response.data;
     },
 

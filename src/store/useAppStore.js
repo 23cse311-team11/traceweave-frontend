@@ -10,6 +10,8 @@ import { createTabSlice } from './slices/tabSlice';
 import { createMonitorSlice } from './slices/monitorSlice';
 import { createExecutionSlice } from './slices/executionSlice';
 import { createHistorySlice } from './slices/historySlice';
+import { createWorkflowSlice } from './slices/workflowSlice';
+import { createNotificationSlice } from './slices/notificationSlice';
 
 export const useAppStore = create(
   persist(
@@ -23,6 +25,8 @@ export const useAppStore = create(
       ...createMonitorSlice(set, get),
       ...createExecutionSlice(set, get),
       ...createHistorySlice(set, get),
+      ...createWorkflowSlice(set, get),
+      ...createNotificationSlice(set, get),
 
       // --- Facade Actions ---
       deleteItem: async (id) => {

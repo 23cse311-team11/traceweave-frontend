@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
+import traceWeaveLogo from '@/assets/traceWeaveLogo.png';
 
 export const LandingNavbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -32,8 +33,8 @@ export const LandingNavbar = () => {
       animate={{ y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled
-          ? 'glass-strong py-3'
-          : 'bg-transparent py-5'
+        ? 'glass-strong py-3'
+        : 'bg-transparent py-5'
         }`}
     >
       <div className="max-w-[1600px] mx-auto px-8">
@@ -48,7 +49,7 @@ export const LandingNavbar = () => {
                 transition={{ duration: 0.4 }}
               >
                 <div className="absolute -inset-2 bg-brand-primary/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                <Image src="/logo.png" alt="Trace-weave" width={34} height={34} className="brightness-110 relative z-10" />
+                <Image src={traceWeaveLogo} alt="Trace-weave" width={34} height={34} className="brightness-110 relative z-10 rounded-xl" />
               </motion.div>
               <div className="flex flex-col">
                 <span className="font-black text-xl tracking-tighter text-white font-mono leading-none">TRACE–WEAVE</span>

@@ -18,8 +18,109 @@ const formatCookiesToHeader = (cookieList) => {
     if (!Array.isArray(cookieList) || cookieList.length === 0) return null;
     return cookieList
         .filter(c => c.key && c.active !== false)
-        .map(c => `${c.key}=${c.value}`)
+        .map(c => `${c.key}=${c.value !== undefined ? c.value : ''}`)
         .join('; ');
+};
+
+const resolveUrlWithEnvs = (url, envValues) => {
+    if (!url) return '';
+    return url.replace(/{{([^}]+)}}/g, (match, key) => {
+        return envValues[key.trim()] || match; // Replace {{var}} with value, or keep as is
+    });
+};
+
+const isLocalhostUrl = (urlString) => {
+    if (!urlString) return false;
+    try {
+        // Detect ANY protocol (http, ws, wss, grpc, etc.) before parsing
+        const hasProtocol = /^[a-zA-Z]+:\/\//.test(urlString);
+        const urlToParse = hasProtocol ? urlString : `http://${urlString}`;
+        const parsedUrl = new URL(urlToParse);
+        const hostname = parsedUrl.hostname.toLowerCase();
+        
+        // Catch standard local loopbacks
+        return ['localhost', '127.0.0.1', '0.0.0.0', '[::1]'].includes(hostname);
+    } catch (e) {
+        return false; 
+    }
+};
+
+const getFileNameFromPath = (pathValue) => {
+    if (!pathValue || typeof pathValue !== 'string') return null;
+    const segments = pathValue.split(/[/\\]/);
+    return segments[segments.length - 1] || null;
+};
+
+const sanitizeFileForHistory = (fileLike, pathValue = null) => {
+    if (!fileLike && !pathValue) return null;
+
+    return {
+        name: fileLike?.name || getFileNameFromPath(pathValue) || 'Attached file',
+        type: fileLike?.type || 'application/octet-stream',
+    };
+};
+
+const sanitizeBodyForHistory = (body) => {
+    if (!body || body.type === 'none') return null;
+
+    switch (body.type) {
+        case 'raw':
+            return {
+                type: 'raw',
+                raw: body.raw || '',
+                language: body.language || 'text',
+            };
+
+        case 'urlencoded':
+            return {
+                type: 'urlencoded',
+                urlencoded: (body.urlencoded || [])
+                    .filter(item => item?.active !== false && item.key)
+                    .map(item => ({ key: item.key, value: item.value })),
+            };
+
+        case 'formdata':
+            return {
+                type: 'formdata',
+                formdata: (body.formdata || [])
+                    .filter(item => item?.active !== false && item.key)
+                    .map(item => {
+                        const isFile = item.isFile || item.valueType === 'file' || Boolean(item.path) || Boolean(item.value?.path);
+
+                        if (isFile) {
+                            return {
+                                key: item.key,
+                                isFile: true,
+                                value: sanitizeFileForHistory(item.value, item.path || item.value?.path),
+                            };
+                        }
+
+                        return {
+                            key: item.key,
+                            isFile: false,
+                            value: item.value,
+                        };
+                    }),
+            };
+
+        case 'binary':
+            return {
+                type: 'binary',
+                binaryFile: sanitizeFileForHistory(body.binaryFile, body.binaryFilePath || body.binaryFile?.path),
+            };
+
+        case 'graphql':
+            return {
+                type: 'graphql',
+                graphql: {
+                    query: body.graphql?.query || '',
+                    variables: body.graphql?.variables || {},
+                },
+            };
+
+        default:
+            return body;
+    }
 };
 
 export const createExecutionSlice = (set, get) => ({
@@ -27,6 +128,10 @@ export const createExecutionSlice = (set, get) => ({
     response: null,
     error: null,
     history: [],
+
+    // State to control the localhost warning modal
+    showLocalhostModal: false,
+    setShowLocalhostModal: (show) => set({ showLocalhostModal: show }),
 
     executeRequest: async () => {
         const state = get();
@@ -152,8 +257,15 @@ export const createExecutionSlice = (set, get) => ({
 
                 const cookieHeader = formatCookiesToHeader(req.cookies);
                 if (cookieHeader) {
-                    if (finalHeaders['Cookie']) finalHeaders['Cookie'] += `; ${cookieHeader}`;
-                    else finalHeaders['Cookie'] = cookieHeader;
+                    const existingCookieKey = Object.keys(finalHeaders).find(k => k.toLowerCase() === 'cookie');
+                    
+                    if (existingCookieKey) {
+                        finalHeaders[existingCookieKey] = finalHeaders[existingCookieKey] 
+                            ? `${finalHeaders[existingCookieKey]}; ${cookieHeader}` 
+                            : cookieHeader;
+                    } else {
+                        finalHeaders['Cookie'] = cookieHeader;
+                    }
                 }
 
                 finalConfig = { ...finalConfig, headers: finalHeaders, params: userParams };
@@ -190,6 +302,16 @@ export const createExecutionSlice = (set, get) => ({
                     };
                 }
             } else {
+                const resolvedUrl = resolveUrlWithEnvs(finalConfig.url || '', environmentValues);
+
+                if (isLocalhostUrl(resolvedUrl)) {
+                    set({ 
+                        isLoading: false, 
+                        showLocalhostModal: true
+                    });
+                    return;
+                }
+
                 if (hasFiles) {
                     apiPayload = new FormData();
                     if (req.isDetached) {
@@ -238,11 +360,16 @@ export const createExecutionSlice = (set, get) => ({
                         protocol: req.protocol,
                         url: result.url || finalConfig.url, // Ensure we have the URL
                         method: finalConfig.method || 'GET',
+                        requestHeaders: finalConfig.headers || null,
+                        requestBody: sanitizeBodyForHistory(finalConfig.body),
+                        responseHeaders: result.headers || null,
+                        responseBody: result.data ?? null,
                         responseMeta: {
                             status: result.status,
                             statusText: result.statusText,
-                            time: result.duration,
+                            time: result.duration ?? result.timings?.total ?? 0,
                             size: result.size || 0,
+                            timings: result.timings || null,
                         }
                     }).then(() => {
                         // Re-fetch history to update the sidebar silently after sync

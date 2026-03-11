@@ -13,6 +13,8 @@ import GraphqlRequestPanel from './request_panel/GraphqlRequestPanel';
 import GrpcRequestPanel from './request_panel/GrpcRequestPanel';
 import WebSocketRequestPanel from './request_panel/WebSocketRequestPanel';
 
+import LocalhostWarningModal from '@/components/ui/LocalhostWarningModal';
+
 export default function RequestPanel() {
   const store = useAppStore();
   const activeId = store.activeTabId;
@@ -26,7 +28,7 @@ export default function RequestPanel() {
   const [containerWidth, setContainerWidth] = useState(1000); // Default safe width
   const [showDropdown, setShowDropdown] = useState(false);
 
-  // 1. ✨ THE FIX: Accurately measure the parent container's width
+  // 1. Accurately measure the parent container's width
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -292,6 +294,11 @@ export default function RequestPanel() {
         onClose={() => setCloseCandidateId(null)}
         onDiscard={handleDiscard}
         onSave={handleSaveAndClose}
+      />
+
+      <LocalhostWarningModal 
+        isOpen={store.showLocalhostModal}
+        onClose={() => store.setShowLocalhostModal(false)}
       />
 
     </main>
