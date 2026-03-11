@@ -70,3 +70,5 @@ test.describe('Collection Management', () => {
 });
 
 // regression testing sweep
+
+// e2e true journey check
