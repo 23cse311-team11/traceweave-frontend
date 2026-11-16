@@ -92,7 +92,7 @@ export const LandingFooter = () => {
               animate={{ opacity: [1, 0.3, 1] }}
               transition={{ duration: 2, repeat: Infinity }}
             />
-            <span>All systems operational</span>
+            <span>All systems operational &bull; v1.0.1</span>
           </div>
         </div>
 
