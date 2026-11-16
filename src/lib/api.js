@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-// Get API URL from env, default to local Core API
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost/api/v1';
-export const WS_URL = API_URL.replace('http', 'ws');
+// Get API URL from env, default to current origin in browser or local Core API in SSR
+const API_URL = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? `${window.location.origin}/api/v1` : 'http://localhost/api/v1');
+export const WS_URL = API_URL.replace(/^http/, 'ws');
 
 export const api = axios.create({
   baseURL: API_URL,

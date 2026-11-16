@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Activity, BarChart3, BookOpen, FileText, Globe, HelpCircle, 
-         Keyboard, MessageSquare, Network, TestTube, Terminal, Users, LayoutDashboard 
+         Keyboard, MessageSquare, Network, TestTube, Terminal, Users, LayoutDashboard, Settings 
 } from 'lucide-react';
 
 export const Sidebar = () => {
@@ -25,11 +25,10 @@ export const Sidebar = () => {
 
   const mainNavItems = [
     { id: 'workspaces', label: 'Workspaces', icon: Network, href: '/workspace' },
-    { id: 'traces', label: 'Traces', icon: Activity, href: '/traces' },
+    { id: 'traces', label: 'Traces', icon: Activity, href: '/history' },
     { id: 'environments', label: 'Environments', icon: Globe, href: '/environments' },
-    { id: 'monitors', label: 'Monitors', icon: TestTube, href: '/monitors' },
-    { id: 'reports', label: 'Reports', icon: BarChart3, href: '/reports' },
     { id: 'team', label: 'Team', icon: Users, href: '/team' },
+    { id: 'settings', label: 'Settings', icon: Settings, href: '/settings' },
   ];
 
   // The home route is exactly '/' (or perhaps '/dashboard' depending on your setup)
@@ -130,12 +129,9 @@ export const Sidebar = () => {
             >
               <div className="p-3 border-b border-border-subtle">
                 <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.1em] mb-2 px-2">Support</p>
-                <Link href="/docs" className="flex items-center gap-3 px-2 py-2 text-[13px] font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors">
+                <a href="https://github.com/23cse311-team11/traceweave" target="_blank" rel="noreferrer" className="flex items-center gap-3 px-2 py-2 text-[13px] font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors">
                   <BookOpen size={16} className="text-text-muted" /> Documentation
-                </Link>
-                <Link href="/api-docs" className="flex items-center gap-3 px-2 py-2 text-[13px] font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors">
-                  <FileText size={16} className="text-text-muted" /> API Reference
-                </Link>
+                </a>
                 <a href="https://discord.gg/traceweave" target="_blank" rel="noreferrer" className="flex items-center gap-3 px-2 py-2 text-[13px] font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors">
                   <MessageSquare size={16} className="text-text-muted" /> Join Community
                 </a>
@@ -143,9 +139,9 @@ export const Sidebar = () => {
 
               <div className="p-3 bg-[#111]">
                 <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.1em] mb-2 px-2">Tools</p>
-                <button className="w-full flex items-center justify-between px-2 py-2 text-[13px] font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors text-left group">
-                  <span className="flex items-center gap-3"><Terminal size={16} className="text-text-muted group-hover:text-text-secondary transition-colors" /> Download CLI</span>
-                </button>
+                <Link href="/download" className="w-full flex items-center justify-between px-2 py-2 text-[13px] font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors text-left group">
+                  <span className="flex items-center gap-3"><Terminal size={16} className="text-text-muted group-hover:text-text-secondary transition-colors" /> Download App & CLI</span>
+                </Link>
                 <button className="w-full flex items-center justify-between px-2 py-2 text-[13px] font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors text-left group">
                   <span className="flex items-center gap-3"><Keyboard size={16} className="text-text-muted group-hover:text-text-secondary transition-colors" /> Shortcuts</span>
                   <span className="text-[10px] bg-bg-base border border-border-subtle px-1.5 py-0.5 rounded-md text-text-muted font-mono">?</span>

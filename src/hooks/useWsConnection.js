@@ -142,7 +142,8 @@ export function useWsConnection(activeId) {
     else {
       addLog('system', `Preparing SSE stream for ${url}...`);
 
-      const sseUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}/requests/ws/stream?connectionId=${connectionIdRef.current}`;
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? `${window.location.origin}/api/v1` : 'http://localhost/api/v1');
+      const sseUrl = `${apiBase}/requests/ws/stream?connectionId=${connectionIdRef.current}`;
 
       if (eventSourceRef.current) eventSourceRef.current.close();
       eventSourceRef.current = new EventSource(sseUrl);

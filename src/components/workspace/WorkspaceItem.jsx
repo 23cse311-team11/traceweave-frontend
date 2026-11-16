@@ -35,9 +35,11 @@ export function WorkspaceItem({
     const derivedAccess = memberCount > 1 ? 'Shared' : 'Private';
     const collectionCount = ws._count?.collections || 0;
 
-    const lastActiveDate = new Date(ws.updatedAt).toLocaleDateString('en-US', {
-        month: 'short', day: 'numeric', year: 'numeric'
-    });
+    const lastActiveDate = ws.updatedAt
+        ? new Date(ws.updatedAt).toLocaleDateString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric'
+        })
+        : 'Recently';
 
     const handleAction = (e, action) => {
         e.preventDefault();
@@ -231,7 +233,7 @@ function MetaItem({ icon, label, isMono }) {
     return (
         <div className={`flex items-center gap-3 text-zinc-500 ${isMono ? 'font-mono' : ''}`}>
             <span className="text-brand-primary/60">{icon}</span>
-            <span>{label}</span>
+            <span suppressHydrationWarning>{label}</span>
         </div>
     );
 }

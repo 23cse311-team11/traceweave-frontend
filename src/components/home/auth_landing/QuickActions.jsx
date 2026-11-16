@@ -1,21 +1,49 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Plus, Download, Terminal, X, Code2 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { parseCurlToConfig } from '@/utils/curlUtils';
 
 export const QuickActions = () => {
-  const { createDetachedRequest } = useAppStore();
+  const router = useRouter();
+  const { 
+    createDetachedRequest, 
+    activeWorkspaceId, 
+    availableWorkspaces, 
+    createWorkspace,
+    fetchWorkspaces
+  } = useAppStore();
+
   const [isCurlModalOpen, setIsCurlModalOpen] = useState(false);
   const [curlInput, setCurlInput] = useState('');
   const [error, setError] = useState('');
 
-  const handleNewRequest = () => {
-    createDetachedRequest('http');
+  const getTargetWorkspaceId = async () => {
+    if (activeWorkspaceId) return activeWorkspaceId;
+    if (availableWorkspaces?.length > 0) return availableWorkspaces[0].id;
+    try {
+      const res = await createWorkspace('My Workspace');
+      if (res?.data?.id) return res.data.id;
+    } catch (e) {
+      console.warn("Failed to create fallback workspace", e);
+    }
+    return null;
   };
 
-  const handleImportCurl = (e) => {
+  const handleNewRequest = async () => {
+    createDetachedRequest('http');
+    const wsId = await getTargetWorkspaceId();
+    if (wsId) {
+      router.push(`/workspace/${wsId}`);
+    } else {
+      router.push('/workspace');
+    }
+  };
+
+  const handleImportCurl = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -29,6 +57,12 @@ export const QuickActions = () => {
       createDetachedRequest('http', config);
       setIsCurlModalOpen(false);
       setCurlInput('');
+      const wsId = await getTargetWorkspaceId();
+      if (wsId) {
+        router.push(`/workspace/${wsId}`);
+      } else {
+        router.push('/workspace');
+      }
     } catch {
       setError('Failed to parse cURL command.');
     }
@@ -68,9 +102,9 @@ export const QuickActions = () => {
             </div>
           </button>
 
-          {/* Action 3: CLI Setup (Placeholder for future) */}
-          <button 
-            type="button"
+          {/* Action 3: CLI Setup */}
+          <Link 
+            href="/download"
             className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-white/5 text-left text-sm text-text-secondary hover:text-text-primary transition-colors border border-transparent hover:border-border-subtle group"
           >
             <div className="w-8 h-8 rounded bg-emerald-500/10 flex items-center justify-center text-emerald-500 group-hover:scale-105 transition-transform">
@@ -78,9 +112,9 @@ export const QuickActions = () => {
             </div>
             <div>
               <p className="font-medium text-text-primary">CLI Setup</p>
-              <p className="text-xs text-text-muted mt-0.5">Configure local proxy</p>
+              <p className="text-xs text-text-muted mt-0.5">Configure local proxy & tools</p>
             </div>
-          </button>
+          </Link>
 
         </div>
       </div>

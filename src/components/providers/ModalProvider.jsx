@@ -1,16 +1,19 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
-const ModalContext = createContext(null);
+const defaultModalContext = {
+    showAlert: () => {},
+    showConfirm: () => {},
+    showPrompt: () => {}
+};
+
+const ModalContext = createContext(defaultModalContext);
 
 export const useModal = () => {
     const context = useContext(ModalContext);
-    if (!context) {
-        throw new Error('useModal must be used within a ModalProvider');
-    }
-    return context;
+    return context || defaultModalContext;
 };
 
 // Internal component to handle the prompt's input state locally
@@ -57,6 +60,12 @@ const PromptModalUI = ({ config, onClose }) => {
 };
 
 export function ModalProvider({ children }) {
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     // --- States ---
     const [alertConfig, setAlertConfig] = useState({ isOpen: false, message: '', title: 'Notice' });
     const [confirmConfig, setConfirmConfig] = useState({ isOpen: false, message: '', title: 'Confirm Action', onConfirm: null });
@@ -89,7 +98,7 @@ export function ModalProvider({ children }) {
         <ModalContext.Provider value={{ showAlert, showConfirm, showPrompt }}>
             {children}
 
-            {typeof document !== 'undefined' && createPortal(
+            {mounted && typeof document !== 'undefined' && createPortal(
                 <>
                     {/* Alert Modal */}
                     {alertConfig.isOpen && (

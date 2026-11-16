@@ -89,7 +89,7 @@ export const RecentActivity = () => {
                     <span className={getStatusColor(log.status)}>
                       {log.status || 'ERR'}
                     </span>
-                    <span className="text-text-muted w-8 text-right">
+                    <span suppressHydrationWarning className="text-text-muted w-8 text-right">
                       {getRelativeTime(log.createdAt)}
                     </span>
                   </div>

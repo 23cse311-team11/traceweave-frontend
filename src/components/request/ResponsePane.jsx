@@ -249,7 +249,9 @@ const WorkflowReport = ({ report }) => {
             </div>
             <div>
               <h3 className="text-lg font-bold text-[#EDEDED]">Workflow {report.status}</h3>
-              <p className="text-xs text-[#666]">Executed {new Date(report.startTime).toLocaleString()}</p>
+              <p suppressHydrationWarning className="text-xs text-[#666]">
+                Executed {report.startTime ? new Date(report.startTime).toLocaleString() : 'Just now'}
+              </p>
             </div>
           </div>
           <div className="text-right">

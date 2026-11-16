@@ -8,6 +8,7 @@ import { SortableRequest } from './SortableRequest';
 import { useAppStore } from '@/store/useAppStore';
 import ContextMenu from '../ui/ContextMenu';
 import { useModal } from '@/components/providers/ModalProvider';
+import MoveCollectionModal from './MoveCollectionModal';
 
 export function SortableCollection({ collection, activeRequestId, onToggle, onRequestClick }) {
   const store = useAppStore();
@@ -23,6 +24,7 @@ export function SortableCollection({ collection, activeRequestId, onToggle, onRe
   });
 
   const [contextMenu, setContextMenu] = useState({ x: null, y: null });
+  const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
 
   const style = {
     transform: CSS.Translate.toString(transform),
@@ -221,8 +223,22 @@ export function SortableCollection({ collection, activeRequestId, onToggle, onRe
             store.togglePinItem(collection.id); 
             setContextMenu({ x: null, y: null }); 
           }}
+          onMoveTo={() => {
+            setContextMenu({ x: null, y: null });
+            setIsMoveModalOpen(true);
+          }}
+          onMoveToRoot={collection.parentId ? () => {
+            store.setCollectionParent(collection.id, null);
+            setContextMenu({ x: null, y: null });
+          } : null}
         />
       )}
+
+      <MoveCollectionModal
+        isOpen={isMoveModalOpen}
+        onClose={() => setIsMoveModalOpen(false)}
+        collection={collection}
+      />
     </>
   );
 }

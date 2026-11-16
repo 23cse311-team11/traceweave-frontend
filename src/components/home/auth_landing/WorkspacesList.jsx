@@ -50,7 +50,7 @@ export const WorkspacesList = ({
 
       <motion.div key={workspaces.length} variants={containerVariants} initial="hidden" animate="show" className="space-y-3">
         {workspaces.map((ws) => {
-          const formattedDate = new Date(ws.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          const formattedDate = ws.updatedAt ? new Date(ws.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recently';
           const isShared = ws.members?.length > 1;
 
           return (
@@ -68,7 +68,7 @@ export const WorkspacesList = ({
                       <h3 className="text-base font-semibold text-text-primary group-hover:text-brand-primary transition-colors">{ws.name}</h3>
                       <p className="text-xs text-text-secondary mt-1 flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
-                        Active • Updated {formattedDate}
+                        <span suppressHydrationWarning>Active • Updated {formattedDate}</span>
                       </p>
                     </div>
                     

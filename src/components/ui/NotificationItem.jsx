@@ -43,8 +43,8 @@ export const NotificationItem = ({ notification, onClose }) => {
     >
       <h4 className="text-sm font-semibold">{notification.title}</h4>
       <p className="text-xs text-text-muted mt-1">{notification.message}</p>
-      <span className="text-[10px] text-text-muted mt-2 block">
-        {new Date(notification.createdAt).toLocaleDateString()}
+      <span suppressHydrationWarning className="text-[10px] text-text-muted mt-2 block">
+        {notification.createdAt ? new Date(notification.createdAt).toLocaleDateString() : 'Just now'}
       </span>
     </div>
   );

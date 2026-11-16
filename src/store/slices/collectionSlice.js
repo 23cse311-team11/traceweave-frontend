@@ -182,14 +182,18 @@ export const createCollectionSlice = (set, get) => ({
         const overCol = state.collections.find(c => c.id === overId);
 
         if (!activeCol || !overCol || activeCol.pinned || overCol.pinned) return {};
+        if (activeId === overId) return {};
 
-        // Anti-Cyclic Check
-        let currentParent = overCol.parentId;
-        while (currentParent) {
-            if (currentParent === activeId) return {}; 
-            const parent = state.collections.find(c => c.id === currentParent);
-            currentParent = parent?.parentId;
+        // Anti-Cyclic Check: ensure overCol is not activeCol or any descendant of activeCol
+        let checkId = overCol.id;
+        while (checkId) {
+            if (checkId === activeId) return {}; 
+            const p = state.collections.find(c => c.id === checkId);
+            checkId = p?.parentId;
         }
+
+        const isSameParent = activeCol.parentId === overCol.parentId;
+        const newParentId = isSameParent ? activeCol.parentId : overCol.id;
 
         const activeIndex = state.collections.findIndex(c => c.id === activeId);
         const overIndex = state.collections.findIndex(c => c.id === overId);
@@ -198,15 +202,26 @@ export const createCollectionSlice = (set, get) => ({
             const newCollections = [...state.collections];
             const [moved] = newCollections.splice(activeIndex, 1);
             
-            moved.parentId = overCol.parentId || null;
-            newCollections.splice(overIndex, 0, moved);
+            moved.parentId = newParentId;
 
-            // Recalculate order for siblings in the new parent
+            // If nesting into overCol, ensure overCol is expanded
+            if (!isSameParent) {
+                const targetParent = newCollections.find(c => c.id === overCol.id);
+                if (targetParent) {
+                    targetParent.collapsed = false;
+                }
+            }
+
+            if (isSameParent) {
+                newCollections.splice(overIndex, 0, moved);
+            } else {
+                newCollections.push(moved);
+            }
+
+            // Recalculate order for siblings in the destination parent
             const siblings = newCollections.filter(c => c.parentId === moved.parentId);
             siblings.forEach((sibling, idx) => {
-                // Update state order
-                sibling.order = idx; 
-                // Only send API calls for the ones that actually changed position (optimization)
+                sibling.order = idx;
                 if (sibling.id === activeId) {
                     collectionApi.updateCollection(sibling.id, { 
                         parentId: sibling.parentId, 
@@ -219,6 +234,50 @@ export const createCollectionSlice = (set, get) => ({
         }
         return {};
     }),
+
+    setCollectionParent: async (collectionId, targetParentId = null) => {
+        const { collections } = get();
+        const activeCol = collections.find(c => c.id === collectionId);
+        if (!activeCol) return;
+
+        // Anti-cyclic check if moving into a parent
+        if (targetParentId) {
+            if (targetParentId === collectionId) return;
+            let checkId = targetParentId;
+            while (checkId) {
+                if (checkId === collectionId) return;
+                const p = collections.find(c => c.id === checkId);
+                checkId = p?.parentId;
+            }
+        }
+
+        const newCollections = collections.map(c => {
+            if (c.id === collectionId) {
+                return { ...c, parentId: targetParentId };
+            }
+            if (targetParentId && c.id === targetParentId) {
+                return { ...c, collapsed: false };
+            }
+            return c;
+        });
+
+        const siblings = newCollections.filter(c => c.parentId === targetParentId);
+        const newOrder = siblings.length;
+        const targetCol = newCollections.find(c => c.id === collectionId);
+        if (targetCol) targetCol.order = newOrder;
+
+        set({ collections: newCollections });
+
+        try {
+            await collectionApi.updateCollection(collectionId, {
+                parentId: targetParentId,
+                order: newOrder
+            });
+        } catch (err) {
+            console.warn("Failed to update collection parent:", err);
+            set({ collections });
+        }
+    },
 
     moveRequest: (activeId, overId) => set(state => {
         const activeReq = state.requestStates[activeId];

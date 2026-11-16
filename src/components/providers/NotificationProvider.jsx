@@ -15,7 +15,7 @@ export default function NotificationProvider({ children }) {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = process.env.NEXT_PUBLIC_API_URL 
       ? new URL(process.env.NEXT_PUBLIC_API_URL).host 
-      : 'localhost:5000';
+      : (typeof window !== 'undefined' ? window.location.host : 'localhost');
     
     const wsUrl = `${protocol}//${host}/api/v1/notifications`;
 
