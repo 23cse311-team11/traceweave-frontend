@@ -480,11 +480,14 @@ export const createExecutionSlice = (set, get) => ({
         get().fetchHistory('workspace');
     },
 
-    clearHistory: async () => {
-        set({ history: [] });
+    clearHistory: async (scope = 'workspace') => {
+        return get().clearHistory ? get().clearHistory(scope) : set({ history: [], historyLogs: [] });
     },
 
-    removeFromHistory: (id) => set(state => ({
-        history: state.history.filter(h => (h._id || h.id) !== id)
-    })),
+    removeFromHistory: (id) => {
+        return get().deleteExecution ? get().deleteExecution(id) : set(state => ({
+            history: (state.history || []).filter(h => (h._id || h.id) !== id),
+            historyLogs: (state.historyLogs || []).filter(h => (h._id || h.id) !== id)
+        }));
+    },
 });

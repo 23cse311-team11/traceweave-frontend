@@ -46,5 +46,36 @@ export const createHistorySlice = (set, get) => ({
         }
     },
     
-    clearActiveExecution: () => set({ activeExecution: null })
+    clearActiveExecution: () => set({ activeExecution: null }),
+
+    deleteExecution: async (id) => {
+        set(state => ({
+            historyLogs: (state.historyLogs || []).filter(h => (h._id || h.id) !== id),
+            history: (state.history || []).filter(h => (h._id || h.id) !== id)
+        }));
+        try {
+            await historyApi.deleteExecution(id);
+        } catch (error) {
+            console.error("Failed to delete execution:", error);
+        }
+    },
+
+    removeFromHistory: async (id) => {
+        return get().deleteExecution(id);
+    },
+
+    clearHistory: async (scope = 'workspace') => {
+        const state = get();
+        const wsId = state.activeWorkspaceId;
+        set({ historyLogs: [], history: [] });
+        try {
+            if (scope === 'workspace' && wsId) {
+                await historyApi.clearWorkspaceHistory(wsId);
+            } else {
+                await historyApi.clearGlobalHistory();
+            }
+        } catch (error) {
+            console.error("Failed to clear history:", error);
+        }
+    }
 });

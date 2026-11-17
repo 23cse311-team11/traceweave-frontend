@@ -16,5 +16,20 @@ export const historyApi = {
     getExecutionDetails: async (execId) => {
         const response = await api.get(`/executions/${execId}`);
         return response.data;
+    },
+
+    deleteExecution: async (execId) => {
+        const response = await api.delete(`/executions/${execId}`);
+        return response.data;
+    },
+
+    clearWorkspaceHistory: async (workspaceId) => {
+        const response = await api.delete(`/workspaces/${workspaceId}/history`);
+        return response.data;
+    },
+
+    clearGlobalHistory: async () => {
+        const response = await api.delete(`/workspaces/user/global-history`);
+        return response.data;
     }
 };
