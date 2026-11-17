@@ -49,9 +49,17 @@ export default function RegisterPage() {
     const isEmailValid = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     const isFormValid = name.length > 2 && isEmailValid(email) && strength.score >= 2;
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? `${window.location.origin}/api/v1` : 'http://localhost/api/v1');
-    const handleGoogleLogin = () => window.location.href = `${apiUrl}/auth/google`;
-    const handleGithubLogin = () => window.location.href = `${apiUrl}/auth/github`;
+    const getApiUrl = () => {
+        if (typeof window !== 'undefined') {
+            if (process.env.NEXT_PUBLIC_API_URL && !process.env.NEXT_PUBLIC_API_URL.includes('localhost')) {
+                return process.env.NEXT_PUBLIC_API_URL;
+            }
+            return `${window.location.origin}/api/v1`;
+        }
+        return process.env.NEXT_PUBLIC_API_URL || 'http://localhost/api/v1';
+    };
+    const handleGoogleLogin = () => window.location.href = `${getApiUrl()}/auth/google`;
+    const handleGithubLogin = () => window.location.href = `${getApiUrl()}/auth/github`;
 
     const handleSubmit = async (e) => {
         e.preventDefault();

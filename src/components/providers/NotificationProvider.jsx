@@ -13,9 +13,11 @@ export default function NotificationProvider({ children }) {
 
     // Determine WS URL (WSS for production, WS for dev)
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = process.env.NEXT_PUBLIC_API_URL 
-      ? new URL(process.env.NEXT_PUBLIC_API_URL).host 
-      : (typeof window !== 'undefined' ? window.location.host : 'localhost');
+    const host = typeof window !== 'undefined'
+      ? window.location.host
+      : ((process.env.NEXT_PUBLIC_API_URL && !process.env.NEXT_PUBLIC_API_URL.includes('localhost'))
+          ? new URL(process.env.NEXT_PUBLIC_API_URL).host
+          : 'localhost');
     
     const wsUrl = `${protocol}//${host}/api/v1/notifications`;
 
