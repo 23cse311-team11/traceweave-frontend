@@ -45,10 +45,13 @@ export default function Header() {
     }
   }, [activeWorkspaceId, availableWorkspaces, availableEnvironments, isLoadingWorkspaces, fetchWorkspaces, fetchEnvironments]);
 
-  const currentEnv = store.getWorkspaceEnvironments()[store.selectedEnvIndex];
+  const envs = store.getWorkspaceEnvironments();
+  const currentEnv = (envs && store.selectedEnvIndex >= 0 && store.selectedEnvIndex < envs.length)
+    ? envs[store.selectedEnvIndex]
+    : null;
   const envOptions = [
     { label: 'No Environment', value: -1, className: 'text-text-muted italic' },
-    ...store.getWorkspaceEnvironments().map((e, idx) => ({
+    ...envs.map((e, idx) => ({
       label: e.name, value: idx, className: 'text-white'
     }))
   ];

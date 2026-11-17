@@ -434,9 +434,11 @@ function CanvasEditor({ initialData, onSave }) {
 
     const store = useAppStore.getState();
     const envs = store.workspaceEnvironments[store.activeWorkspaceId] || [];
-    const activeEnv = envs[store.selectedEnvIndex];
+    const activeEnv = (envs && store.selectedEnvIndex >= 0 && store.selectedEnvIndex < envs.length)
+      ? envs[store.selectedEnvIndex]
+      : null;
     const environmentValues = activeEnv
-      ? activeEnv.variables.reduce((acc, v) => { if (v.key && v.active !== false) acc[v.key] = v.value; return acc; }, {})
+      ? (activeEnv.variables || []).reduce((acc, v) => { if (v.key && v.enabled !== false && v.active !== false) acc[v.key] = v.value; return acc; }, {})
       : {};
 
     const hydratedNodes = getNodes().map(node => {

@@ -78,11 +78,13 @@ export function useWsConnection(activeId) {
     }
 
     const envs = store.workspaceEnvironments[store.activeWorkspaceId] || [];
-    const activeEnv = envs[store.selectedEnvIndex];
+    const activeEnv = (envs && store.selectedEnvIndex >= 0 && store.selectedEnvIndex < envs.length)
+      ? envs[store.selectedEnvIndex]
+      : null;
     const environmentId = activeEnv ? activeEnv.id : null;
     
     // Pass the actual environment values down so Electron can inject them natively
-    const environmentValues = activeEnv ? activeEnv.variables.reduce((acc, v) => ({ ...acc, [v.key]: v.value }), {}) : {};
+    const environmentValues = activeEnv ? (activeEnv.variables || []).reduce((acc, v) => ({ ...acc, [v.key]: v.value }), {}) : {};
 
     // ==========================================================
     // BRANCH 1: ELECTRON NATIVE IPC LOGIC

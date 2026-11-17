@@ -128,6 +128,19 @@ export default function SidebarEnvironments() {
 
                         {/* Unpinned Environments */}
                         {unpinnedEnvs.map(env => renderEnvItem(env))}
+
+                        {envs.length === 0 && (
+                            <div className="text-center py-6 px-4 border border-dashed border-border-subtle/50 rounded-lg mt-2">
+                                <p className="text-xs text-text-muted mb-2">No environments yet</p>
+                                <button
+                                    onClick={() => store.createEnvironment({ isTemp: true })}
+                                    className="text-xs text-brand-primary hover:underline font-medium inline-flex items-center gap-1"
+                                >
+                                    <Plus size={12} />
+                                    <span>Create Environment</span>
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

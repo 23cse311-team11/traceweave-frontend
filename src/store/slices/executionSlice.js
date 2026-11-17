@@ -273,12 +273,14 @@ export const createExecutionSlice = (set, get) => ({
 
             // --- PAYLOAD CONSTRUCTION ---
             const envs = state.workspaceEnvironments[state.activeWorkspaceId] || [];
-            const activeEnv = envs[state.selectedEnvIndex];
+            const activeEnv = (envs && state.selectedEnvIndex >= 0 && state.selectedEnvIndex < envs.length)
+                ? envs[state.selectedEnvIndex]
+                : null;
             const envId = activeEnv ? activeEnv.id : null;
 
             // ✨ EXTRACT ENVIRONMENT VARIABLES FOR OFFLINE DESKTOP INJECTION
-            const environmentValues = activeEnv ? activeEnv.variables.reduce((acc, v) => {
-                if (v.key && v.active !== false) acc[v.key] = v.value;
+            const environmentValues = activeEnv ? (activeEnv.variables || []).reduce((acc, v) => {
+                if (v.key && v.enabled !== false && v.active !== false) acc[v.key] = v.value;
                 return acc;
             }, {}) : {};
 

@@ -1,25 +1,76 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppStore } from '@/store/useAppStore';
-import { Edit2, Check, X, AlertCircle } from 'lucide-react';
+import { Edit2, Check, X, AlertCircle, Plus, Layers, Loader2 } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
-const FloatingTooltip = ({ data, onSave, onManage, onMouseEnter, onMouseLeave }) => {
+const FloatingTooltip = ({ data, onSave, onManage, onCreateEnv, onSelectEnv, onMouseEnter, onMouseLeave }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState(data?.resolvedValue || '');
+    const [newVarValue, setNewVarValue] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        setIsEditing(false);
+        setEditValue(data?.resolvedValue || '');
+        setNewVarValue('');
+    }, [data?.varName]);
+
+    useEffect(() => {
+        if (!isEditing) {
+            setEditValue(data?.resolvedValue || '');
+        }
+    }, [data?.resolvedValue, isEditing]);
 
     if (!data) return null;
 
-    const { rect, name, resolvedValue, selectedEnvName, isSystemNoEnv } = data;
+    const {
+        rect,
+        name,
+        varName,
+        resolvedValue,
+        selectedEnvName,
+        selectedEnv,
+        isSystemNoEnv,
+        hasEnvironments,
+        envs
+    } = data;
+
+    const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;
+    const tooltipWidth = 320;
+    const leftPos = Math.max(12, Math.min(rect.left, screenWidth - tooltipWidth - 20));
 
     const style = {
-        top: `${rect.bottom + 5}px`,
-        left: `${rect.left}px`,
+        top: `${rect.bottom + 6}px`,
+        left: `${leftPos}px`,
     };
 
-    const handleSaveClick = () => {
-        onSave(data.varName, editValue);
-        setIsEditing(false);
+    const handleSaveClick = async () => {
+        setIsSubmitting(true);
+        try {
+            await onSave(varName, editValue);
+            setIsEditing(false);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleQuickCreate = async () => {
+        setIsSubmitting(true);
+        try {
+            await onCreateEnv(varName, newVarValue);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleCreateEmpty = async () => {
+        setIsSubmitting(true);
+        try {
+            await onCreateEnv(null, null);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return createPortal(
@@ -29,59 +80,161 @@ const FloatingTooltip = ({ data, onSave, onManage, onMouseEnter, onMouseLeave })
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
         >
-            <div className="text-[10px] uppercase font-bold mb-2 tracking-wider border-b border-border-subtle pb-1 flex justify-between items-center">
-                {isSystemNoEnv ? (
-                    <span className="text-text-muted flex items-center gap-1">
-                        <AlertCircle size={10} /> No Environment Selected
-                    </span>
-                ) : (
-                    <span>Resolved in: <span className="text-brand-primary">{selectedEnvName}</span></span>
-                )}
-            </div>
-
-            <div className="text-xs mb-1 text-text-secondary">Current Value:</div>
-
-            {isSystemNoEnv ? (
-                <div className="text-sm text-text-muted italic bg-bg-base/50 p-2 rounded border border-border-subtle mb-3">
-                    Select an environment to resolve this variable.
-                </div>
-            ) : (
+            {/* CASE 1: No Environment Created in Workspace */}
+            {!hasEnvironments ? (
                 <>
-                    {isEditing ? (
-                        <div className="flex items-center gap-1 mb-2">
+                    <div className="text-[10px] uppercase font-bold mb-2 tracking-wider border-b border-border-subtle pb-1 flex justify-between items-center">
+                        <span className="text-amber-400 flex items-center gap-1.5 font-semibold">
+                            <AlertCircle size={12} /> No Environment Found
+                        </span>
+                        <span className="text-[10px] text-text-muted">Unresolved</span>
+                    </div>
+
+                    <div className="text-xs text-text-secondary mb-2.5">
+                        Variables require an environment to store their values.
+                    </div>
+
+                    <div className="bg-bg-input p-2.5 rounded border border-border-subtle mb-3 space-y-2">
+                        <div className="text-[11px] text-text-secondary font-medium">
+                            Set initial value for <span className="font-mono text-brand-primary">{name}</span>:
+                        </div>
+                        <div className="flex items-center gap-1.5">
                             <input
-                                className="flex-1 bg-bg-input border border-brand-primary/50 rounded px-2 py-1 text-sm text-text-primary focus:outline-none"
+                                type="text"
+                                placeholder="e.g. https://api.example.com"
+                                value={newVarValue}
+                                onChange={(e) => setNewVarValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleQuickCreate();
+                                }}
+                                disabled={isSubmitting}
+                                autoFocus
+                                className="flex-1 bg-bg-base border border-border-subtle rounded px-2 py-1 text-xs text-text-primary focus:outline-none focus:border-brand-primary font-mono placeholder:text-text-muted/50"
+                            />
+                            <button
+                                onClick={handleQuickCreate}
+                                disabled={isSubmitting}
+                                className="px-2.5 py-1 bg-brand-primary text-black text-xs font-semibold rounded hover:bg-brand-primary/90 transition flex items-center gap-1 disabled:opacity-50"
+                                title="Create environment and save this variable"
+                            >
+                                {isSubmitting ? (
+                                    <Loader2 size={12} className="animate-spin" />
+                                ) : (
+                                    <Check size={12} strokeWidth={2.5} />
+                                )}
+                                <span>Save</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={handleCreateEmpty}
+                        disabled={isSubmitting}
+                        className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 bg-bg-base hover:bg-bg-input border border-border-subtle rounded text-xs text-text-secondary hover:text-text-primary transition mb-3"
+                    >
+                        <Plus size={12} />
+                        <span>Create "Development" Environment</span>
+                    </button>
+                </>
+            ) : isSystemNoEnv ? (
+                /* CASE 2: Environments exist, but "No Environment" is currently selected */
+                <>
+                    <div className="text-[10px] uppercase font-bold mb-2 tracking-wider border-b border-border-subtle pb-1 flex justify-between items-center">
+                        <span className="text-amber-400 flex items-center gap-1.5 font-semibold">
+                            <AlertCircle size={12} /> No Environment Selected
+                        </span>
+                        <span className="text-[10px] text-text-muted">Unresolved</span>
+                    </div>
+
+                    <div className="text-xs text-text-secondary mb-2">
+                        Select an environment to resolve and update <span className="font-mono text-brand-primary">{name}</span>:
+                    </div>
+
+                    <div className="mb-3">
+                        <select
+                            className="w-full bg-bg-input border border-border-subtle rounded px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-brand-primary cursor-pointer font-medium"
+                            onChange={(e) => {
+                                const idx = parseInt(e.target.value, 10);
+                                if (!isNaN(idx)) onSelectEnv(idx);
+                            }}
+                            defaultValue=""
+                        >
+                            <option value="" disabled>Choose an active environment...</option>
+                            {envs.map((env, idx) => (
+                                <option key={env.id} value={idx}>{env.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <button
+                        onClick={handleCreateEmpty}
+                        disabled={isSubmitting}
+                        className="w-full flex items-center justify-center gap-1.5 py-1 px-2 bg-bg-base hover:bg-bg-input border border-border-subtle rounded text-[11px] text-text-secondary hover:text-text-primary transition mb-3"
+                    >
+                        <Plus size={11} />
+                        <span>Create New Environment</span>
+                    </button>
+                </>
+            ) : (
+                /* CASE 3: Active environment selected */
+                <>
+                    <div className="text-[10px] uppercase font-bold mb-2 tracking-wider border-b border-border-subtle pb-1 flex justify-between items-center">
+                        <span>Resolved in: <span className="text-brand-primary font-semibold">{selectedEnvName}</span></span>
+                    </div>
+
+                    <div className="text-xs mb-1 text-text-secondary">Current Value:</div>
+
+                    {isEditing ? (
+                        <div className="flex items-center gap-1 mb-3">
+                            <input
+                                className="flex-1 bg-bg-input border border-brand-primary/50 rounded px-2 py-1 text-sm text-text-primary focus:outline-none font-mono"
                                 value={editValue}
                                 onChange={(e) => setEditValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSaveClick();
+                                    if (e.key === 'Escape') setIsEditing(false);
+                                }}
                                 autoFocus
                             />
-                            <button onClick={handleSaveClick} className="p-1 bg-brand-primary text-brand-surface rounded hover:bg-brand-glow"><Check size={12} /></button>
-                            <button onClick={() => setIsEditing(false)} className="p-1 bg-bg-base text-text-secondary rounded hover:text-text-primary"><X size={12} /></button>
+                            <button
+                                onClick={handleSaveClick}
+                                disabled={isSubmitting}
+                                className="p-1 bg-brand-primary text-black rounded hover:bg-brand-primary/90 transition flex items-center justify-center"
+                                title="Save value"
+                            >
+                                {isSubmitting ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} strokeWidth={2.5} />}
+                            </button>
+                            <button
+                                onClick={() => setIsEditing(false)}
+                                className="p-1 bg-bg-base text-text-secondary rounded hover:text-text-primary transition"
+                                title="Cancel"
+                            >
+                                <X size={12} />
+                            </button>
                         </div>
                     ) : (
                         <div className="text-sm text-text-primary font-mono bg-bg-input p-2 rounded break-all border border-border-subtle mb-3 flex justify-between items-start group/val">
-                            <span>{resolvedValue !== null ? resolvedValue : <span className="text-red-500 italic">Unresolved</span>}</span>
+                            <span>{resolvedValue !== null && resolvedValue !== undefined ? resolvedValue : <span className="text-red-500 italic">Unresolved</span>}</span>
                             <button
-                                onClick={(e) => { setIsEditing(true); setEditValue(resolvedValue || ''); }}
-                                className="opacity-0 group-hover/val:opacity-100 p-1 hover:bg-bg-base rounded text-text-secondary"
+                                onClick={() => { setIsEditing(true); setEditValue(resolvedValue || ''); }}
+                                className="opacity-0 group-hover/val:opacity-100 p-1 hover:bg-bg-base rounded text-text-secondary hover:text-text-primary transition"
+                                title="Edit variable"
                             >
-                                <Edit2 size={10} />
+                                <Edit2 size={11} />
                             </button>
                         </div>
                     )}
                 </>
             )}
 
-            <div className="text-[10px] text-text-muted flex justify-between items-center">
+            <div className="text-[10px] text-text-muted flex justify-between items-center border-t border-border-subtle/50 pt-2">
                 <span>Scope: Environment</span>
-                {!isSystemNoEnv && (
-                    <span
-                        onClick={onManage}
-                        className="text-brand-blue cursor-pointer hover:underline"
-                    >
-                        Manage Variables →
-                    </span>
-                )}
+                <span
+                    onClick={onManage}
+                    className="text-brand-blue cursor-pointer hover:underline"
+                >
+                    {hasEnvironments && !isSystemNoEnv ? 'Manage Variables →' : 'Manage Environments →'}
+                </span>
             </div>
         </div>,
         document.body
@@ -101,9 +254,12 @@ export const UrlBar = ({ value, onChange }) => {
     const getEnvVariable = store.getEnvVariable;
     const selectedEnvIndex = store.selectedEnvIndex;
     const envs = store.getWorkspaceEnvironments();
-    const selectedEnv = envs[selectedEnvIndex];
+    const hasEnvironments = Array.isArray(envs) && envs.length > 0;
+    const selectedEnv = (hasEnvironments && selectedEnvIndex >= 0 && selectedEnvIndex < envs.length)
+        ? envs[selectedEnvIndex]
+        : null;
 
-    const isSystemNoEnv = selectedEnvIndex === -1;
+    const isSystemNoEnv = !selectedEnv;
     const selectedEnvName = selectedEnv?.name || 'No Environment';
 
     // SCROLL SYNC: When input scrolls, scroll overlay matching it
@@ -125,8 +281,12 @@ export const UrlBar = ({ value, onChange }) => {
             name: varNameRaw,
             varName,
             resolvedValue,
+            selectedEnv,
+            selectedEnvIndex,
             selectedEnvName,
-            isSystemNoEnv
+            isSystemNoEnv,
+            hasEnvironments,
+            envs: envs || []
         });
     };
 
@@ -136,15 +296,62 @@ export const UrlBar = ({ value, onChange }) => {
         }, 300);
     };
 
-    const handleUpdateVar = (key, newValue) => {
+    const handleUpdateVar = async (key, newValue) => {
         if (!selectedEnv) return;
-        const idx = selectedEnv.variables.findIndex(v => v.key === key);
+        const vars = selectedEnv.variables || [];
+        const idx = vars.findIndex(v => v.key === key);
         if (idx !== -1) {
-            store.updateEnvironmentVariable(selectedEnv.id, idx, 'value', newValue);
+            await store.updateEnvironmentVariable(selectedEnv.id, idx, 'value', newValue);
         } else {
-            store.addEnvironmentVariable(selectedEnv.id, { key, value: newValue, enabled: true });
+            await store.addEnvironmentVariable(selectedEnv.id, { key, value: newValue, enabled: true });
         }
-        setTooltipData(prev => ({ ...prev, resolvedValue: newValue }));
+        setTooltipData(prev => prev ? ({ ...prev, resolvedValue: newValue }) : null);
+    };
+
+    const handleCreateEnv = async (initialVarName, initialVarValue) => {
+        const initialVars = initialVarName 
+            ? [{ key: initialVarName, value: initialVarValue || '', enabled: true }] 
+            : [];
+        const newEnv = await store.createEnvironment({
+            name: 'Development',
+            variables: initialVars,
+            openTab: false,
+            selectImmediately: true
+        });
+        if (newEnv) {
+            const updatedEnvs = store.getWorkspaceEnvironments();
+            const targetIdx = updatedEnvs.findIndex(e => e.id === newEnv.id);
+            const resolvedIdx = targetIdx !== -1 ? targetIdx : (updatedEnvs.length - 1);
+            store.setSelectedEnvIndex(resolvedIdx);
+
+            setTooltipData(prev => prev ? ({
+                ...prev,
+                selectedEnv: newEnv,
+                selectedEnvIndex: resolvedIdx,
+                selectedEnvName: newEnv.name,
+                isSystemNoEnv: false,
+                hasEnvironments: true,
+                envs: updatedEnvs,
+                resolvedValue: initialVarValue !== null && initialVarValue !== undefined ? initialVarValue : null
+            }) : null);
+        }
+    };
+
+    const handleSelectEnv = (envIndex) => {
+        store.setSelectedEnvIndex(envIndex);
+        const targetEnv = envs[envIndex];
+        if (targetEnv) {
+            const found = (targetEnv.variables || []).find(v => v.key === tooltipData?.varName && v.enabled !== false);
+            const resolved = found ? found.value : null;
+            setTooltipData(prev => prev ? ({
+                ...prev,
+                selectedEnv: targetEnv,
+                selectedEnvIndex: envIndex,
+                selectedEnvName: targetEnv.name,
+                isSystemNoEnv: false,
+                resolvedValue: resolved
+            }) : null);
+        }
     };
 
     const handleVarClick = () => {
@@ -154,8 +361,10 @@ export const UrlBar = ({ value, onChange }) => {
     const handleManageClick = () => {
         if (selectedEnv) {
             store.openEnvironmentTab(selectedEnv.id);
-            setTooltipData(null);
+        } else {
+            store.setActiveSidebarItem('Environments');
         }
+        setTooltipData(null);
     };
 
     const renderRichText = (text) => {
@@ -234,6 +443,8 @@ export const UrlBar = ({ value, onChange }) => {
                     data={tooltipData}
                     onSave={handleUpdateVar}
                     onManage={handleManageClick}
+                    onCreateEnv={handleCreateEnv}
+                    onSelectEnv={handleSelectEnv}
                     onMouseEnter={() => {
                         if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
                     }}
