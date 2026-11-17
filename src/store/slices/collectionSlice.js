@@ -74,8 +74,10 @@ export const createCollectionSlice = (set, get) => ({
                 parentId: parentId 
             };
             set(state => ({ collections: [...state.collections, newCol] }));
+            return newCol;
         } catch (error) {
             console.warn("Create Collection Error:", error.response?.data || error);
+            return null;
         }
     },
 

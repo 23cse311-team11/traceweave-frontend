@@ -71,12 +71,14 @@ export default function WsHeader({ activeId, configTab, setConfigTab, wsState, o
 
         <motion.button
           onClick={handleSave}
-          whileTap={{ scale: 0.96 }}
+          disabled={!requiresSave}
+          whileTap={requiresSave ? { scale: 0.96 } : {}}
           className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border transition-colors shrink-0 ${
             requiresSave
-              ? 'bg-brand-primary/10 border-brand-primary/50 text-brand-primary'
-              : 'bg-bg-input border-border-subtle text-text-secondary hover:text-text-primary'
+              ? 'bg-brand-primary/10 border-brand-primary/50 text-brand-primary hover:bg-brand-primary/20 cursor-pointer'
+              : 'bg-bg-input border-border-subtle text-text-muted opacity-50 cursor-not-allowed'
           }`}
+          title={requiresSave ? (isNew ? "Save to Collection" : "Save changes") : "All changes saved"}
         >
           <Save size={13} />
           {isNew ? 'Save' : (isDirty ? 'Save*' : 'Saved')}

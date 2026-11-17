@@ -1,6 +1,7 @@
 'use client';
+import { useState, useRef, useEffect } from 'react';
 import { useAppStore } from '@/store/useAppStore';
-import { ChevronDown, FileCode, UploadCloud } from 'lucide-react';
+import { ChevronDown, Check, FileCode, UploadCloud } from 'lucide-react';
 import Editor from '@monaco-editor/react';
 import KeyValueTable from './KeyValueTable';
 
@@ -22,6 +23,19 @@ const RAW_LANGUAGES = [
 
 export default function BodyEditor() {
     const store = useAppStore();
+    const [isRawDropdownOpen, setIsRawDropdownOpen] = useState(false);
+    const rawDropdownRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (rawDropdownRef.current && !rawDropdownRef.current.contains(e.target)) {
+                setIsRawDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     const activeId = store.activeTabId;
     const request = store.requestStates[activeId];
     const bodyState = request?.body || { type: 'none', language: 'json', formdata: [] };
@@ -53,22 +67,34 @@ export default function BodyEditor() {
 
                 {/* JSON Dropdown for Raw */}
                 {bodyState.type === 'raw' && (
-                    <div className="relative group">
-                        <button className="flex items-center gap-1 text-brand-primary font-bold hover:text-brand-primary">
-                            {RAW_LANGUAGES.find(l => l.id === bodyState.language)?.label || 'Text'}
-                            <ChevronDown size={10} />
+                    <div className="relative" ref={rawDropdownRef}>
+                        <button
+                            type="button"
+                            onClick={() => setIsRawDropdownOpen(prev => !prev)}
+                            className="flex items-center gap-1.5 px-2 py-1 rounded bg-bg-input/60 hover:bg-bg-input text-brand-primary font-bold text-xs border border-border-subtle/50 transition cursor-pointer select-none"
+                        >
+                            <span>{RAW_LANGUAGES.find(l => l.id === bodyState.language)?.label || 'JSON'}</span>
+                            <ChevronDown size={11} className={`transition-transform duration-200 ${isRawDropdownOpen ? 'rotate-180' : ''}`} />
                         </button>
-                        <div className="absolute right-0 top-full mt-1 w-24 bg-bg-panel border border-border-subtle rounded shadow-xl py-1 z-50 hidden group-hover:block">
-                            {RAW_LANGUAGES.map(lang => (
-                                <div
-                                    key={lang.id}
-                                    onClick={() => updateBody('language', lang.id)}
-                                    className={`px-3 py-1.5 hover:bg-brand-blue hover:text-white cursor-pointer ${bodyState.language === lang.id ? 'text-brand-primary font-bold' : 'text-text-secondary'}`}
-                                >
-                                    {lang.label}
-                                </div>
-                            ))}
-                        </div>
+                        {isRawDropdownOpen && (
+                            <div className="absolute right-0 top-full mt-1.5 w-32 bg-bg-panel border border-border-strong rounded-lg shadow-2xl py-1 z-50 animate-in fade-in zoom-in-95 duration-150">
+                                {RAW_LANGUAGES.map(lang => (
+                                    <div
+                                        key={lang.id}
+                                        onClick={() => {
+                                            updateBody('language', lang.id);
+                                            setIsRawDropdownOpen(false);
+                                        }}
+                                        className={`px-3 py-1.5 text-xs flex items-center justify-between hover:bg-brand-primary/10 hover:text-brand-primary cursor-pointer transition ${
+                                            bodyState.language === lang.id ? 'text-brand-primary font-bold bg-brand-primary/5' : 'text-text-secondary'
+                                        }`}
+                                    >
+                                        <span>{lang.label}</span>
+                                        {bodyState.language === lang.id && <Check size={12} className="text-brand-primary" />}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

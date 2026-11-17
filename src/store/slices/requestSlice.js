@@ -154,26 +154,87 @@ export const createRequestSlice = (set, get) => ({
         });
     },
 
-    attachRequestToCollection: (reqId, colId, newName) => set(state => {
+    attachRequestToCollection: async (reqId, colId, newName) => {
+        const state = get();
         const req = state.requestStates[reqId];
-        if (!req) return {};
+        if (!req) return null;
 
-        const updatedReq = { ...req, collectionId: colId, name: newName || req.name };
-        const newRequestStates = { ...state.requestStates, [reqId]: updatedReq };
-
-        const newCollections = state.collections.map(c =>
-            c.id === colId ? { ...c, itemIds: [...c.itemIds, reqId] } : c
-        );
-
-        const newUnsaved = new Set(state.unsavedRequests);
-        newUnsaved.delete(reqId);
-
-        return {
-            requestStates: newRequestStates,
-            collections: newCollections,
-            unsavedRequests: newUnsaved
+        const requestName = newName || req.name || 'Untitled Request';
+        const safeConfig = {
+            ...req.config,
+            cookies: req.cookies || [],
+            scripts: req.scripts || { pre: '', post: '' }
         };
-    }),
+
+        try {
+            // Persist the request to the database via API
+            const newReqData = await requestApi.createRequest(colId, {
+                name: requestName,
+                protocol: req.protocol || 'http',
+                config: safeConfig
+            });
+
+            const savedId = newReqData.id;
+
+            set(currState => {
+                const { [reqId]: oldReq, ...restRequestStates } = currState.requestStates;
+                const updatedReq = {
+                    ...oldReq,
+                    ...newReqData,
+                    id: savedId,
+                    collectionId: colId,
+                    name: requestName,
+                    config: safeConfig,
+                    isDetached: false
+                };
+
+                const newRequestStates = { ...restRequestStates, [savedId]: updatedReq };
+                const newOpenTabs = currState.openTabs.map(t => t === reqId ? savedId : t);
+                const newActiveTabId = currState.activeTabId === reqId ? savedId : currState.activeTabId;
+
+                const newCollections = currState.collections.map(c =>
+                    c.id === colId
+                        ? { ...c, itemIds: [...(c.itemIds || []).filter(id => id !== reqId && id !== savedId), savedId], collapsed: false }
+                        : { ...c, itemIds: (c.itemIds || []).filter(id => id !== reqId) }
+                );
+
+                const newUnsaved = new Set(currState.unsavedRequests);
+                newUnsaved.delete(reqId);
+                newUnsaved.delete(savedId);
+
+                return {
+                    requestStates: newRequestStates,
+                    collections: newCollections,
+                    openTabs: newOpenTabs,
+                    activeTabId: newActiveTabId,
+                    unsavedRequests: newUnsaved
+                };
+            });
+
+            return savedId;
+        } catch (error) {
+            console.warn("Attach Request to Collection Error:", error.response?.data || error);
+            // Fallback in-memory update
+            set(currState => {
+                const updatedReq = { ...req, collectionId: colId, name: requestName, isDetached: false };
+                const newRequestStates = { ...currState.requestStates, [reqId]: updatedReq };
+                const newCollections = currState.collections.map(c =>
+                    c.id === colId
+                        ? { ...c, itemIds: [...(c.itemIds || []).filter(id => id !== reqId), reqId], collapsed: false }
+                        : c
+                );
+                const newUnsaved = new Set(currState.unsavedRequests);
+                newUnsaved.delete(reqId);
+
+                return {
+                    requestStates: newRequestStates,
+                    collections: newCollections,
+                    unsavedRequests: newUnsaved
+                };
+            });
+            return reqId;
+        }
+    },
 
     toggleRequestPin: (id) => set(state => {
         const req = state.requestStates[id];

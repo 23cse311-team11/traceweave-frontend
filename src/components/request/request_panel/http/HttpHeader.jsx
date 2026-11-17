@@ -90,13 +90,15 @@ export default function HttpHeader({
 
           <button
             onClick={handleSaveClick}
+            disabled={!isDirty && !isNew}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border transition ${
-              isDirty 
-                ? 'bg-bg-input border-brand-primary text-text-primary' 
-                : 'bg-bg-input border-border-subtle text-text-secondary'
+              isDirty || isNew
+                ? 'bg-bg-input border-brand-primary text-text-primary hover:bg-brand-primary/10 cursor-pointer' 
+                : 'bg-bg-input border-border-subtle text-text-muted opacity-50 cursor-not-allowed'
             }`}
+            title={isDirty || isNew ? (isNew ? "Save to Collection" : "Save changes") : "All changes saved"}
           >
-            <Save size={14} /> {isDirty ? 'Save*' : 'Saved'}
+            <Save size={14} /> {isDirty || isNew ? 'Save*' : 'Saved'}
           </button>
         </div>
       </div>

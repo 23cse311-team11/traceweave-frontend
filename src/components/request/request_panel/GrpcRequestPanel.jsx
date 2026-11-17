@@ -110,8 +110,17 @@ export default function GrpcRequestPanel({ activeId }) {
                 )}
             </div>
           </div>
-          <button onClick={handleSave} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border transition ${isDirty ? 'bg-bg-input border-brand-primary text-text-primary' : 'bg-bg-input border-border-subtle text-text-secondary'}`}>
-            <Save size={14} /> {isDirty ? 'Save*' : 'Saved'}
+          <button 
+            onClick={handleSave} 
+            disabled={!isDirty && !!activeReqState.collectionId}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border transition ${
+              isDirty || !activeReqState.collectionId
+                ? 'bg-bg-input border-brand-primary text-text-primary hover:bg-brand-primary/10 cursor-pointer' 
+                : 'bg-bg-input border-border-subtle text-text-muted opacity-50 cursor-not-allowed'
+            }`}
+            title={isDirty || !activeReqState.collectionId ? (!activeReqState.collectionId ? "Save to Collection" : "Save changes") : "All changes saved"}
+          >
+            <Save size={14} /> {isDirty || !activeReqState.collectionId ? 'Save*' : 'Saved'}
           </button>
         </div>
 

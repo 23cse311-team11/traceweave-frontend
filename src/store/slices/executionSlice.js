@@ -162,16 +162,31 @@ export const createExecutionSlice = (set, get) => ({
                     const bodyLang = req.config.body?.language;
 
                     if (bodyType === 'raw') {
-                        finalBodyPayload = { type: 'raw', raw: req.config.body.raw };
-                        if (!hasHeader('content-type') && bodyLang === 'json') {
-                            impliedHeaders['Content-Type'] = 'application/json';
+                        finalBodyPayload = { 
+                            type: 'raw', 
+                            raw: req.config.body?.raw || '',
+                            language: bodyLang || 'json'
+                        };
+                        if (!hasHeader('content-type')) {
+                            const rawStr = String(req.config.body?.raw || '').trim();
+                            if (bodyLang === 'json' || !bodyLang || rawStr.startsWith('{') || rawStr.startsWith('[')) {
+                                impliedHeaders['Content-Type'] = 'application/json';
+                            } else if (bodyLang === 'xml') {
+                                impliedHeaders['Content-Type'] = 'application/xml';
+                            } else if (bodyLang === 'html') {
+                                impliedHeaders['Content-Type'] = 'text/html';
+                            } else if (bodyLang === 'javascript') {
+                                impliedHeaders['Content-Type'] = 'application/javascript';
+                            } else {
+                                impliedHeaders['Content-Type'] = 'text/plain';
+                            }
                         }
                     }
                     else if (bodyType === 'urlencoded') {
                         const urlencodedData = [];
-                        (req.config.body.urlencoded || []).forEach((item) => {
-                            if (item.active && item.key) {
-                                urlencodedData.push({ key: item.key, value: item.value });
+                        (req.config.body?.urlencoded || []).forEach((item) => {
+                            if (item.active !== false && item.key) {
+                                urlencodedData.push({ key: item.key, value: item.value ?? '' });
                             }
                         });
 
