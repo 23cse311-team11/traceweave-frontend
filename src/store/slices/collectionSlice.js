@@ -179,66 +179,28 @@ export const createCollectionSlice = (set, get) => ({
         return { collections: newCollections };
     }),
 
-    moveCollection: (activeId, overId) => set(state => {
-        const activeCol = state.collections.find(c => c.id === activeId);
-        const overCol = state.collections.find(c => c.id === overId);
+    moveCollection: async (activeId, overId) => {
+        const { collections, setCollectionParent } = get();
+        const activeCol = collections.find(c => c.id === activeId);
+        const overCol = collections.find(c => c.id === overId);
 
-        if (!activeCol || !overCol || activeCol.pinned || overCol.pinned) return {};
-        if (activeId === overId) return {};
+        if (!activeCol || !overCol || activeCol.pinned || overCol.pinned) return;
+        if (activeId === overId) return;
 
         // Anti-Cyclic Check: ensure overCol is not activeCol or any descendant of activeCol
         let checkId = overCol.id;
         while (checkId) {
-            if (checkId === activeId) return {}; 
-            const p = state.collections.find(c => c.id === checkId);
+            if (checkId === activeId) return; 
+            const p = collections.find(c => c.id === checkId);
             checkId = p?.parentId;
         }
 
-        const isSameParent = activeCol.parentId === overCol.parentId;
-        const newParentId = isSameParent ? activeCol.parentId : overCol.id;
-
-        const activeIndex = state.collections.findIndex(c => c.id === activeId);
-        const overIndex = state.collections.findIndex(c => c.id === overId);
-
-        if (activeIndex !== -1 && overIndex !== -1) {
-            const newCollections = [...state.collections];
-            const [moved] = newCollections.splice(activeIndex, 1);
-            
-            moved.parentId = newParentId;
-
-            // If nesting into overCol, ensure overCol is expanded
-            if (!isSameParent) {
-                const targetParent = newCollections.find(c => c.id === overCol.id);
-                if (targetParent) {
-                    targetParent.collapsed = false;
-                }
-            }
-
-            if (isSameParent) {
-                newCollections.splice(overIndex, 0, moved);
-            } else {
-                newCollections.push(moved);
-            }
-
-            // Recalculate order for siblings in the destination parent
-            const siblings = newCollections.filter(c => c.parentId === moved.parentId);
-            siblings.forEach((sibling, idx) => {
-                sibling.order = idx;
-                if (sibling.id === activeId) {
-                    collectionApi.updateCollection(sibling.id, { 
-                        parentId: sibling.parentId, 
-                        order: idx 
-                    }).catch(console.warn);
-                }
-            });
-
-            return { collections: newCollections };
-        }
-        return {};
-    }),
+        // Move activeCol inside overCol (or re-parent)
+        await setCollectionParent(activeId, overCol.id);
+    },
 
     setCollectionParent: async (collectionId, targetParentId = null) => {
-        const { collections } = get();
+        const { collections, activeWorkspaceId } = get();
         const activeCol = collections.find(c => c.id === collectionId);
         if (!activeCol) return;
 
@@ -275,6 +237,7 @@ export const createCollectionSlice = (set, get) => ({
                 parentId: targetParentId,
                 order: newOrder
             });
+            await get().fetchCollections(activeWorkspaceId);
         } catch (err) {
             console.warn("Failed to update collection parent:", err);
             set({ collections });

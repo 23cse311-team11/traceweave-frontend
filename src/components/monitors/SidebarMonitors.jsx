@@ -100,10 +100,10 @@ export default function SidebarMonitors() {
                             onDoubleClick={() => openTab(monitor.id, false)}
 
                             className={`
-                                group flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer transition-colors select-none relative
+                                group flex items-center gap-2 px-2.5 py-1.5 rounded-md cursor-pointer transition-colors select-none relative
                                 ${activeTabId === monitor.id
-                                    ? 'bg-bg-input text-text-primary border-l-2 border-brand-primary'
-                                    : 'text-text-secondary hover:bg-bg-panel hover:text-text-primary border-l-2 border-transparent'}
+                                    ? 'bg-white/[0.08] text-white'
+                                    : 'text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-200'}
                             `}
                         >
                             {/* Icon / Status */}
@@ -111,7 +111,7 @@ export default function SidebarMonitors() {
                                 {monitor.status ? (
                                     renderStatus(monitor.status)
                                 ) : (
-                                    <Activity size={14} className={activeTabId === monitor.id ? 'text-brand-primary' : 'text-text-secondary'} />
+                                    <Activity size={14} className={activeTabId === monitor.id ? 'text-brand-primary' : 'text-zinc-500'} />
                                 )}
                             </div>
 
@@ -126,12 +126,12 @@ export default function SidebarMonitors() {
                                         onBlur={handleRenameSubmit}
                                         onKeyDown={handleKeyDown}
                                         onClick={(e) => e.stopPropagation()}
-                                        className="w-full bg-bg-base border border-brand-blue rounded px-1 py-0.5 text-xs text-text-primary focus:outline-none"
+                                        className="w-full bg-zinc-900 border border-brand-primary/50 rounded px-1.5 py-0.5 text-xs text-zinc-100 focus:outline-none"
                                     />
                                 ) : (
                                     <div className="flex items-center gap-2">
                                         <span className="text-xs font-medium truncate">{monitor.name}</span>
-                                        {monitor.pinned && <Pin size={10} className="text-text-muted shrink-0 rotate-45" />}
+                                        {monitor.pinned && <Pin size={10} className="text-zinc-500 shrink-0 rotate-45" />}
                                     </div>
                                 )}
                             </div>
@@ -144,7 +144,7 @@ export default function SidebarMonitors() {
                                     setContextMenu({ x: e.clientX, y: e.clientY, id: monitor.id });
                                 }}
                             >
-                                <div className="p-1 hover:bg-bg-base rounded hover:text-text-primary text-text-muted">
+                                <div className="p-1 hover:bg-white/[0.08] rounded text-zinc-500 hover:text-zinc-200">
                                     <MoreHorizontal size={14} />
                                 </div>
                             </div>
@@ -153,9 +153,9 @@ export default function SidebarMonitors() {
                 </AnimatePresence>
 
                 {monitors.length === 0 && (
-                    <div className="text-center mt-10 opacity-50">
-                        <Activity size={32} className="mx-auto mb-2 text-text-muted" />
-                        <p className="text-xs text-text-secondary">No monitors created</p>
+                    <div className="text-center py-10 opacity-40">
+                        <Activity size={28} className="mx-auto mb-2 text-zinc-500" />
+                        <p className="text-xs text-zinc-400">No monitors created</p>
                     </div>
                 )}
             </div>

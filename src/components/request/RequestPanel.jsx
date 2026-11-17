@@ -135,25 +135,59 @@ export default function RequestPanel() {
     };
   };
 
+  // Filter tabs strictly belonging to the active workspace
+  const currentWorkspaceTabs = useMemo(() => {
+    if (!store.activeWorkspaceId) return store.openTabs;
+    return store.openTabs.filter(tabId => {
+      // 1. Check if request
+      const req = store.requestStates[tabId];
+      if (req) {
+        if (req.workspaceId && req.workspaceId !== store.activeWorkspaceId) return false;
+        if (req.collectionId) {
+          const col = store.collections.find(c => c.id === req.collectionId);
+          if (col && col.workspaceId && col.workspaceId !== store.activeWorkspaceId) return false;
+        }
+        return true;
+      }
+      // 2. Check if environment
+      const env = store.getEnvironmentById(tabId);
+      if (env) {
+        return !env.workspaceId || env.workspaceId === store.activeWorkspaceId;
+      }
+      // 3. Check if monitor
+      const monitor = store.monitorStates[tabId];
+      if (monitor) {
+        return !monitor.workspaceId || monitor.workspaceId === store.activeWorkspaceId;
+      }
+      return true;
+    });
+  }, [store.openTabs, store.requestStates, store.collections, store.activeWorkspaceId, store.workspaceEnvironments, store.monitorStates]);
+
+  useEffect(() => {
+    if (activeId && currentWorkspaceTabs.length > 0 && !currentWorkspaceTabs.includes(activeId)) {
+      store.openTab(currentWorkspaceTabs[currentWorkspaceTabs.length - 1]);
+    }
+  }, [activeId, currentWorkspaceTabs, store]);
+
   // --- Mathematical calculation for visible tabs ---
   const TAB_WIDTH = 176; // w-44 = 176px. Exact width locking ensures perfect math.
   const BUTTONS_WIDTH = 100; // Plus button + Dropdown trigger space
   const maxVisible = Math.max(1, Math.floor((containerWidth - BUTTONS_WIDTH) / TAB_WIDTH));
 
-  let visibleTabs = store.openTabs;
+  let visibleTabs = currentWorkspaceTabs;
   let hiddenTabs = [];
 
-  if (store.openTabs.length > maxVisible) {
-    const activeIndex = store.openTabs.indexOf(activeId);
+  if (currentWorkspaceTabs.length > maxVisible) {
+    const activeIndex = currentWorkspaceTabs.indexOf(activeId);
 
     // If the active tab gets pushed to the hidden area, swap it into the visible array
     if (activeIndex !== -1 && activeIndex >= maxVisible) {
-      visibleTabs = store.openTabs.slice(0, maxVisible);
-      visibleTabs[maxVisible - 1] = store.openTabs[activeIndex]; // Overwrite the last slot
-      hiddenTabs = store.openTabs.filter(id => !visibleTabs.includes(id));
+      visibleTabs = currentWorkspaceTabs.slice(0, maxVisible);
+      visibleTabs[maxVisible - 1] = currentWorkspaceTabs[activeIndex]; // Overwrite the last slot
+      hiddenTabs = currentWorkspaceTabs.filter(id => !visibleTabs.includes(id));
     } else {
-      visibleTabs = store.openTabs.slice(0, maxVisible);
-      hiddenTabs = store.openTabs.slice(maxVisible);
+      visibleTabs = currentWorkspaceTabs.slice(0, maxVisible);
+      hiddenTabs = currentWorkspaceTabs.slice(maxVisible);
     }
   }
 
@@ -262,20 +296,6 @@ export default function RequestPanel() {
             </AnimatePresence>
           </div>
         )}
-      </div>
-                            size={14}
-                            className="opacity-0 group-hover:opacity-100 hover:text-red-400 transition-opacity"
-                            onClick={(e) => handleTabClose(e, tabId)}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        )}
 
         {/* Plus Button - Detached Request */}
         <motion.div
@@ -305,7 +325,6 @@ export default function RequestPanel() {
         isOpen={store.showLocalhostModal}
         onClose={() => store.setShowLocalhostModal(false)}
       />
-
     </main>
   );
 }

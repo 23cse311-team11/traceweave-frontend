@@ -80,11 +80,12 @@ html {
 body {
   background-color: var(--bg-base);
   color: var(--text-primary);
-  font-family: var(--font-archivo);
+  font-family: inherit;
   min-height: 100vh;
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* ============================================

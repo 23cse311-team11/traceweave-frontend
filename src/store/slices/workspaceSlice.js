@@ -75,11 +75,43 @@ export const createWorkspaceSlice = (set, get) => ({
     },
 
     setActiveWorkspace: (id) => {
-        set(state => ({
-        activeWorkspaceId: id,
-        activeSidebarItem: 'Collections',
-        workspaceMembers: state.availableWorkspaces.find(w => w.id === id)?.members || []
-        }));
+        const state = get();
+        const prevId = state.activeWorkspaceId;
+        if (prevId === id) return;
+
+        // 1. Save tabs for the outgoing workspace
+        const currentTabs = state.openTabs || [];
+        const currentActive = state.activeTabId;
+        const currentPreview = state.previewTabId;
+
+        const updatedWorkspaceTabs = {
+            ...(state.workspaceTabs || {}),
+            ...(prevId ? {
+                [prevId]: {
+                    openTabs: currentTabs,
+                    activeTabId: currentActive,
+                    previewTabId: currentPreview
+                }
+            } : {})
+        };
+
+        // 2. Restore tabs for the incoming workspace
+        const targetWsTabs = updatedWorkspaceTabs[id] || {
+            openTabs: [],
+            activeTabId: null,
+            previewTabId: null
+        };
+
+        set({
+            activeWorkspaceId: id,
+            activeSidebarItem: 'Collections',
+            workspaceMembers: state.availableWorkspaces.find(w => w.id === id)?.members || [],
+            workspaceTabs: updatedWorkspaceTabs,
+            openTabs: targetWsTabs.openTabs,
+            activeTabId: targetWsTabs.activeTabId,
+            previewTabId: targetWsTabs.previewTabId
+        });
+
         get().fetchWorkspaceData(id);
     },
   

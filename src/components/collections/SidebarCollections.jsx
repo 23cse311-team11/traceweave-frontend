@@ -8,12 +8,37 @@ import {
   useSensor,
   useSensors,
   DragOverlay,
+  useDroppable,
 } from '@dnd-kit/core';
 import { createPortal } from 'react-dom';
 import { useEffect, useState } from 'react';
 import { SortableCollection } from './SortableCollection';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useAppStore } from '@/store/useAppStore';
+import { CornerUpLeft } from 'lucide-react';
+
+function RootDroppable({ isDragging }) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: 'root-drop-zone',
+    data: { type: 'root' },
+  });
+
+  if (!isDragging) return null;
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`my-2 p-2.5 rounded-lg border-2 border-dashed transition-colors flex items-center justify-center gap-2 text-xs font-medium ${
+        isOver
+          ? 'border-brand-primary bg-brand-primary/15 text-brand-primary'
+          : 'border-white/10 text-zinc-400 bg-white/[0.02]'
+      }`}
+    >
+      <CornerUpLeft size={13} />
+      <span>Drop here to move to Root (Top Level)</span>
+    </div>
+  );
+}
 
 export default function SidebarCollections() {
   const {
@@ -22,7 +47,8 @@ export default function SidebarCollections() {
     openTab,
     moveRequest,
     moveCollection,
-    getFilteredCollections
+    getFilteredCollections,
+    setCollectionParent
   } = useAppStore();
   
   const collections = getFilteredCollections();
@@ -70,7 +96,11 @@ export default function SidebarCollections() {
       const type = active.data.current?.type;
 
       if (type === 'collection') {
-        moveCollection(active.id, over.id);
+        if (over.id === 'root-drop-zone') {
+          setCollectionParent(active.id, null);
+        } else {
+          moveCollection(active.id, over.id);
+        }
       } else {
         moveRequest(active.id, over.id);
       }
@@ -102,6 +132,7 @@ export default function SidebarCollections() {
               onRequestClick={handleRequestClick}
             />
           ))}
+          <RootDroppable isDragging={activeDragItem !== null} />
           {rootCollections.length === 0 && (
             <div className="p-4 text-center text-xs text-text-secondary flex flex-col gap-2">
               <span>No collections found.</span>

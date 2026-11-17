@@ -48,28 +48,31 @@ export default function SidebarEnvironments() {
         return (
             <div
                 key={env.id}
-                className={`group flex items-center justify-between p-2 rounded cursor-pointer border border-transparent transition-all mb-0.5 ${isRenaming ? 'bg-bg-input' : 'hover:bg-bg-input'
-                    }`}
+                className={`group flex items-center justify-between px-2.5 py-1.5 rounded-md cursor-pointer border border-transparent transition-colors mb-0.5 ${
+                    isRenaming ? 'bg-white/[0.08]' : 'hover:bg-white/[0.05]'
+                }`}
                 onClick={() => !isRenaming && store.openTab(env.id, true)}
                 onDoubleClick={() => !isRenaming && store.openTab(env.id, false)}
                 onContextMenu={(e) => !isRenaming && handleContextMenu(e, env.id)}
             >
-                <div className="flex items-center gap-3 overflow-hidden flex-1">
+                <div className="flex items-center gap-2.5 overflow-hidden flex-1">
                     {/* Active Selection Checkbox */}
                     <div
                         onClick={(e) => { e.stopPropagation(); store.setSelectedEnvIndex(globalIdx); }}
-                        className={`w-3 h-3 rounded-full border flex items-center justify-center transition-all shrink-0 ${globalIdx === store.selectedEnvIndex
-                            ? 'bg-brand-primary border-brand-primary'
-                            : 'border-border-strong hover:border-brand-primary'
-                            }`}
+                        className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center transition-colors shrink-0 ${
+                            globalIdx === store.selectedEnvIndex
+                                ? 'bg-violet-600 border-violet-600 text-white'
+                                : 'border-white/[0.15] hover:border-violet-400'
+                        }`}
+                        title={globalIdx === store.selectedEnvIndex ? 'Active Environment' : 'Select Environment'}
                     >
-                        {globalIdx === store.selectedEnvIndex && <Check size={8} className="text-black" strokeWidth={4} />}
+                        {globalIdx === store.selectedEnvIndex && <Check size={9} strokeWidth={3} />}
                     </div>
 
                     {isRenaming ? (
                         <input
                             autoFocus
-                            className="bg-transparent text-sm w-full outline-none text-text-primary border-b border-brand-primary"
+                            className="bg-transparent text-xs w-full outline-none text-white border-b border-brand-primary py-0.5"
                             value={renameValue}
                             onChange={(e) => setRenameValue(e.target.value)}
                             onBlur={submitRename}
@@ -78,15 +81,15 @@ export default function SidebarEnvironments() {
                         />
                     ) : (
                         <div className="flex items-center gap-2 overflow-hidden w-full">
-                            <span className="text-sm truncate text-text-primary flex-1">{env.name}</span>
-                            {env.pinned && <Pin size={10} className="text-text-secondary shrink-0 rotate-45" />}
+                            <span className="text-xs font-medium truncate text-zinc-300 group-hover:text-white flex-1">{env.name}</span>
+                            {env.pinned && <Pin size={10} className="text-brand-primary shrink-0 rotate-45" />}
                         </div>
                     )}
                 </div>
 
                 {!isRenaming && (
                     <div
-                        className="text-text-secondary opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:text-text-primary"
+                        className="text-zinc-500 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:text-white rounded hover:bg-white/[0.08]"
                         onClick={(e) => handleContextMenu(e, env.id)}
                     >
                         <MoreHorizontal size={14} />

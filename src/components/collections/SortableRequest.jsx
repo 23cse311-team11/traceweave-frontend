@@ -94,9 +94,9 @@ export function SortableRequest({ id, protocol, method, name, active, pinned, on
         ref={setNodeRef}
         style={style}
         className={cn(
-          "group flex items-center gap-2 px-2 py-1.5 ml-3 mr-2 rounded-md cursor-pointer border border-transparent transition-all select-none relative",
-          active ? "bg-bg-input border-border-subtle text-text-primary" : "text-text-secondary hover:bg-bg-panel hover:text-text-primary",
-          isOver && !isDragging ? "ring-1 ring-brand-primary/50" : "" 
+          "group flex items-center gap-2 px-2 py-1.5 ml-2 mr-1 rounded-md cursor-pointer border border-transparent transition-colors select-none relative",
+          active ? "bg-white/[0.08] border-white/[0.08] text-white font-medium" : "text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-200",
+          isOver && !isDragging ? "ring-1 ring-brand-primary" : "" 
         )}
         onClick={handleSingleClick}
         onDoubleClick={handleDoubleClick}

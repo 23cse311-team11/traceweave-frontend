@@ -56,31 +56,31 @@ export default function ContextMenu({
         <div
             ref={ref}
             style={style}
-            className="fixed z-[9999] w-44 bg-bg-panel border border-border-strong rounded shadow-xl py-1 flex flex-col"
+            className="fixed z-[9999] w-44 bg-zinc-900 border border-zinc-800 rounded-lg shadow-2xl p-1 flex flex-col"
         >
-            <button onClick={onPin} className="flex items-center gap-2 px-3 py-2 text-xs text-text-primary hover:bg-brand-blue hover:text-white text-left">
-                {isPinned ? <PinOff size={12} /> : <Pin size={12} />} {isPinned ? 'Unpin' : 'Pin to Top'}
+            <button onClick={onPin} className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium text-zinc-300 hover:text-white hover:bg-white/[0.08] transition-colors text-left">
+                {isPinned ? <PinOff size={13} /> : <Pin size={13} />} {isPinned ? 'Unpin' : 'Pin to Top'}
             </button>
-            <div className="h-[1px] bg-border-subtle my-1"></div>
-            <button onClick={onRename} className="flex items-center gap-2 px-3 py-2 text-xs text-text-primary hover:bg-brand-blue hover:text-white text-left">
-                <Edit2 size={12} /> Rename
+            <div className="h-px bg-white/[0.08] my-1" />
+            <button onClick={onRename} className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium text-zinc-300 hover:text-white hover:bg-white/[0.08] transition-colors text-left">
+                <Edit2 size={13} /> Rename
             </button>
-            <button onClick={onDuplicate} className="flex items-center gap-2 px-3 py-2 text-xs text-text-primary hover:bg-brand-blue hover:text-white text-left">
-                <Copy size={12} /> Duplicate
+            <button onClick={onDuplicate} className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium text-zinc-300 hover:text-white hover:bg-white/[0.08] transition-colors text-left">
+                <Copy size={13} /> Duplicate
             </button>
             {onMoveTo && (
-                <button onClick={onMoveTo} className="flex items-center gap-2 px-3 py-2 text-xs text-text-primary hover:bg-brand-blue hover:text-white text-left">
-                    <FolderInput size={12} /> Move to...
+                <button onClick={onMoveTo} className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium text-zinc-300 hover:text-white hover:bg-white/[0.08] transition-colors text-left">
+                    <FolderInput size={13} /> Move to...
                 </button>
             )}
             {onMoveToRoot && (
-                <button onClick={onMoveToRoot} className="flex items-center gap-2 px-3 py-2 text-xs text-text-primary hover:bg-brand-blue hover:text-white text-left">
-                    <CornerUpLeft size={12} /> Move to Root
+                <button onClick={onMoveToRoot} className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium text-violet-400 hover:text-violet-300 hover:bg-violet-500/10 transition-colors text-left">
+                    <CornerUpLeft size={13} /> Move to Root
                 </button>
             )}
-            <div className="h-[1px] bg-border-subtle my-1"></div>
-            <button onClick={onDelete} className="flex items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-500 hover:text-white text-left">
-                <Trash2 size={12} /> Delete
+            <div className="h-px bg-white/[0.08] my-1" />
+            <button onClick={onDelete} className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors text-left">
+                <Trash2 size={13} /> Delete
             </button>
         </div>
     );

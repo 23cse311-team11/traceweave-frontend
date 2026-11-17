@@ -89,12 +89,11 @@ export function SortableCollection({ collection, activeRequestId, onToggle, onRe
     <>
       <div ref={setNodeRef} style={style} className="mb-1 select-none min-w-0">
         <div
-          // Added conditional classes for the active highlight
-          className={`group flex items-center gap-2 px-2 py-1.5 cursor-pointer rounded relative transition-colors ${
+          className={`group flex items-center gap-2 px-2 py-1.5 cursor-pointer rounded-md relative transition-colors ${
             hasActiveItem && collection.collapsed 
-              ? 'bg-brand-primary/5 text-brand-primary' 
-              : 'text-text-secondary hover:text-text-primary hover:bg-bg-panel'
-          } ${isOver && !isDragging ? 'ring-2 ring-brand-primary ring-inset bg-brand-primary/10' : ''}`}
+              ? 'bg-brand-primary/10 text-white' 
+              : 'text-zinc-300 hover:text-white hover:bg-white/[0.05]'
+          } ${isOver && !isDragging ? 'ring-1 ring-brand-primary bg-brand-primary/10' : ''}`}
           onClick={() => onToggle(collection.id)}
           onContextMenu={handleContextMenu}
         >
@@ -104,60 +103,61 @@ export function SortableCollection({ collection, activeRequestId, onToggle, onRe
             <div
               {...attributes}
               {...listeners}
-              className="opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing p-1 text-text-tertiary hover:text-text-primary shrink-0"
+              className="opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing p-0.5 text-zinc-500 hover:text-zinc-200 shrink-0"
               onClick={(e) => e.stopPropagation()}
             >
-              <GripVertical size={12} />
+              <GripVertical size={13} />
             </div>
           )}
 
-          <div className={`p-1 relative shrink-0 ${hasActiveItem && collection.collapsed ? 'text-brand-primary' : 'text-brand-primary/80'}`}>
+          <div className={`p-0.5 relative shrink-0 ${hasActiveItem && collection.collapsed ? 'text-brand-primary' : 'text-zinc-400 group-hover:text-zinc-200'}`}>
             {collection.collapsed ? <Folder size={14} /> : <FolderOpen size={14} />}
-            {collection.pinned && <div className="absolute -top-1 -right-1 bg-bg-base rounded-full p-[1px]"><Pin size={8} className="text-text-primary fill-current" /></div>}
+            {collection.pinned && <div className="absolute -top-1 -right-1 bg-zinc-900 rounded-full p-[1px]"><Pin size={8} className="text-zinc-200 fill-current" /></div>}
           </div>
 
           {/* min-w-0 ensures truncation works deeply nested */}
-          <span className="text-xs font-semibold select-none flex-1 truncate min-w-0">
+          <span className="text-xs font-medium select-none flex-1 truncate min-w-0 text-zinc-200 group-hover:text-white">
             {collection.name}
           </span>
 
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
             <div
               role="button"
               onClick={handleCreateSubCollection}
-              className="p-1 hover:bg-bg-input rounded text-text-primary hover:text-brand-primary"
+              className="p-1 hover:bg-white/[0.08] rounded text-zinc-400 hover:text-brand-primary transition-colors"
               title="Add Sub-collection"
             >
-              <FolderPlus size={14} />
+              <FolderPlus size={13} />
             </div>
             <div
               role="button"
               onClick={handleCreateRequest}
-              className="p-1 hover:bg-bg-input rounded text-text-primary hover:text-brand-primary"
+              className="p-1 hover:bg-white/[0.08] rounded text-zinc-400 hover:text-brand-primary transition-colors"
               title="Add Request"
             >
-              <Plus size={14} />
+              <Plus size={13} />
             </div>
             <div
               role="button"
               onClick={(e) => { e.stopPropagation(); setContextMenu({ x: e.clientX, y: e.clientY }); }}
-              className="p-1 hover:bg-bg-input rounded text-text-primary"
+              className="p-1 hover:bg-white/[0.08] rounded text-zinc-400 hover:text-white transition-colors"
+              title="More options"
             >
-              <MoreHorizontal size={14} />
+              <MoreHorizontal size={13} />
             </div>
           </div>
 
-          <div className="text-text-muted shrink-0">
-            {collection.collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+          <div className="text-zinc-500 shrink-0">
+            {collection.collapsed ? <ChevronRight size={13} /> : <ChevronDown size={13} />}
           </div>
         </div>
 
         {!collection.collapsed && (
-          <div className={`flex flex-col gap-[2px] mt-1 pl-1 border-l ml-3 ${hasActiveItem ? 'border-brand-primary/30' : 'border-border-subtle'}`}>
+          <div className={`flex flex-col gap-[2px] mt-1 pl-1 border-l ml-3 ${hasActiveItem ? 'border-brand-primary/40' : 'border-white/[0.08]'}`}>
             {isEmpty ? (
-              <div className="py-2 pl-6 pr-2">
-                <div className="text-[10px] text-text-muted italic py-3 border border-dashed border-border-subtle/50 rounded flex items-center justify-center pointer-events-none">
-                  Drop requests here
+              <div className="py-2 pl-4 pr-2">
+                <div className="text-[10px] text-zinc-500 italic py-2 px-3 border border-dashed border-white/[0.08] rounded-md flex items-center justify-center pointer-events-none">
+                  Empty collection
                 </div>
               </div>
             ) : (

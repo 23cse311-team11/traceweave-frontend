@@ -94,7 +94,7 @@ export const createRequestSlice = (set, get) => ({
             if (!newReq) return;
 
             set(state => {
-                const newRequestStates = { ...state.requestStates, [newReq.id]: { ...newReq, collectionId: colId } };
+                const newRequestStates = { ...state.requestStates, [newReq.id]: { ...newReq, collectionId: colId, workspaceId: state.activeWorkspaceId } };
                 const newCollections = state.collections.map(col =>
                     col.id === colId ? { ...col, itemIds: [...(col.itemIds || []), newReq.id], collapsed: false } : col
                 );
@@ -125,6 +125,7 @@ export const createRequestSlice = (set, get) => ({
             const newReq = {
                 id: newId,
                 collectionId: null,
+                workspaceId: state.activeWorkspaceId,
                 name: customConfig ? 'Imported cURL' : 'Untitled Request', // ✨ AUTO NAME
                 protocol: protoToUse,
                 config: initialConfig, 
