@@ -172,16 +172,22 @@ export function SortableCollection({ collection, activeRequestId, onToggle, onRe
                   />
                 ))}
 
-                {collection.items && collection.items.map(req => (
-                  <SortableRequest
-                    key={req.id}
-                    {...req}
-                    protocol={req.protocol || 'http'}
-                    method={req.config?.method || req.method || 'GET'}
-                    active={activeRequestId === req.id}
-                    onClick={() => onRequestClick(req.id)}
-                  />
-                ))}
+                {collection.items && collection.items.map(req => {
+                  const liveReq = store.requestStates[req.id];
+                  const method = liveReq?.config?.method || liveReq?.method || req.config?.method || req.method || 'GET';
+                  const name = liveReq?.name || req.name;
+                  return (
+                    <SortableRequest
+                      key={req.id}
+                      {...req}
+                      name={name}
+                      protocol={liveReq?.protocol || req.protocol || 'http'}
+                      method={method}
+                      active={activeRequestId === req.id}
+                      onClick={() => onRequestClick(req.id)}
+                    />
+                  );
+                })}
               </SortableContext>
             )}
           </div>

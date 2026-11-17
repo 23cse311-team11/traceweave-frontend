@@ -81,7 +81,7 @@ describe('SidebarHistory', () => {
 
     it('filters history by text', () => {
         render(<SidebarHistory />);
-        const input = screen.getByPlaceholderText('Search logs...');
+        const input = screen.getByPlaceholderText(/Search (history|logs)/i);
         fireEvent.change(input, { target: { value: 'users' } });
 
         expect(screen.getByText(/http:\/\/api\.test\/users/)).toBeInTheDocument();

@@ -336,8 +336,8 @@ export const createRequestSlice = (set, get) => ({
         } catch (e) { console.warn(e); }
     },
 
-    updateActiveRequest: (field, value) => set(state => {
-        const id = state.activeTabId;
+    updateActiveRequest: (field, value, targetId = null) => set(state => {
+        const id = targetId || state.activeTabId;
         if (!id) return {};
 
         const req = state.requestStates[id];
@@ -565,7 +565,19 @@ export const createRequestSlice = (set, get) => ({
             set(state => {
                 const newSet = new Set(state.unsavedRequests);
                 newSet.delete(id);
-                return { unsavedRequests: newSet };
+                const updatedCollections = (state.collections || []).map(col => {
+                    if (col.id === req.collectionId && Array.isArray(col.items)) {
+                        return {
+                            ...col,
+                            items: col.items.map(item => item.id === id ? { ...item, ...updateData } : item)
+                        };
+                    }
+                    return col;
+                });
+                return { 
+                    unsavedRequests: newSet,
+                    collections: updatedCollections 
+                };
             });
             return true;
         } catch (error) {

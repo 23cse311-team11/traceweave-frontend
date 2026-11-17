@@ -40,7 +40,7 @@ export default function HttpMethodDropdown({ activeId }) {
                 type="button"
                 key={method}
                 onClick={() => {
-                  store.updateActiveRequest('method', method);
+                  store.updateActiveRequest('method', method, activeId);
                   setIsOpen(false);
                 }}
                 className={`px-2.5 py-1.5 text-xs font-semibold cursor-pointer hover:bg-white/[0.08] rounded-md transition-colors flex items-center justify-between text-left ${METHOD_COLORS[method] || 'text-zinc-200'}`}

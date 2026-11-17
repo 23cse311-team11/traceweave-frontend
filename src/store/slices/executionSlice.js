@@ -144,6 +144,8 @@ export const createExecutionSlice = (set, get) => ({
 
         try {
             let finalConfig = { ...req.config };
+            finalConfig.method = req.config?.method || req.method || 'GET';
+            finalConfig.url = req.config?.url || req.url || '';
             let hasFiles = false; 
             const isElectron = typeof window !== "undefined" && window.electronAPI;
 
