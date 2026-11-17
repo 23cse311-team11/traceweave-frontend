@@ -50,60 +50,63 @@ const Dropdown = ({
   return (
     <div className="relative" ref={ref}>
       {/* Trigger Button */}
-      <div
+      <button
+        type="button"
         onClick={handleToggle}
         className={`
-          flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer border transition-all duration-200
+          flex items-center gap-2 px-2.5 py-1 rounded-md cursor-pointer border transition-colors
           ${isOpen 
-            ? 'bg-bg-input border-brand-primary/30 ring-1 ring-brand-primary/10' 
-            : 'bg-bg-input/50 border-border-subtle hover:border-brand-primary/20 hover:bg-bg-input'
+            ? 'bg-[#18181c] border-brand-primary/50 text-white' 
+            : 'bg-white/[0.04] border-white/[0.08] hover:border-white/[0.14] hover:bg-white/[0.06] text-zinc-300 hover:text-white'
           }
         `}
       >
-        {Icon && <Icon size={14} className={isOpen ? "text-brand-primary" : "text-text-muted"} />}
-        <span className="text-text-primary text-xs font-semibold max-w-[110px] truncate">
+        {Icon && <Icon size={13} className={isOpen ? "text-brand-primary" : "text-zinc-400"} />}
+        <span className="text-xs font-medium max-w-[120px] truncate">
           {value || 'Select...'}
         </span>
         <ChevronDown 
           size={12} 
-          className={`text-text-muted transition-transform duration-200 ${isOpen ? 'rotate-180 text-brand-primary' : ''}`} 
+          className={`text-zinc-500 transition-transform duration-150 ${isOpen ? 'rotate-180 text-brand-primary' : ''}`} 
         />
-      </div>
+      </button>
       
       {/* Dropdown Menu */}
       {isOpen && (
         <div className={`
-          absolute top-full left-0 mt-2 ${menuWidth} z-[100]
-          glass-strong rounded-xl shadow-2xl overflow-hidden
-          animate-in fade-in zoom-in-95 duration-200 origin-top-left
-          flex flex-col border border-white/[0.05]
+          absolute top-full left-0 mt-1.5 ${menuWidth} z-[100]
+          bg-[#121215] border border-white/[0.1] rounded-lg shadow-2xl overflow-hidden
+          animate-in fade-in zoom-in-95 duration-150 origin-top-left
+          flex flex-col
         `}>
           {/* Header Label */}
-          <div className="px-3.5 py-2.5 text-[10px] font-bold text-text-muted uppercase tracking-[0.12em] border-b border-white/[0.03] shrink-0 bg-white/[0.01]">
-            {label}
-          </div>
+          {label && (
+            <div className="px-3 py-1.5 text-[10px] font-medium text-zinc-500 uppercase tracking-wider border-b border-white/[0.06] shrink-0">
+              {label}
+            </div>
+          )}
 
           {/* Search Section */}
           {enableSearch && (
-            <div className="p-2 border-b border-white/[0.03] shrink-0">
+            <div className="p-1.5 border-b border-white/[0.06] shrink-0">
               <div className="relative flex items-center">
-                <Search size={12} className="absolute left-2.5 text-text-muted/60" />
+                <Search size={12} className="absolute left-2.5 text-zinc-500" />
                 <input
                   type="text"
                   autoFocus
                   placeholder={searchPlaceholder}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-bg-base/40 text-xs text-white rounded-md py-1.5 pl-8 pr-2 border border-white/[0.05] focus:border-brand-primary/40 focus:outline-none transition-all placeholder:text-text-muted/30"
+                  className="w-full bg-[#18181c] text-xs text-white rounded-md py-1.5 pl-7 pr-2 border border-white/[0.08] focus:border-brand-primary/50 focus:outline-none transition-colors placeholder:text-zinc-500"
                 />
               </div>
             </div>
           )}
 
           {/* Options List */}
-          <div className="max-h-64 overflow-y-auto custom-scrollbar py-1.5 px-1.5">
+          <div className="max-h-64 overflow-y-auto custom-scrollbar p-1">
             {filteredOptions.length === 0 ? (
-              <div className="px-3 py-8 text-xs text-text-muted/50 italic text-center">
+              <div className="px-3 py-6 text-xs text-zinc-500 italic text-center">
                 No results found
               </div>
             ) : (
@@ -118,26 +121,16 @@ const Dropdown = ({
                     key={optionValue} 
                     onClick={() => { onSelect(opt); setIsOpen(false); }}
                     className={`
-                      relative px-3 py-2 text-sm cursor-pointer flex items-center justify-between group rounded-lg transition-all duration-150 mb-0.5 last:mb-0
-                      hover:bg-brand-primary/[0.08] hover:translate-x-0.5
-                      ${isSelected ? 'bg-brand-primary/[0.12]' : ''}
+                      px-2.5 py-1.5 text-xs cursor-pointer flex items-center justify-between rounded-md transition-colors mb-0.5 last:mb-0
+                      ${isSelected ? 'bg-violet-500/15 text-violet-300 font-medium' : 'text-zinc-300 hover:bg-white/[0.06] hover:text-white'}
                     `}
                   >
-                    {/* Active Accent Pill */}
-                    <div className={`
-                      absolute left-0 w-0.5 h-4 rounded-full bg-brand-primary transition-all duration-200
-                      ${isSelected ? 'opacity-100 scale-y-100' : 'opacity-0 scale-y-0 group-hover:opacity-50 group-hover:scale-y-75'}
-                    `} />
-
-                    <span className={`
-                      text-xs transition-colors truncate pr-2 pl-1
-                      ${isSelected ? 'text-brand-primary font-medium' : 'text-text-secondary group-hover:text-white'}
-                    `}>
+                    <span className="truncate pr-2">
                       {optionLabel}
                     </span>
                     
                     {isSelected && (
-                      <Check size={14} className="text-brand-primary shrink-0 animate-in zoom-in-50 duration-200" />
+                      <Check size={13} className="text-brand-primary shrink-0" />
                     )}
                   </div>
                 );
@@ -147,7 +140,7 @@ const Dropdown = ({
 
           {/* Footer */}
           {customFooter && (
-            <div className="border-t border-white/[0.03] p-1 shrink-0 bg-brand-muted/20">
+            <div className="border-t border-white/[0.06] p-1 shrink-0 bg-white/[0.02]">
               <div onClick={() => setIsOpen(false)}>
                 {customFooter}
               </div>

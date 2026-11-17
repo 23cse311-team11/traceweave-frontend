@@ -43,7 +43,7 @@ export default function EnvironmentTab({ envId }) {
                         onClick={() => store.saveEnvironment(environment.id)}
                         disabled={!isDirty}
                         className={`flex items-center gap-2 px-4 py-2 rounded-md text-xs font-medium transition-all ${isDirty
-                            ? 'bg-brand-primary text-brand-surface font-black hover:bg-brand-glow shadow-glow-sm'
+                            ? 'bg-violet-600 text-white font-medium hover:bg-violet-500'
                             : 'bg-bg-input text-text-secondary cursor-default opacity-70'
                             }`}
                     >

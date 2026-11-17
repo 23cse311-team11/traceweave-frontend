@@ -222,15 +222,15 @@ export default function CommandPalette({ isOpen, onClose }) {
         />
 
         <motion.div 
-          initial={{ opacity: 0, scale: 0.95, y: -20 }} 
+          initial={{ opacity: 0, scale: 0.96, y: -16 }} 
           animate={{ opacity: 1, scale: 1, y: 0 }} 
-          exit={{ opacity: 0, scale: 0.95, y: -20 }}
+          exit={{ opacity: 0, scale: 0.96, y: -16 }}
           transition={{ duration: 0.15, ease: "easeOut" }}
-          className="relative w-full max-w-2xl bg-bg-panel border border-border-strong rounded-2xl shadow-2xl overflow-hidden flex flex-col mx-4"
+          className="relative w-full max-w-xl bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden flex flex-col mx-4"
         >
           {/* Header */}
-          <div className="flex items-center px-4 py-3 border-b border-border-subtle bg-bg-base/50">
-            <Search size={18} className="text-brand-primary" />
+          <div className="flex items-center px-3.5 py-2.5 border-b border-zinc-800 bg-zinc-900/90">
+            <Search size={16} className="text-zinc-400" />
             <input
               ref={inputRef}
               type="text"
@@ -238,10 +238,10 @@ export default function CommandPalette({ isOpen, onClose }) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="flex-1 bg-transparent border-none text-white text-lg px-4 py-1 focus:outline-none placeholder:text-text-muted"
+              className="flex-1 bg-transparent border-none text-white text-sm px-3 py-1 focus:outline-none placeholder:text-zinc-500 font-normal"
             />
-            <button onClick={onClose} className="p-1 text-text-muted hover:text-white rounded-md hover:bg-white/10 transition-colors">
-              <X size={18} />
+            <button onClick={onClose} className="p-1 text-zinc-400 hover:text-white rounded-md hover:bg-white/[0.08] transition-colors">
+              <X size={16} />
             </button>
           </div>
 

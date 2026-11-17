@@ -80,40 +80,35 @@ export default function ResizablePanel() {
 
   return (
     <>
-      <div style={{ width: store.sidebarWidth }} className="glass flex flex-col shrink-0 relative group z-10 h-full border-r border-white/5 relative overflow-hidden">
-        <div className="absolute inset-0 bg-white/[0.01] pointer-events-none" />
-
+      <div style={{ width: store.sidebarWidth }} className="bg-[#0d0d10] flex flex-col shrink-0 relative group z-10 h-full border-r border-white/[0.08] overflow-hidden select-none">
         {/* Header Region */}
-        <div className="p-4 flex items-center gap-3 border-b border-white/5 shrink-0 relative z-10">
-
-          {/* Search Bar - Refined */}
-          <div className="flex-1 flex items-center bg-white/5 border border-white/5 rounded-xl px-3 py-2 text-xs focus-within:border-brand-primary/50 focus-within:bg-white/10 transition-all group/search">
-            <Search size={14} className="text-text-muted group-focus-within/search:text-brand-primary transition-colors mr-2" />
+        <div className="p-3 flex items-center gap-2 border-b border-white/[0.08] shrink-0 relative z-10">
+          {/* Search Bar */}
+          <div className="flex-1 flex items-center bg-zinc-900/60 border border-white/[0.08] rounded-md px-2.5 py-1 text-xs focus-within:border-brand-primary/50 focus-within:bg-zinc-900 transition-all group/search">
+            <Search size={13} className="text-zinc-500 group-focus-within/search:text-brand-primary transition-colors mr-2 shrink-0" />
             <input
               type="text"
               placeholder="Filter..."
-              className="bg-transparent focus:outline-none w-full placeholder:text-text-muted/50 text-white font-medium"
+              className="bg-transparent focus:outline-none w-full placeholder:text-zinc-500 text-zinc-200 text-xs font-normal"
             />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {/* Context Action */}
             {getHeaderAction() && (
-              <div className="hover:scale-110 active:scale-95 transition-transform">
+              <div>
                 {getHeaderAction()}
               </div>
             )}
 
-            {/* The "New" Button - Premiumized */}
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
+            {/* The "New" Button */}
+            <button
               onClick={() => setIsModalOpen(true)}
-              className="w-8 h-8 bg-brand-primary text-brand-surface hover:bg-brand-glow rounded-lg transition-all flex items-center justify-center shadow-glow-sm"
+              className="w-7 h-7 bg-violet-600 hover:bg-violet-500 text-white rounded-md transition-colors flex items-center justify-center shrink-0"
               title="Create New..."
             >
-              <Plus size={18} strokeWidth={3} />
-            </motion.button>
+              <Plus size={15} strokeWidth={2.25} />
+            </button>
           </div>
         </div>
 
@@ -124,12 +119,11 @@ export default function ResizablePanel() {
           </div>
         </div>
 
-        {/* Resize Handle - More Subtle & Premium */}
+        {/* Resize Handle */}
         <div
           onMouseDown={(e) => { e.preventDefault(); setIsResizing(true); }}
-          className={`absolute right-0 top-0 bottom-0 w-[2px] transition-all duration-300 z-40 
-            ${isResizing ? 'bg-brand-primary shadow-glow' : 'bg-transparent group-hover:bg-white/10'}
-            cursor-col-resize hover:w-[4px]`}
+          className={`absolute right-0 top-0 bottom-0 w-1 transition-colors z-40 cursor-col-resize 
+            ${isResizing ? 'bg-violet-500' : 'bg-transparent hover:bg-violet-500/50'}`}
         />
       </div>
 

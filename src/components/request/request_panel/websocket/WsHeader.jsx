@@ -69,55 +69,53 @@ export default function WsHeader({ activeId, configTab, setConfigTab, wsState, o
           />
         </div>
 
-        <motion.button
+        <button
           onClick={handleSave}
           disabled={!requiresSave}
-          whileTap={requiresSave ? { scale: 0.96 } : {}}
-          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border transition-colors shrink-0 ${
+          className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border transition-colors shrink-0 ${
             requiresSave
-              ? 'bg-brand-primary/10 border-brand-primary/50 text-brand-primary hover:bg-brand-primary/20 cursor-pointer'
-              : 'bg-bg-input border-border-subtle text-text-muted opacity-50 cursor-not-allowed'
+              ? 'bg-violet-500/15 border-violet-500/40 text-violet-300 hover:bg-violet-500/25 cursor-pointer'
+              : 'bg-transparent border-white/[0.06] text-zinc-500 opacity-60 cursor-not-allowed'
           }`}
           title={requiresSave ? (isNew ? "Save to Collection" : "Save changes") : "All changes saved"}
         >
           <Save size={13} />
           {isNew ? 'Save' : (isDirty ? 'Save*' : 'Saved')}
-        </motion.button>
+        </button>
       </div>
 
-      <div className="flex h-10 mb-4 rounded-md border border-border-subtle bg-bg-input overflow-hidden focus-within:border-[#333] transition-colors">
+      <div className="flex h-9.5 mb-3 rounded-lg border border-white/[0.1] bg-[#18181c] overflow-hidden focus-within:border-brand-primary/50 transition-colors">
         <input
-          className="flex-1 bg-transparent px-3 text-xs text-text-primary focus:outline-none placeholder-text-secondary/40 font-mono"
+          className="flex-1 bg-transparent px-3 text-xs text-text-primary focus:outline-none placeholder:text-zinc-600 font-mono"
           placeholder="wss://echo.websocket.org"
           value={activeReqState.config?.url || ''}
           onChange={e => store.updateActiveRequest('url', e.target.value)}
           onKeyDown={e => e.key === 'Enter' && !isConnected && !isConnecting && toggleConnection()}
         />
-        <motion.button
+        <button
           onClick={toggleConnection}
-          whileTap={{ scale: 0.98 }}
           disabled={isConnecting}
-          className={`text-white text-xs font-semibold px-5 flex items-center gap-2 min-w-[120px] justify-center transition-colors ${
-            isConnected ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'
-          } disabled:opacity-60`}
+          className={`text-white text-xs font-medium px-4 flex items-center gap-1.5 min-w-[100px] justify-center transition-colors ${
+            isConnected ? 'bg-red-600 hover:bg-red-500' : 'bg-emerald-600 hover:bg-emerald-500'
+          } disabled:opacity-50 shrink-0`}
         >
           <AnimatePresence mode="wait">
             {isConnecting ? (
-              <motion.span key="loading" className="flex items-center gap-2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <motion.span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full block" animate={{ rotate: 360 }} transition={{ duration: 0.65, repeat: Infinity, ease: 'linear' }} />
+              <motion.span key="loading" className="flex items-center gap-1.5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full block animate-spin" />
                 Connecting
               </motion.span>
             ) : isConnected ? (
-              <motion.span key="stop" className="flex items-center gap-2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <motion.span key="stop" className="flex items-center gap-1.5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 <WifiOff size={13} /> Disconnect
               </motion.span>
             ) : (
-              <motion.span key="connect" className="flex items-center gap-2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <motion.span key="connect" className="flex items-center gap-1.5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 <Wifi size={13} /> Connect
               </motion.span>
             )}
           </AnimatePresence>
-        </motion.button>
+        </button>
       </div>
 
       <Tabs tabs={['Message', 'Params', 'Headers', 'Settings']} activeTab={configTab} onTabClick={setConfigTab} />

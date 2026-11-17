@@ -114,7 +114,7 @@ const FloatingTooltip = ({ data, onSave, onManage, onCreateEnv, onSelectEnv, onM
                             <button
                                 onClick={handleQuickCreate}
                                 disabled={isSubmitting}
-                                className="px-2.5 py-1 bg-brand-primary text-black text-xs font-semibold rounded hover:bg-brand-primary/90 transition flex items-center gap-1 disabled:opacity-50"
+                                className="px-2.5 py-1 bg-violet-600 hover:bg-violet-500 text-white text-xs font-medium rounded transition flex items-center gap-1 disabled:opacity-50"
                                 title="Create environment and save this variable"
                             >
                                 {isSubmitting ? (
@@ -199,7 +199,7 @@ const FloatingTooltip = ({ data, onSave, onManage, onCreateEnv, onSelectEnv, onM
                             <button
                                 onClick={handleSaveClick}
                                 disabled={isSubmitting}
-                                className="p-1 bg-brand-primary text-black rounded hover:bg-brand-primary/90 transition flex items-center justify-center"
+                                className="p-1 bg-violet-600 hover:bg-violet-500 text-white rounded transition flex items-center justify-center"
                                 title="Save value"
                             >
                                 {isSubmitting ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} strokeWidth={2.5} />}

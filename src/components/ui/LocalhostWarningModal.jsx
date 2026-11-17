@@ -79,7 +79,7 @@ export default function LocalhostWarningModal({ isOpen, onClose }) {
             <div className="flex flex-col w-full gap-3">
               <button
                 onClick={handleDownloadClick}
-                className="w-full bg-brand-primary hover:bg-brand-glow text-black font-bold py-3 rounded-xl transition-all shadow-glow-sm flex items-center justify-center gap-2"
+                className="w-full bg-violet-600 hover:bg-violet-500 text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
               >
                 <MonitorDown size={18} />
                 Get Desktop App

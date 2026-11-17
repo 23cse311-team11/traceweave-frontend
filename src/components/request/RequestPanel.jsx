@@ -177,13 +177,11 @@ export default function RequestPanel() {
   };
 
   return (
-    <main className="flex-1 glass border-l border-white/5 flex flex-col min-w-0 h-full relative z-0 overflow-hidden">
-      <div className="absolute inset-0 bg-white/[0.01] pointer-events-none" />
-
+    <main className="flex-1 bg-[#121215] border-l border-white/[0.08] flex flex-col min-w-0 h-full relative z-0 overflow-hidden">
       {/* --- UNIFIED MULTI-TAB BAR --- */}
       <div
         ref={containerRef}
-        className="flex items-center border-b border-white/5 bg-white/[0.02] shrink-0 pt-2 w-full relative z-[9999] px-2"
+        className="flex items-center border-b border-white/[0.08] bg-[#0d0d10] shrink-0 h-9 w-full relative z-[9999] px-1 overflow-x-hidden"
       >
         {visibleTabs.map(tabId => {
           const { name, icon, isPreview, isDirty, isActive } = getTabInfo(tabId);
@@ -194,28 +192,21 @@ export default function RequestPanel() {
               onClick={() => store.openTab(tabId)}
               onDoubleClick={() => store.markTabPermanent(tabId)}
               className={`
-                group flex items-center gap-2 px-4 py-2.5 text-[11px] font-bold 
-                cursor-pointer w-44 shrink-0 relative select-none transition-all duration-300 rounded-t-xl
+                group flex items-center gap-2 px-3 h-full text-xs font-medium 
+                cursor-pointer max-w-[190px] min-w-[110px] shrink-0 relative select-none transition-colors border-r border-white/[0.06]
                 ${isActive
-                  ? 'bg-white/5 text-white shadow-[0_-4px_12px_rgba(157,90,229,0.1)]'
-                  : 'text-text-muted hover:text-white hover:bg-white/[0.02]'}
+                  ? 'bg-[#121215] text-zinc-100 border-t-2 border-t-brand-primary'
+                  : 'bg-transparent text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.02]'}
               `}
             >
-              {isActive && (
-                <motion.div
-                  layoutId="activeTabIndicator"
-                  className="absolute top-0 left-0 right-0 h-[2px] bg-brand-primary shadow-glow"
-                />
-              )}
+              <div className="shrink-0">{icon}</div>
+              <span className={`truncate flex-1 ${isPreview ? 'italic text-zinc-500' : ''}`}>{name}</span>
 
-              <div className="shrink-0 scale-110">{icon}</div>
-              <span className={`truncate flex-1 tracking-wide ${isPreview ? 'italic font-medium opacity-60' : ''}`}>{name.toUpperCase()}</span>
-
-              <div className="w-5 h-5 flex items-center justify-center shrink-0">
-                {isDirty && <div className="w-1.5 h-1.5 rounded-full bg-brand-primary group-hover:hidden shadow-glow"></div>}
+              <div className="w-4 h-4 flex items-center justify-center shrink-0">
+                {isDirty && <div className="w-1.5 h-1.5 rounded-full bg-brand-primary group-hover:hidden" />}
                 <X
-                  size={14}
-                  className={`text-text-muted hover:text-white hover:bg-white/10 rounded-md p-0.5 transition-all ${isDirty ? 'hidden group-hover:block' : 'opacity-0 group-hover:opacity-100'}`}
+                  size={13}
+                  className={`text-zinc-500 hover:text-white hover:bg-white/[0.1] rounded p-0.5 transition-colors ${isDirty ? 'hidden group-hover:block' : 'opacity-0 group-hover:opacity-100'}`}
                   onClick={(e) => handleTabClose(e, tabId)}
                 />
               </div>
@@ -226,22 +217,22 @@ export default function RequestPanel() {
         {/* --- OVERFLOW DROPDOWN --- */}
         {hiddenTabs.length > 0 && (
           <div className="relative flex items-center shrink-0 h-full ml-1" ref={dropdownRef}>
-            <div
-              className={`px-4 py-2.5 text-[11px] font-black cursor-pointer flex items-center gap-2 transition-all h-full rounded-t-xl ${showDropdown ? 'bg-white/5 text-white' : 'text-text-muted hover:text-white hover:bg-white/[0.02]'}`}
+            <button
+              className={`px-2.5 py-1 text-xs font-medium cursor-pointer flex items-center gap-1.5 transition-colors rounded-md ${showDropdown ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'}`}
               onClick={() => setShowDropdown(!showDropdown)}
               title="View hidden tabs"
             >
-              <ChevronsRight size={14} className="text-brand-primary" />
-              <span>{hiddenTabs.length} HIDDEN</span>
-            </div>
+              <ChevronsRight size={13} className="text-brand-primary" />
+              <span>+{hiddenTabs.length}</span>
+            </button>
 
             <AnimatePresence>
               {showDropdown && (
                 <motion.div
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  className="absolute top-[100%] right-0 mt-1 w-72 glass-strong border border-white/10 rounded-2xl shadow-2xl py-2 z-[10000] max-h-96 overflow-y-auto custom-scrollbar p-1"
+                  exit={{ opacity: 0, y: 6 }}
+                  className="absolute top-[100%] right-0 mt-1 w-64 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl py-1 z-[10000] max-h-96 overflow-y-auto custom-scrollbar p-1"
                 >
                   {hiddenTabs.map(tabId => {
                     const { name, icon, isDirty, isPreview } = getTabInfo(tabId);
@@ -249,15 +240,29 @@ export default function RequestPanel() {
                       <div
                         key={tabId}
                         onClick={() => { store.openTab(tabId); setShowDropdown(false); }}
-                        className="group flex items-center justify-between px-4 py-3 text-[11px] font-bold text-text-muted hover:bg-white/5 hover:text-white cursor-pointer rounded-xl transition-all"
+                        className="group flex items-center justify-between px-3 py-2 text-xs font-medium text-zinc-400 hover:bg-white/[0.06] hover:text-white cursor-pointer rounded-lg transition-colors"
                       >
-                        <div className="flex items-center gap-3 overflow-hidden flex-1 mr-2">
+                        <div className="flex items-center gap-2 overflow-hidden flex-1 mr-2">
                           <div className="shrink-0">{icon}</div>
-                          <span className={`truncate tracking-wide ${isPreview ? 'italic font-medium' : ''}`}>{name.toUpperCase()}</span>
+                          <span className={`truncate ${isPreview ? 'italic text-zinc-500' : ''}`}>{name}</span>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          {isDirty && <div className="w-1.5 h-1.5 rounded-full bg-brand-primary group-hover:shadow-glow font-black"></div>}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {isDirty && <div className="w-1.5 h-1.5 rounded-full bg-brand-primary" />}
                           <X
+                            size={13}
+                            className="text-zinc-500 hover:text-white hover:bg-white/[0.1] rounded p-0.5 opacity-0 group-hover:opacity-100 transition-colors"
+                            onClick={(e) => handleTabClose(e, tabId)}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+      </div>
                             size={14}
                             className="opacity-0 group-hover:opacity-100 hover:text-red-400 transition-opacity"
                             onClick={(e) => handleTabClose(e, tabId)}

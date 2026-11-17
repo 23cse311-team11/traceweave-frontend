@@ -56,7 +56,7 @@ export default function InviteMembersModal({ isOpen, onClose }) {
               <option value="EDITOR">Editor</option>
               <option value="OWNER">Owner</option>
             </select>
-            <button className="bg-brand-primary text-brand-surface text-xs font-black px-4 py-2 rounded hover:bg-brand-glow transition shadow-glow-sm">
+            <button className="bg-violet-600 hover:bg-violet-500 text-white text-xs font-medium px-4 py-2 rounded-md transition-colors">
               Invite
             </button>
           </form>

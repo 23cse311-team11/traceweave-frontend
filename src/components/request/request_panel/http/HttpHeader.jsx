@@ -70,40 +70,40 @@ export default function HttpHeader({
           />
         </div>
 
-        <div className="flex gap-2 shrink-0">
+        <div className="flex gap-1.5 shrink-0">
           {/* --- GENERATE CODE BUTTON --- */}
           <button
             onClick={onOpenCodeModal}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border border-border-subtle text-text-secondary hover:bg-bg-input hover:text-text-primary transition"
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border border-white/[0.08] text-zinc-300 hover:text-white hover:bg-white/[0.06] hover:border-white/[0.14] transition-colors"
             title="Generate Code Snippet"
           >
-            <Code2 size={14} /> Code
+            <Code2 size={13} /> Code
           </button>
 
           <button
             onClick={onOpenCookieModal}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border border-border-subtle text-text-secondary hover:bg-bg-input hover:text-text-primary transition"
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border border-white/[0.08] text-zinc-300 hover:text-white hover:bg-white/[0.06] hover:border-white/[0.14] transition-colors"
             title="View Persistent Cookies (Jar)"
           >
-            <CookieIcon size={14} /> Cookies
+            <CookieIcon size={13} /> Cookies
           </button>
 
           <button
             onClick={handleSaveClick}
             disabled={!isDirty && !isNew}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border transition ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border transition-colors ${
               isDirty || isNew
-                ? 'bg-bg-input border-brand-primary text-text-primary hover:bg-brand-primary/10 cursor-pointer' 
-                : 'bg-bg-input border-border-subtle text-text-muted opacity-50 cursor-not-allowed'
+                ? 'bg-violet-500/15 border-violet-500/40 text-violet-300 hover:bg-violet-500/25 cursor-pointer' 
+                : 'bg-transparent border-white/[0.06] text-zinc-500 opacity-60 cursor-not-allowed'
             }`}
             title={isDirty || isNew ? (isNew ? "Save to Collection" : "Save changes") : "All changes saved"}
           >
-            <Save size={14} /> {isDirty || isNew ? 'Save*' : 'Saved'}
+            <Save size={13} /> {isDirty || isNew ? 'Save*' : 'Saved'}
           </button>
         </div>
       </div>
 
-      <div className="flex h-10 mb-4 rounded border border-border-subtle bg-bg-input focus-within:border-border-strong transition-colors z-50 relative">
+      <div className="flex h-9.5 mb-3 rounded-lg border border-white/[0.1] bg-[#18181c] focus-within:border-brand-primary/50 transition-colors z-50 relative overflow-hidden">
         <HttpMethodDropdown activeId={activeId} />
         <UrlBar 
           value={activeReqState.config?.url || ''} 
@@ -112,9 +112,9 @@ export default function HttpHeader({
         <button
           onClick={store.executeRequest}
           disabled={store.isLoading}
-          className="bg-brand-primary hover:bg-brand-glow text-brand-surface font-black px-4 flex items-center gap-2 transition rounded-r disabled:opacity-70 disabled:cursor-not-allowed w-[90px] justify-center shadow-glow-sm"
+          className="bg-violet-600 hover:bg-violet-500 text-white font-medium text-xs px-4 flex items-center gap-1.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[80px] justify-center shrink-0"
         >
-          {store.isLoading ? <Loader2 className="animate-spin" size={16} /> : 'Send'}
+          {store.isLoading ? <Loader2 className="animate-spin" size={14} /> : 'Send'}
         </button>
       </div>
 

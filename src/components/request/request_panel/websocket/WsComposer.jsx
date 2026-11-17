@@ -111,14 +111,13 @@ export default function WsComposer({ wsState }) {
           <textarea value={message} onChange={e => setMessage(e.target.value)} onKeyDown={handleTextKeyDown} className="w-full h-full bg-[#111] px-4 py-3 text-xs font-mono text-text-primary focus:outline-none resize-none placeholder-text-secondary/30" placeholder="Message to send…" />
         )}
 
-        <motion.button
+        <button
           onClick={handleSend}
           disabled={!isConnected}
-          whileTap={{ scale: 0.93 }}
-          className="absolute bottom-3 right-3 bg-brand-primary text-brand-surface px-3 py-1.5 rounded flex items-center gap-1.5 text-[11px] font-black hover:bg-brand-glow disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-glow-sm"
+          className="absolute bottom-3 right-3 bg-violet-600 hover:bg-violet-500 text-white px-3 py-1.5 rounded-md flex items-center gap-1.5 text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           <Send size={12} /> Send
-        </motion.button>
+        </button>
       </div>
     </div>
   );

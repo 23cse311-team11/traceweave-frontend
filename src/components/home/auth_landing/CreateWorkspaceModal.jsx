@@ -86,7 +86,7 @@ export const CreateWorkspaceModal = ({ isOpen, onClose, onSuccess, editData = nu
 
                                 <div className="flex gap-3 pt-2">
                                     <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 rounded-lg border border-border-subtle text-sm font-semibold text-text-secondary hover:bg-white/5 transition-all">Cancel</button>
-                                    <button type="submit" disabled={isLoading} className="flex-1 px-4 py-2.5 bg-brand-primary hover:bg-brand-glow text-brand-surface text-sm font-black rounded-lg transition-all shadow-glow-sm flex items-center justify-center gap-2">
+                                    <button type="submit" disabled={isLoading} className="flex-1 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
                                         {isLoading ? <Loader2 size={16} className="animate-spin" /> : (isEdit ? 'Save Changes' : 'Create Workspace')}
                                     </button>
                                 </div>

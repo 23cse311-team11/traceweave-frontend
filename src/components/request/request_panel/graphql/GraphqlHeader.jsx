@@ -61,31 +61,31 @@ export default function GraphqlHeader({ activeId, configTab, setConfigTab, onOpe
           />
         </div>
 
-        <div className="flex gap-2 shrink-0">
+        <div className="flex gap-1.5 shrink-0">
           <button
             onClick={onOpenCookieModal}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border border-border-subtle text-text-secondary hover:bg-bg-input hover:text-text-primary transition"
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border border-white/[0.08] text-zinc-300 hover:text-white hover:bg-white/[0.06] hover:border-white/[0.14] transition-colors"
             title="View Persistent Cookies (Jar)"
           >
-            <CookieIcon size={14} /> Cookies
+            <CookieIcon size={13} /> Cookies
           </button>
           <button
             onClick={handleSaveClick}
             disabled={!isDirty && !isNew}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border transition ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border transition-colors ${
               isDirty || isNew
-                ? 'bg-bg-input border-brand-primary text-text-primary hover:bg-brand-primary/10 cursor-pointer' 
-                : 'bg-bg-input border-border-subtle text-text-muted opacity-50 cursor-not-allowed'
+                ? 'bg-violet-500/15 border-violet-500/40 text-violet-300 hover:bg-violet-500/25 cursor-pointer' 
+                : 'bg-transparent border-white/[0.06] text-zinc-500 opacity-60 cursor-not-allowed'
             }`}
             title={isDirty || isNew ? (isNew ? "Save to Collection" : "Save changes") : "All changes saved"}
           >
-            <Save size={14} /> {isDirty || isNew ? 'Save*' : 'Saved'}
+            <Save size={13} /> {isDirty || isNew ? 'Save*' : 'Saved'}
           </button>
         </div>
       </div>
 
-      <div className="flex h-10 mb-4 rounded border border-border-subtle bg-bg-input z-10 relative">
-        <div className="flex items-center px-3 border-r border-border-subtle font-bold text-xs text-brand-primary select-none">
+      <div className="flex h-9.5 mb-3 rounded-lg border border-white/[0.1] bg-[#18181c] focus-within:border-brand-primary/50 transition-colors z-10 relative overflow-hidden">
+        <div className="flex items-center px-3 border-r border-white/[0.08] font-semibold text-xs text-brand-primary select-none">
           POST
         </div>
         <UrlBar
@@ -95,9 +95,9 @@ export default function GraphqlHeader({ activeId, configTab, setConfigTab, onOpe
         <button
           onClick={store.executeRequest}
           disabled={store.isLoading}
-          className="bg-brand-primary hover:bg-brand-glow text-brand-surface font-black px-4 flex items-center gap-2 rounded-r w-[90px] justify-center transition shadow-glow-sm"
+          className="bg-violet-600 hover:bg-violet-500 text-white font-medium text-xs px-4 flex items-center gap-1.5 rounded-r min-w-[80px] justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
         >
-          {store.isLoading ? <Loader2 className="animate-spin" size={16} /> : <><Play size={14} fill="currentColor" /> Query</>}
+          {store.isLoading ? <Loader2 className="animate-spin" size={14} /> : <><Play size={13} fill="currentColor" /> Query</>}
         </button>
       </div>
 

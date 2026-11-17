@@ -118,7 +118,7 @@ export default function SaveRequestModal({ isOpen, onClose, requestId }) {
                                 type="button"
                                 onClick={handleCreateCollection}
                                 disabled={isCreating || !newCollectionName.trim()}
-                                className="text-xs bg-brand-primary text-black font-semibold px-3 py-1 rounded hover:bg-brand-primary/90 disabled:opacity-50 flex items-center gap-1"
+                                className="text-xs bg-violet-600 hover:bg-violet-500 text-white font-medium px-3 py-1 rounded transition disabled:opacity-50 flex items-center gap-1"
                             >
                                 {isCreating ? <Loader2 size={12} className="animate-spin" /> : 'Create'}
                             </button>
@@ -169,7 +169,7 @@ export default function SaveRequestModal({ isOpen, onClose, requestId }) {
                         type="button"
                         onClick={handleSave}
                         disabled={!selectedCollectionId || isSaving}
-                        className="bg-brand-primary text-black px-4 py-1.5 rounded text-xs font-bold hover:bg-brand-glow transition disabled:opacity-50 disabled:cursor-not-allowed shadow-glow-sm flex items-center gap-1.5"
+                        className="bg-violet-600 hover:bg-violet-500 text-white px-4 py-1.5 rounded-md text-xs font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                     >
                         {isSaving && <Loader2 size={12} className="animate-spin" />}
                         <span>Save</span>

@@ -59,11 +59,9 @@ export default function Header() {
 
   return (
     <>
-      <header className="h-14 glass-strong border-b border-white/10 flex items-center px-6 justify-between shrink-0 z-40 select-none relative">
-        <div className="absolute inset-0 bg-white/[0.02] pointer-events-none" />
-
-        {/* Workspace Dropdown */}
-        <div className="flex items-center gap-6 relative z-10">
+      <header className="h-13 bg-[#0d0d10] border-b border-white/[0.08] flex items-center px-4 justify-between shrink-0 z-40 select-none relative">
+        {/* Workspace Dropdown & Nav */}
+        <div className="flex items-center gap-4 relative z-10">
           <div className="flex items-center gap-1">
             <Dropdown
               icon={Briefcase}
@@ -79,67 +77,60 @@ export default function Header() {
               }}
               onOpen={() => fetchWorkspaces()}
               label="Workspaces"
-              className="font-bold text-white tracking-tight"
+              className="font-medium text-xs text-white"
               enableSearch={true}
               searchPlaceholder="Find workspace..."
-              menuWidth="w-64"
+              menuWidth="w-60"
               customFooter={
                 <button
                   onClick={() => setIsCreateWorkspaceOpen(true)}
-                  className="flex w-full items-center gap-2 px-2 py-1.5 rounded text-sm font-semibold text-brand-primary hover:bg-brand-primary/10 transition-colors"
+                  className="flex w-full items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium text-brand-primary hover:bg-brand-primary/10 transition-colors"
                 >
-                  <Plus size={14} />
+                  <Plus size={13} />
                   <span>New Workspace</span>
                 </button>
               }
             />
           </div>
 
-          <div className="h-4 w-px bg-white/10" />
+          <div className="h-4 w-px bg-white/[0.08]" />
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <Link
               href="/"
-              className="flex items-center justify-center w-8 h-8 hover:bg-white/5 rounded-lg text-text-muted hover:text-white transition-all group"
+              className="flex items-center justify-center w-7 h-7 hover:bg-white/[0.06] rounded-md text-text-muted hover:text-white transition-colors"
               title="Back to Home"
             >
-              <Home size={16} className="group-hover:scale-110 transition-transform" />
+              <Home size={15} />
             </Link>
             <button
               onClick={() => setIsInviteOpen(true)}
-              className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 rounded-lg text-text-muted hover:text-brand-primary transition-all text-xs font-black uppercase tracking-widest"
+              className="flex items-center gap-1.5 px-2.5 py-1 hover:bg-white/[0.06] rounded-md text-text-muted hover:text-white transition-colors text-xs font-medium border border-transparent hover:border-white/[0.08]"
             >
-              <UserPlus size={14} />
+              <UserPlus size={13} />
               <span>Invite</span>
             </button>
           </div>
         </div>
 
-        {/* Search Trigger to open Command Palette */}
-        <div className="flex-1 max-w-2xl mx-12 relative z-10">
+        {/* Command Palette Search Trigger */}
+        <div className="flex-1 max-w-xl mx-8 relative z-10">
           <div 
-            className="relative group cursor-pointer"
-            onClick={() => setIsCommandPaletteOpen(true)} // Open on click
+            className="flex items-center justify-between h-8 px-3 rounded-lg bg-zinc-900/60 hover:bg-zinc-900 border border-white/[0.08] hover:border-white/[0.14] text-xs text-zinc-400 hover:text-zinc-300 transition-all cursor-pointer group"
+            onClick={() => setIsCommandPaletteOpen(true)}
           >
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Search size={14} className="text-text-muted group-focus-within:text-brand-primary transition-colors" />
+            <div className="flex items-center gap-2.5">
+              <Search size={13} className="text-zinc-500 group-hover:text-zinc-300 transition-colors" />
+              <span className="text-xs text-zinc-400 group-hover:text-zinc-300 font-normal">Search traces, collections, or requests...</span>
             </div>
-            {/* Made ReadOnly to act as a button trigger rather than an actual input */}
-            <input
-              type="text"
-              readOnly
-              placeholder="Search traces, collections, or requests..."
-              className="w-full bg-white/5 text-sm text-white rounded-xl py-2 pl-10 pr-16 border border-white/5 hover:border-brand-primary/50 hover:bg-white/10 focus:outline-none transition-all placeholder:text-text-muted/50 font-medium cursor-pointer"
-            />
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] text-text-muted font-mono tracking-tighter">⌘</kbd>
-              <kbd className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] text-text-muted font-mono tracking-tighter">K</kbd>
+            <div className="flex items-center gap-1">
+              <kbd className="px-1.5 py-0.5 rounded bg-zinc-800/90 border border-white/[0.08] text-[10px] text-zinc-400 font-mono">⌘K</kbd>
             </div>
           </div>
         </div>
 
         {/* Actions & Environment */}
-        <div className="flex items-center gap-4 relative z-10">
+        <div className="flex items-center gap-3 relative z-10">
           <Dropdown
             icon={Layers}
             value={selectedOption.label}
@@ -156,41 +147,23 @@ export default function Header() {
               if (activeWorkspaceId) fetchEnvironments(activeWorkspaceId)
             }}
             label="Environments"
-            className="font-bold text-text-muted hover:text-white"
+            className="font-medium text-xs text-text-muted hover:text-white"
           />
 
-          <div className="h-6 w-px bg-white/10 mx-1 hidden lg:block"></div>
+          <div className="h-4 w-px bg-white/[0.08] hidden lg:block" />
 
-          {/* DESKTOP DOWNLOAD BUTTON */}
+          {/* DESKTOP APP BUTTON */}
           <Link href="/download">
-             <motion.div 
-              whileHover={{ y: -1 }} 
-              whileTap={{ scale: 0.98 }}
-              className="relative group flex items-center gap-2 bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 hover:border-brand-primary/40 px-3 py-1.5 rounded-full transition-all duration-300"
+            <button
+              className="flex items-center gap-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-white/[0.14] px-2.5 py-1 rounded-md text-xs font-medium text-zinc-300 hover:text-white transition-colors"
+              title="Download Desktop App"
             >
-              <div className="flex items-center justify-center w-6 h-6 rounded-full bg-brand-primary/10 group-hover:bg-brand-primary/20 transition-colors">
-                <Monitor size={12} className="text-brand-primary group-hover:scale-110 transition-transform" />
-              </div>
-              
-              <div className="flex flex-col items-start leading-none pr-1">
-                <span className="text-[10px] font-black uppercase tracking-wider text-white">Desktop App</span>
-                <span className="text-[8px] text-text-muted font-medium group-hover:text-brand-primary transition-colors">Native Performance</span>
-              </div>
-
-              <div className="absolute -top-1 -right-1 flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-primary opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-primary"></span>
-              </div>
-            </motion.div>
+              <Monitor size={13} className="text-brand-primary" />
+              <span>Desktop App</span>
+            </button>
           </Link>
 
-          {/* <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-            <Eye size={18} className="text-text-muted hover:text-brand-primary cursor-pointer transition-colors" />
-          </motion.div> */}
-
-          {/* 2. Replace the embedded bell code with the standalone component */}
           <NotificationBell />
-          
         </div>
       </header>
 

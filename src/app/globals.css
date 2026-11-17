@@ -32,30 +32,27 @@
 }
 
 :root {
-  /* Dynamic Backgrounds - Shifted from pure black to deeply tinted charcoal/violet */
-  --bg-base: #050408;
-  /* Richer, darker base for higher contrast */
-  --bg-sidebar: #09080E;
-  --bg-panel: #0E0C16;
-  --bg-input: #14121F;
+  /* Dynamic Backgrounds - Clean, neutral zinc/slate palette like Linear & Vercel */
+  --bg-base: #09090b;
+  --bg-sidebar: #0d0d10;
+  --bg-panel: #121215;
+  --bg-input: #18181c;
 
-  /* Borders - Softer, more cohesive with purple tints */
-  --border-subtle: rgba(234, 194, 255, 0.08);
-  --border-strong: rgba(234, 194, 255, 0.15);
+  /* Borders - Razor-sharp 1px neutral borders */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
 
-  /* Text - High-contrast off-whites and muted lavenders */
-  --text-primary: #FFFFFF;
-  --text-secondary: #E2E8F0;
-  /* Brighter secondary */
-  --text-muted: #94A3B8;
-  /* Brighter muted */
+  /* Text - High-contrast off-whites and crisp muted slates */
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
 
-  /* Brand Colors - Approved Lavender Theme */
-  --brand-primary: #EAC2FF;
-  --brand-surface: #3D065F;
-  --brand-glow: #bc80f1;
-  --brand-muted: #1A1025;
-  --brand-blue: #38BDF8;
+  /* Brand Colors - Modern Linear-style Violet */
+  --brand-primary: #a78bfa;
+  --brand-surface: #1e1b4b;
+  --brand-glow: #c4b5fd;
+  --brand-muted: #181528;
+  --brand-blue: #38bdf8;
 
   /* Status / Methods */
   --method-get: #10B981;
@@ -64,9 +61,9 @@
   --method-delete: #EF4444;
 
   /* Advanced Tokens */
-  --glass-bg: rgba(18, 17, 24, 0.7);
-  --glass-border: rgba(234, 194, 255, 0.1);
-  --accent-gradient: linear-gradient(135deg, #EAC2FF 0%, #9D5AE5 100%);
+  --glass-bg: rgba(18, 18, 21, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --accent-gradient: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
 
   --font-archivo: 'Archivo', ui-sans-serif, system-ui, sans-serif;
   --font-space-mono: 'Space Mono', ui-monospace, monospace;
@@ -92,12 +89,11 @@ body {
 
 /* ============================================
    CUSTOM SCROLLBAR
-   (Browsers handle this better via CSS than JS libraries)
    ============================================ */
 
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -105,77 +101,74 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #262626;
-  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #404040;
+  background: rgba(255, 255, 255, 0.22);
 }
 
 /* Firefox */
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #262626 transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
 }
 
 /* ============================================
    UTILITY CLASSES
    ============================================ */
 
-/* Glass Morphism - Enhanced with multi-layered blurs and subtle borders */
+/* Clean Surfaces (Linear / Vercel style) */
 .glass {
   background: var(--glass-bg);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
 }
 
 .glass-strong {
-  background: rgba(18, 17, 24, 0.9);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(234, 194, 255, 0.2);
+  background: rgba(15, 15, 18, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-subtle);
 }
 
-/* Premium Gradients & Glows */
+/* Gradients & Glows (Subtle and focused) */
 .brand-gradient {
   background: var(--accent-gradient);
 }
 
+.shadow-glow {
+  box-shadow: 0 0 16px -2px rgba(167, 139, 250, 0.25);
+}
+
+.shadow-glow-sm {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 0 10px -2px rgba(167, 139, 250, 0.2);
+}
+
 .glow-primary {
-  box-shadow: 0 0 40px -10px rgba(157, 90, 229, 0.5);
+  box-shadow: 0 0 24px -4px rgba(167, 139, 250, 0.3);
 }
 
 .hover-glow:hover {
-  box-shadow: 0 0 50px -5px rgba(157, 90, 229, 0.6);
+  box-shadow: 0 0 28px -4px rgba(167, 139, 250, 0.35);
 }
 
-/* Grain Texture (Static noise for depth) */
+/* Grain Texture removed for crisp rendering */
 .grain-texture {
   position: relative;
-}
-
-.grain-texture::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  opacity: 0.03;
-  pointer-events: none;
-  mix-blend-mode: overlay;
-  z-index: 1;
 }
 
 /* Code / Monospace Helpers */
 code {
   font-family: var(--font-space-mono);
   font-size: 0.85em;
-  background: rgba(234, 194, 255, 0.08);
-  padding: 0.2em 0.4em;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.15em 0.4em;
   border-radius: 4px;
   color: var(--brand-primary);
-  border: 1px solid rgba(234, 194, 255, 0.1);
+  border: 1px solid var(--border-subtle);
 }
 
 @utility no-scrollbar {
@@ -202,21 +195,6 @@ code {
   100% { transform: translateX(100%); }
 }
 
-/* Custom scrollbar for dark theme */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 100px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
 
 /* ReactFlow edge override — subtle white-ish edges */
 .react-flow__edge-path {
