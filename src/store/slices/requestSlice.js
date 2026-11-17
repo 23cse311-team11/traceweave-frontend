@@ -341,7 +341,22 @@ export const createRequestSlice = (set, get) => ({
         if (!id) return {};
 
         const req = state.requestStates[id];
+        if (!req) return {};
         
+        if (field === 'method') {
+            return {
+                unsavedRequests: new Set(state.unsavedRequests).add(id),
+                requestStates: {
+                    ...state.requestStates,
+                    [id]: { 
+                        ...req, 
+                        method: value,
+                        config: { ...(req.config || {}), method: value } 
+                    }
+                }
+            };
+        }
+
         // Generalized Logic: If it's not a root-level concept (like name, protocol), put it in config.
         if (!TOP_LEVEL_FIELDS.includes(field)) {
              return {
@@ -350,7 +365,7 @@ export const createRequestSlice = (set, get) => ({
                     ...state.requestStates,
                     [id]: { 
                         ...req, 
-                        config: { ...req.config, [field]: value } 
+                        config: { ...(req.config || {}), [field]: value } 
                     }
                 }
             };
@@ -360,7 +375,7 @@ export const createRequestSlice = (set, get) => ({
             unsavedRequests: new Set(state.unsavedRequests).add(id),
             requestStates: {
                 ...state.requestStates,
-                [id]: { ...state.requestStates[id], [field]: value }
+                [id]: { ...req, [field]: value }
             }
         };
     }),

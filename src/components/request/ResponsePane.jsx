@@ -114,7 +114,11 @@ const StatusBadge = ({ response }) => {
       statusText = response.statusText;
     }
 
-    description = info?.desc || 'No detailed description available for this status code.';
+    if (status === 0 && (response.data?.error || response.error)) {
+      description = response.data?.error || response.error;
+    } else {
+      description = info?.desc || 'No detailed description available for this status code.';
+    }
   }
 
   const displayText = status === 0
@@ -173,7 +177,7 @@ const StatusBadge = ({ response }) => {
           </div>
           {status === 0 && (
             <div className="mt-2.5 p-1.5 rounded bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] tracking-wide text-center">
-              Check target URL, network connection, DNS, or CORS policy
+              {response.data?.error ? `Cause: ${response.data.error}` : 'Check target URL, network connection, DNS, or CORS policy'}
             </div>
           )}
         </TooltipContainer>

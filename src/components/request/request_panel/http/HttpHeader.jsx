@@ -103,7 +103,7 @@ export default function HttpHeader({
         </div>
       </div>
 
-      <div className="flex h-9.5 mb-3 rounded-lg border border-white/[0.1] bg-[#18181c] focus-within:border-brand-primary/50 transition-colors z-50 relative overflow-hidden">
+      <div className="flex h-9.5 mb-3 rounded-lg border border-white/[0.1] bg-[#18181c] focus-within:border-brand-primary/50 transition-colors z-50 relative">
         <HttpMethodDropdown activeId={activeId} />
         <UrlBar 
           value={activeReqState.config?.url || ''} 
@@ -112,7 +112,7 @@ export default function HttpHeader({
         <button
           onClick={store.executeRequest}
           disabled={store.isLoading}
-          className="bg-violet-600 hover:bg-violet-500 text-white font-medium text-xs px-4 flex items-center gap-1.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[80px] justify-center shrink-0"
+          className="bg-violet-600 hover:bg-violet-500 text-white font-medium text-xs px-4 flex items-center gap-1.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[80px] justify-center shrink-0 rounded-r-lg"
         >
           {store.isLoading ? <Loader2 className="animate-spin" size={14} /> : 'Send'}
         </button>
