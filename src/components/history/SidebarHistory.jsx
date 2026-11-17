@@ -25,7 +25,7 @@ export default function SidebarHistory() {
       const matchesText = (item?.url || '').toLowerCase().includes(filterText.toLowerCase()) ||
                          (item?.method?.toLowerCase().includes(filterText.toLowerCase()));
       if (filterType === 'success') return matchesText && item.status >= 200 && item.status < 300;
-      if (filterType === 'error') return matchesText && item.status >= 400;
+      if (filterType === 'error') return matchesText && (item.status >= 400 || item.status === 0 || !item.status);
       return matchesText;
     });
 
@@ -134,8 +134,8 @@ export default function SidebarHistory() {
                       <div className="text-xs text-zinc-300 font-mono truncate mb-1">
                         {item.url}
                       </div>
-                      <div className={`text-[10px] font-medium ${item.status < 400 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                        {item.status || 'ERROR'} <span className="text-zinc-500 font-normal ml-1">— {item.timings?.total || 0}ms</span>
+                      <div className={`text-[10px] font-medium ${item.status >= 200 && item.status < 400 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {item.status ? `${item.status} ${item.statusText || ''}`.trim() : 'ERROR'} <span className="text-zinc-500 font-normal ml-1">— {item.timings?.total || 0}ms</span>
                       </div>
                       
                       <button 

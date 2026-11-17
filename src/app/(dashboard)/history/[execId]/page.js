@@ -408,12 +408,12 @@ export default function ExecutionDetailPage() {
             <div className="flex flex-col items-end">
               <span className="text-[10px] text-text-muted uppercase tracking-wider font-semibold">Status</span>
               <span className={`font-mono font-bold text-sm ${getStatusColor(execution.status)}`}>
-                {execution.status || 'ERR'} {execution.statusText}
+                {execution.status || 'ERR'} {(execution.status && execution.status !== 200 && execution.statusText?.toLowerCase() === 'ok') ? '' : (execution.statusText || '')}
               </span>
             </div>
             <div className="flex flex-col items-end">
               <span className="text-[10px] text-text-muted uppercase tracking-wider font-semibold">Time</span>
-              <span className="font-mono font-bold text-sm text-emerald-500">{execution.timings.total || 0} ms</span>
+              <span className="font-mono font-bold text-sm text-emerald-500">{execution.timings?.total || 0} ms</span>
             </div>
             <div className="flex flex-col items-end">
               <span className="text-[10px] text-text-muted uppercase tracking-wider font-semibold">Size</span>

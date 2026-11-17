@@ -13,27 +13,78 @@ import TooltipContainer from './response_panel/TooltipContainer';
 // --- SUB-COMPONENTS (Defined outside to prevent re-initialization on every render) ---
 
 const HTTP_STATUS_INFO = {
+  // 1xx Informational
   100: { text: 'Continue', desc: 'The server received request headers; client should proceed to send the body.' },
   101: { text: 'Switching Protocols', desc: 'The server agrees to switch protocols as requested by the client.' },
+  102: { text: 'Processing', desc: 'The server has received and is processing the request, but no response is available yet.' },
+  103: { text: 'Early Hints', desc: 'Used to return some response headers before final HTTP message.' },
+
+  // 2xx Success
   200: { text: 'OK', desc: 'The request succeeded.' },
   201: { text: 'Created', desc: 'The request succeeded, and a new resource was created.' },
   202: { text: 'Accepted', desc: 'The request has been received but not yet acted upon.' },
+  203: { text: 'Non-Authoritative Information', desc: 'The returned meta-information is from a local or third-party copy.' },
   204: { text: 'No Content', desc: 'The server successfully processed the request and is not returning any content.' },
+  205: { text: 'Reset Content', desc: 'The server successfully processed the request, but is not returning any content; requires requester to reset document view.' },
+  206: { text: 'Partial Content', desc: 'The server is delivering only part of the resource due to a Range header sent by the client.' },
+  207: { text: 'Multi-Status', desc: 'Conveys information about multiple resources in situations where multiple status codes might be appropriate.' },
+  208: { text: 'Already Reported', desc: 'Used inside a DAV: propstat response element to avoid repeatedly enumerating internal members of multiple bindings.' },
+  226: { text: 'IM Used', desc: 'The server has fulfilled a GET request for the resource, and the response is an instance-manipulation.' },
+
+  // 3xx Redirection
+  300: { text: 'Multiple Choices', desc: 'The request has more than one possible response.' },
   301: { text: 'Moved Permanently', desc: 'The URL of the requested resource has been changed permanently.' },
   302: { text: 'Found', desc: 'The URI of the requested resource has been changed temporarily.' },
+  303: { text: 'See Other', desc: 'The response can be found under another URI using the GET method.' },
   304: { text: 'Not Modified', desc: 'The resource has not been modified since the last request.' },
+  305: { text: 'Use Proxy', desc: 'The requested resource must be accessed through a proxy.' },
+  307: { text: 'Temporary Redirect', desc: 'The request should be repeated with another URI; future requests should still use the original URI.' },
+  308: { text: 'Permanent Redirect', desc: 'The request and all future requests should be repeated using another URI.' },
+
+  // 4xx Client Errors
   400: { text: 'Bad Request', desc: 'The server could not understand the request due to invalid syntax.' },
   401: { text: 'Unauthorized', desc: 'Authentication is required to access the requested resource.' },
+  402: { text: 'Payment Required', desc: 'Reserved for future use.' },
   403: { text: 'Forbidden', desc: 'The client does not have access rights to the content.' },
   404: { text: 'Not Found', desc: 'The server cannot find the requested resource.' },
   405: { text: 'Method Not Allowed', desc: 'The request method is known by the server but not supported by the resource.' },
+  406: { text: 'Not Acceptable', desc: 'The server cannot produce a response matching the list of acceptable values defined in request headers.' },
+  407: { text: 'Proxy Authentication Required', desc: 'The client must first authenticate itself with the proxy.' },
+  408: { text: 'Request Timeout', desc: 'The server timed out waiting for the request.' },
   409: { text: 'Conflict', desc: 'The request conflicts with the current state of the server.' },
+  410: { text: 'Gone', desc: 'The target resource has been permanently deleted.' },
+  411: { text: 'Length Required', desc: 'The server refuses to accept the request without a defined Content-Length.' },
+  412: { text: 'Precondition Failed', desc: 'One or more conditions given in the request header fields evaluated to false.' },
+  413: { text: 'Payload Too Large', desc: 'Request entity is larger than limits defined by server.' },
+  414: { text: 'URI Too Long', desc: 'The URI requested by the client is longer than the server is willing to interpret.' },
+  415: { text: 'Unsupported Media Type', desc: 'The media format of the requested data is not supported by the server.' },
+  416: { text: 'Range Not Satisfiable', desc: 'The client has asked for a portion of the file that cannot be provided.' },
+  417: { text: 'Expectation Failed', desc: 'The expectation given in the Expect request-header could not be met.' },
+  418: { text: "I'm a teapot", desc: 'The server refuses the attempt to brew coffee with a teapot.' },
+  421: { text: 'Misdirected Request', desc: 'The request was directed at a server that is not able to produce a response.' },
   422: { text: 'Unprocessable Entity', desc: 'The request was well-formed but unable to be followed due to semantic errors.' },
+  423: { text: 'Locked', desc: 'The resource that is being accessed is locked.' },
+  424: { text: 'Failed Dependency', desc: 'The request failed because it depended on another request that failed.' },
+  425: { text: 'Too Early', desc: 'The server is unwilling to risk processing a request that might be replayed.' },
+  426: { text: 'Upgrade Required', desc: 'The server refuses to perform the request using the current protocol.' },
+  428: { text: 'Precondition Required', desc: 'The origin server requires the request to be conditional.' },
   429: { text: 'Too Many Requests', desc: 'The client has sent too many requests in a given amount of time.' },
+  431: { text: 'Request Header Fields Too Large', desc: 'The server is unwilling to process the request because header fields are too large.' },
+  451: { text: 'Unavailable For Legal Reasons', desc: 'The user agent requested a resource that cannot lawfully be provided.' },
+
+  // 5xx Server Errors
   500: { text: 'Internal Server Error', desc: 'The server encountered an unexpected condition that prevented it from fulfilling the request.' },
+  501: { text: 'Not Implemented', desc: 'The server does not support the functionality required to fulfill the request.' },
   502: { text: 'Bad Gateway', desc: 'The server received an invalid response from the upstream server.' },
   503: { text: 'Service Unavailable', desc: 'The server is currently unable to handle the request due to temporary overloading or maintenance.' },
   504: { text: 'Gateway Timeout', desc: 'The server did not get a timely response from the upstream server.' },
+  505: { text: 'HTTP Version Not Supported', desc: 'The server does not support the HTTP protocol version used in the request.' },
+  506: { text: 'Variant Also Negotiates', desc: 'Transparent content negotiation for the request results in a circular reference.' },
+  507: { text: 'Insufficient Storage', desc: 'The server is unable to store the representation needed to complete the request.' },
+  508: { text: 'Loop Detected', desc: 'The server detected an infinite loop while processing the request.' },
+  510: { text: 'Not Extended', desc: 'Further extensions to the request are required for the server to fulfill it.' },
+  511: { text: 'Network Authentication Required', desc: 'The client needs to authenticate to gain network access.' },
+
   0: { text: 'Network Error', desc: 'Could not connect to the server. Check your network connection, DNS, or CORS policy.' }
 };
 
@@ -51,40 +102,50 @@ const StatusBadge = ({ response }) => {
       ? 'All workflow steps executed successfully.' 
       : 'One or more workflow steps failed during execution.';
   } else {
-    status = response.status || 0;
+    status = typeof response.status === 'number' ? response.status : (parseInt(response.status, 10) || 0);
     const info = HTTP_STATUS_INFO[status];
-    // Fallback to our dictionary or default values
-    statusText = response.statusText || info?.text || 'Unknown';
+
+    // Protect against non-200 responses erroneously having statusText: "OK"
+    const isMismatchedOk = status !== 200 && typeof response.statusText === 'string' && response.statusText.trim().toLowerCase() === 'ok';
+    
+    if (isMismatchedOk || !response.statusText) {
+      statusText = info?.text || (status === 0 ? 'Network Error' : 'Unknown');
+    } else {
+      statusText = response.statusText;
+    }
+
     description = info?.desc || 'No detailed description available for this status code.';
   }
 
-  const displayText = `${status} ${statusText}`.trim();
+  const displayText = status === 0
+    ? (statusText && statusText !== 'Unknown' ? statusText : 'Network Error')
+    : `${status} ${statusText}`.trim();
 
   // Color and Icon mapping logic
-  let color = 'text-green-500';
-  let bgColor = 'bg-green-500/10';
-  let borderColor = 'hover:border-green-500/20';
+  let color = 'text-emerald-400';
+  let bgColor = 'bg-emerald-500/10';
+  let borderColor = 'hover:border-emerald-500/20';
   let Icon = CheckCircle;
 
   if (status >= 100 && status < 300) {
-    color = 'text-green-500';
-    bgColor = 'bg-green-500/10';
-    borderColor = 'hover:border-green-500/20';
+    color = 'text-emerald-400';
+    bgColor = 'bg-emerald-500/10';
+    borderColor = 'hover:border-emerald-500/20';
     Icon = CheckCircle;
   } else if (status >= 300 && status < 400) {
-    color = 'text-blue-500';
+    color = 'text-blue-400';
     bgColor = 'bg-blue-500/10';
     borderColor = 'hover:border-blue-500/20';
     Icon = Info;
   } else if (status >= 400 && status < 500) {
-    color = 'text-yellow-500';
-    bgColor = 'bg-yellow-500/10';
-    borderColor = 'hover:border-yellow-500/20';
+    color = 'text-amber-400';
+    bgColor = 'bg-amber-500/10';
+    borderColor = 'hover:border-amber-500/20';
     Icon = AlertTriangle;
-  } else if (status >= 500 || status === 0) { // Catch 0 (Network Error)
-    color = 'text-red-500';
-    bgColor = 'bg-red-500/10';
-    borderColor = 'hover:border-red-500/20';
+  } else if (status >= 500 || status === 0) { // Catch 5xx and 0 (Network Error)
+    color = 'text-rose-400';
+    bgColor = 'bg-rose-500/10';
+    borderColor = 'hover:border-rose-500/20';
     Icon = XCircle;
   }
 
@@ -92,10 +153,10 @@ const StatusBadge = ({ response }) => {
     <div className="relative group">
       <motion.div
         whileHover={{ scale: 1.02 }}
-        className={`flex items-center gap-2 px-3 py-1.5 rounded-md cursor-help transition-all ${bgColor} border border-transparent ${borderColor}`}
+        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md cursor-help transition-all ${bgColor} border border-transparent ${borderColor}`}
       >
-        <Icon size={14} className={color} />
-        <span className={`font-semibold ${color} text-xs uppercase tracking-wider truncate max-w-[150px]`}>
+        <Icon size={13} className={color} />
+        <span className={`font-semibold ${color} text-xs tracking-wide whitespace-nowrap`}>
           {displayText}
         </span>
       </motion.div>
@@ -103,16 +164,16 @@ const StatusBadge = ({ response }) => {
       {/* Tooltip implementation using existing wrapper */}
       <div className="hidden group-hover:block">
         <TooltipContainer width="w-72">
-          <div className={`flex items-center gap-2 mb-3 pb-2 border-b border-[#1F1F1F] ${color}`}>
-            <Icon size={16} />
-            <span className="font-bold text-sm tracking-wide">{displayText}</span>
+          <div className={`flex items-center gap-2 mb-2 pb-2 border-b border-white/10 ${color}`}>
+            <Icon size={14} />
+            <span className="font-bold text-xs tracking-wide">{displayText}</span>
           </div>
-          <div className="text-xs text-[#A1A1AA] leading-relaxed">
+          <div className="text-xs text-zinc-400 leading-relaxed">
             {description}
           </div>
           {status === 0 && (
-            <div className="mt-3 p-2 rounded bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] uppercase tracking-wider text-center">
-              Check Console for CORS issues
+            <div className="mt-2.5 p-1.5 rounded bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] tracking-wide text-center">
+              Check target URL, network connection, DNS, or CORS policy
             </div>
           )}
         </TooltipContainer>

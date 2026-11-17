@@ -103,7 +103,7 @@ export default function HistoryPage() {
                   >
                     <td className="px-6 py-3">
                       <span className={`inline-flex items-center justify-center px-2 py-1 rounded border text-xs font-bold ${getStatusColor(log.status)}`}>
-                        {log.status || 'ERR'} {log.statusText ? `- ${log.statusText}` : ''}
+                        {log.status || 'ERR'} {(log.status && log.status !== 200 && log.statusText?.toLowerCase() === 'ok') ? '' : (log.statusText ? `- ${log.statusText}` : '')}
                       </span>
                     </td>
                     <td className="px-6 py-3">
