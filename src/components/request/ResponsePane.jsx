@@ -114,15 +114,15 @@ const StatusBadge = ({ response }) => {
       statusText = response.statusText;
     }
 
-    if (status === 0 && (response.data?.error || response.error)) {
-      description = response.data?.error || response.error;
+    if (status === 0) {
+      description = 'Could not establish a connection to the destination server. Please check the URL, network connectivity, and server status.';
     } else {
       description = info?.desc || 'No detailed description available for this status code.';
     }
   }
 
   const displayText = status === 0
-    ? (statusText && statusText !== 'Unknown' ? statusText : 'Network Error')
+    ? (statusText && statusText !== 'Unknown' && statusText !== 'Error' ? statusText : 'Network Error')
     : `${status} ${statusText}`.trim();
 
   // Color and Icon mapping logic
@@ -177,7 +177,9 @@ const StatusBadge = ({ response }) => {
           </div>
           {status === 0 && (
             <div className="mt-2.5 p-1.5 rounded bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] tracking-wide text-center">
-              {response.data?.error ? `Cause: ${response.data.error}` : 'Check target URL, network connection, DNS, or CORS policy'}
+              {(response.data?.error || response.error) && !['Unknown Error', 'Error'].includes(response.data?.error || response.error)
+                ? `Cause: ${response.data?.error || response.error}`
+                : 'Check target URL, network connection, DNS, or CORS policy'}
             </div>
           )}
         </TooltipContainer>
