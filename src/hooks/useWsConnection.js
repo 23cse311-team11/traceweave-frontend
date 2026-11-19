@@ -23,7 +23,8 @@ export function useWsConnection(activeId) {
       hour12: false, hour: '2-digit', minute: '2-digit',
       second: '2-digit', fractionalSecondDigits: 3,
     });
-    setLogs(prev => [...prev, { type, msg, time }]);
+    const id = uuidv4();
+    setLogs(prev => [{ id, type, msg, time, timestamp: Date.now() }, ...prev]);
   }, []);
 
   const clearLogs = useCallback(() => setLogs([]), []);
@@ -172,7 +173,9 @@ export function useWsConnection(activeId) {
 
       eventSourceRef.current.addEventListener('ws_message', (e) => {
         const data = JSON.parse(e.data);
-        addLog(data.direction === 'incoming' ? 'in' : 'out', data.message);
+        if (data.direction === 'incoming') {
+          addLog('in', data.message);
+        }
       });
 
       eventSourceRef.current.addEventListener('ws_error', (e) => {

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, Trash2, Activity, ArrowDown, Download, MoreHorizontal } from 'lucide-react';
+import { Search, X, Trash2, Activity, ArrowUp, Download, MoreHorizontal } from 'lucide-react';
 import StatusBadge from './StatusBadge';
 import LogEntry from './LogEntry';
 
@@ -9,10 +9,9 @@ export default function WsLogsPanel({ wsState }) {
   
   const [logFilter, setLogFilter] = useState('All Messages');
   const [logSearch, setLogSearch] = useState('');
-  const [atBottom, setAtBottom] = useState(true);
+  const [isScrolledDown, setIsScrolledDown] = useState(false);
 
   const logsScrollRef = useRef(null);
-  const logsEndRef = useRef(null);
 
   const filteredLogs = logs.filter(log => {
     if (logFilter === 'Sent' && log.type !== 'out') return false;
@@ -28,16 +27,29 @@ export default function WsLogsPanel({ wsState }) {
 
   const handleLogsScroll = () => {
     if (!logsScrollRef.current) return;
-    const { scrollTop, scrollHeight, clientHeight } = logsScrollRef.current;
-    const isAtBottom = scrollHeight - scrollTop - clientHeight < 20;
-    setAtBottom(isAtBottom);
+    const { scrollTop } = logsScrollRef.current;
+    setIsScrolledDown(scrollTop > 50);
   };
 
   useEffect(() => {
-    if (atBottom && logsEndRef.current) {
-      logsEndRef.current.scrollIntoView({ behavior: 'auto' });
+    if (!isScrolledDown && logsScrollRef.current) {
+      logsScrollRef.current.scrollTop = 0;
     }
-  }, [logs, atBottom]);
+  }, [logs, isScrolledDown]);
+
+  const handleSaveResponse = () => {
+    if (!logs || logs.length === 0) return;
+    const exportData = logs.map(({ id, ...rest }) => rest);
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `websocket-logs-${new Date().toISOString().slice(0, 19).replace(/[:]/g, '-')}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="flex-1 flex flex-col min-h-0 relative">
@@ -63,7 +75,12 @@ export default function WsLogsPanel({ wsState }) {
         <div className="flex-1" />
         <StatusBadge connected={isConnected} connectionInfo={connectionInfo} />
 
-        <button className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] text-text-muted hover:text-text-secondary border border-transparent hover:border-border-subtle rounded transition-colors">
+        <button 
+          onClick={handleSaveResponse}
+          disabled={logs.length === 0}
+          className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] text-text-muted hover:text-text-secondary disabled:opacity-40 disabled:cursor-not-allowed border border-transparent hover:border-border-subtle rounded transition-colors"
+          title="Save logs to JSON"
+        >
           <Download size={11} /> Save Response
         </button>
 
@@ -100,7 +117,7 @@ export default function WsLogsPanel({ wsState }) {
         </button>
       </div>
 
-      {/* Log List */}
+      {/* Log List (Latest at the top) */}
       <div ref={logsScrollRef} onScroll={handleLogsScroll} className="flex-1 overflow-auto custom-scrollbar">
         {filteredLogs.length === 0 ? (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center h-full gap-3">
@@ -111,21 +128,28 @@ export default function WsLogsPanel({ wsState }) {
           </motion.div>
         ) : (
           filteredLogs.map((log, i) => (
-            <LogEntry key={`${log.time}-${i}`} log={log} index={i} /> 
+            <LogEntry key={log.id || `${log.time}-${i}`} log={log} index={i} /> 
           ))
         )}
-        <div ref={logsEndRef} />
       </div>
 
-      {/* Auto-scroll FAB */}
+      {/* Scroll-to-top (Latest) FAB */}
       <AnimatePresence>
-        {!atBottom && logs.length > 0 && (
+        {isScrolledDown && filteredLogs.length > 0 && (
           <motion.button 
-            initial={{ opacity: 0, y: 8, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.9 }} transition={{ duration: 0.15 }} 
-            onClick={() => { logsEndRef.current?.scrollIntoView({ behavior: 'smooth' }); setAtBottom(true); }} 
-            className="absolute bottom-5 right-4 w-8 h-8 rounded-full bg-[#1E1E1E] border border-[#333] shadow-xl flex items-center justify-center text-text-secondary hover:text-text-primary hover:border-[#444] transition-colors z-20"
+            initial={{ opacity: 0, y: 8, scale: 0.9 }} 
+            animate={{ opacity: 1, y: 0, scale: 1 }} 
+            exit={{ opacity: 0, y: 8, scale: 0.9 }} 
+            transition={{ duration: 0.15 }} 
+            onClick={() => { 
+              logsScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+              setIsScrolledDown(false); 
+            }} 
+            title="Jump to latest"
+            className="absolute bottom-5 right-4 h-8 px-3 rounded-full bg-[#1E1E1E] border border-[#333] shadow-xl flex items-center gap-1.5 text-xs text-text-secondary hover:text-text-primary hover:border-[#444] transition-colors z-20"
           >
-            <ArrowDown size={14} />
+            <ArrowUp size={13} className="text-brand-primary" />
+            <span className="text-[11px] font-medium">Latest</span>
           </motion.button>
         )}
       </AnimatePresence>
