@@ -18,16 +18,23 @@ export function useWsConnection(activeId) {
 
   const isElectron = typeof window !== "undefined" && window.electronAPI;
 
+  const lastTimestampRef = useRef(0);
+
   const addLog = useCallback((type, msg) => {
-    const time = new Date().toLocaleTimeString('en-US', {
+    const now = Math.max(Date.now(), lastTimestampRef.current + 1);
+    lastTimestampRef.current = now;
+    const time = new Date(now).toLocaleTimeString('en-US', {
       hour12: false, hour: '2-digit', minute: '2-digit',
       second: '2-digit', fractionalSecondDigits: 3,
     });
     const id = uuidv4();
-    setLogs(prev => [{ id, type, msg, time, timestamp: Date.now() }, ...prev]);
+    setLogs(prev => [{ id, type, msg, time, timestamp: now }, ...prev]);
   }, []);
 
-  const clearLogs = useCallback(() => setLogs([]), []);
+  const clearLogs = useCallback(() => {
+    lastTimestampRef.current = 0;
+    setLogs([]);
+  }, []);
 
   const disconnect = useCallback(async () => {
     try {
@@ -206,6 +213,9 @@ export function useWsConnection(activeId) {
     const trimmed = messageText.trim();
     if (!trimmed || !isConnected) return;
     
+    // Log outgoing message immediately when sent
+    addLog('out', trimmed);
+
     try {
       // BRANCH: Desktop vs Web
       if (isElectron) {
@@ -216,8 +226,6 @@ export function useWsConnection(activeId) {
       } else {
         await requestApi.sendWsMessage(connectionIdRef.current, trimmed);
       }
-      
-      addLog('out', trimmed); // Optimistic UI update
     } catch (err) {
       addLog('system', `Send failed: ${err.message}`);
     }
